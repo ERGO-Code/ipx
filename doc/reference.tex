@@ -1,0 +1,142 @@
+\documentclass{article}
+\usepackage{amsmath}
+
+% page size
+\setlength{\hoffset}{-1in}
+\setlength{\voffset}{-1in}
+\setlength{\oddsidemargin}{3.5cm}
+\setlength{\evensidemargin}{3.5cm}
+\setlength{\topmargin}{2cm}
+\setlength{\textwidth}{14cm}
+\setlength{\textheight}{22cm}
+
+\newcommand{\ct}{\texttt}
+\newcommand{\NULL}{\ct{NULL}}
+\setlength{\parindent}{0pt}
+\newcommand{\param}[1]{\vspace{2em}\ct{#1}\nopagebreak\\[0.5em]\nopagebreak}
+\newcommand{\default}[1]{\\Default: #1}
+\newcommand{\rvec}[1]{\left(#1\right)}
+
+\newcommand{\obj}{\ct{obj}}
+\newcommand{\rhs}{\ct{rhs}}
+\newcommand{\lb}{\ct{lb}}
+\newcommand{\ub}{\ct{ub}}
+\newcommand{\numconstr}{\ct{num\_constr}}
+\newcommand{\numvar}{\ct{num\_var}}
+\newcommand{\x}{\ct{x}}
+\newcommand{\slack}{\ct{slack}}
+\newcommand{\xl}{\ct{xl}}
+\newcommand{\xu}{\ct{xu}}
+\newcommand{\y}{\ct{y}}
+\newcommand{\z}{\ct{z}}
+\newcommand{\zl}{\ct{zl}}
+\newcommand{\zu}{\ct{zu}}
+\newcommand{\vbasis}{\ct{vbasis}}
+\newcommand{\cbasis}{\ct{cbasis}}
+\newcommand{\basic}{\ct{IPX\_basic}}
+\newcommand{\nonbasic}{\ct{IPX\_nonbasic}}
+\newcommand{\nonbasiclb}{\ct{IPX\_nonbasic\_lb}}
+\newcommand{\nonbasicub}{\ct{IPX\_nonbasic\_ub}}
+\newcommand{\superbasic}{\ct{IPX\_superbasic}}
+
+\title{IPX Reference}
+\author{Version 1.0}
+
+\begin{document}
+\maketitle
+
+%-------------------------------------------------------------------------------
+\section*{Functionality}
+%-------------------------------------------------------------------------------
+
+IPX solves linear programming (LP) problems in the form
+\begin{subequations}
+  \begin{alignat}{2}
+    \underset{\x}{\text{minimize}} &\quad& &\obj^T\x \\
+    \label{eq:ax=b}
+    \text{subject to} && &A\x\{\ge,\le,=\}\rhs, \\
+    && &\lb\le\x\le\ub.\
+  \end{alignat}
+\end{subequations}
+The matrix $A$ has \numconstr\ rows and \numvar\ columns. Associated with
+\eqref{eq:ax=b} are dual variables \y\ with the sign convention that
+\begin{subequations}
+  \label{eq:signy}
+  \begin{alignat}{2}
+    \y[i]\ge0 &\quad& &\text{if constraint is of type $\ge$,} \\
+    \y[i]\le0 && &\text{if constraint is of type $\le$,} \\
+    \y[i]\text{ free} && &\text{if constraint is of type $=$.}
+  \end{alignat}
+\end{subequations}
+Associated with $\lb\le\x$ and $\x\le\ub$ are dual variable $\zl\ge0$ and
+$\zu\ge0$ respectively. Entries of $-\lb$ and $\ub$ can be infinity, in which
+case the dual is fixed at zero.
+
+\subsubsection*{Interior Point Method}
+The interior point method (IPM) computes a primal-dual point
+$\rvec{\x,\slack,\xl,\xu,\y,\zl,\zu}$ that approximately satisfies
+\begin{subequations}
+  \label{eq:res}
+  \begin{align}
+    \label{eq:pres}
+    &A\x+\slack=\rhs, \quad \x-\xl=\lb, \quad \x+\xu=\ub,\\
+    \label{eq:dres}
+    &A^T\y+\zl-\zu=\obj,
+  \end{align}
+\end{subequations}
+and that is guaranteed to satisfy $\xl\ge0$, $\xu\ge0$, \eqref{eq:signy} and
+\begin{subequations}
+  \label{eq:signslack}
+  \begin{alignat}{2}
+    \slack[i]\le0 &\quad& &\text{if constraint is of type $\ge$,} \\
+    \slack[i]\ge0 && &\text{if constraint is of type $\le$,} \\
+    \slack[i]=0 && &\text{if constraint is of type $=$.}
+  \end{alignat}
+\end{subequations}
+In theory, the IPM iterates will in the limit satisfy \eqref{eq:pres} and
+\eqref{eq:dres}, and the primal objective will equal the dual objective
+\begin{equation}
+  \label{eq:dobj}
+  \rhs^T\y + \lb^T\zl - \ub^T\zu.
+\end{equation}
+(Entries for which -\lb\ or \ub\ is infinity are understood to be dropped from
+the sum.)
+
+\subsubsection*{Crossover}
+The crossover method recovers an optimal basis from the interior solution. A
+basis is defined by variable and constraint statuses
+\begin{align}
+  \vbasis[j] &\in \{\basic, \nonbasiclb, \nonbasicub, \superbasic\}, \\
+  \cbasis[i] &\in \{\basic, \nonbasic\}.
+\end{align}
+The columns of $A$ for which $\vbasis[j]=\basic$ and the columns of the identity
+matrix for which $\cbasis[i]=\basic$ form a square, nonsingular matrix of
+dimension \numconstr. The corresponding basic solution $\rvec{\x,\slack,\y,\z}$
+is obtained by setting
+\begin{subequations}
+  \begin{alignat}{3}
+    \z[j]&=0& &\quad& &\text{if $\vbasis[j]=\basic$}, \\
+    \x[j]&=\lb[j]& && &\text{if $\vbasis[j]=\nonbasiclb$}, \\
+    \x[j]&=\ub[j]& && &\text{if $\vbasis[j]=\nonbasicub$}, \\
+    \x[j]&=0& &&      &\text{if $\vbasis[j]=\superbasic$}, \\
+    \y[i]&=0& &&      &\text{if $\cbasis[i]=\basic$}, \\
+    \slack[i]&=0& &&  &\text{if $\cbasis[i]=\nonbasic$}
+  \end{alignat}
+\end{subequations}
+and computing the remaining components such that $A\x+\slack=\rhs$ and
+$A^T\y+\z=\obj$. The basis is primal feasible if $\lb\le\x\le\ub$ and
+\eqref{eq:signslack} hold; the basis is dual feasible if \eqref{eq:signy} holds
+and
+\begin{subequations}
+  \begin{alignat}{2}
+    \z[j]\ge0 &\quad& &\text{if $\vbasis[j]=\nonbasiclb$}, \\
+    \z[j]\le0 &\quad& &\text{if $\vbasis[j]=\nonbasicub$}, \\
+    \z[j]=0 &\quad& &\text{if $\vbasis[j]=\superbasic$}.
+  \end{alignat}
+\end{subequations}
+The IPX crossover consists of a primal and dual push phase. Depending on the
+accuracy of the interior solution and the numerical stability of the LP problem,
+the obtained basis may not be primal and/or dual feasible. In this case
+reoptimization with an external simplex code is required.
+
+\end{document}
