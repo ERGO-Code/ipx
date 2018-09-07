@@ -9,7 +9,7 @@
 IPX_VERSION = 1.0.0
 
 # path to basiclu
-BASICLUROOT = $(HOME)/ERGO-Code/basiclu
+BASICLUROOT = $(HOME)/Desktop/basiclu
 
 #===============================================================================
 # Defaults for any system
@@ -46,10 +46,10 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     LAPACK ?= -llapack
-    BLAS ?= -lopenblas
+    BLAS ?= -L/home/s1131817/Programs/OpenBLAS-0.2.20 -lopenblas
 
     # uncomment if your BLAS library uses 64 bit integers rather than 'int'
-    # CF += -DBLAS64
+    CF += -DBLAS64
 
     LDLIBS =
     LDLIBS += -lbasiclu
