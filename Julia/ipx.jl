@@ -391,4 +391,6 @@ function GetInfo(this::LPSolver)
                  Info, (Ptr{Void},), this.solver)
 end
 
+include("ipx_utils.jl")
+
 end # module ipx
