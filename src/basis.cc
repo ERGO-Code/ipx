@@ -771,7 +771,12 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
 
     // Maintain stack of fixed basic variables.
     std::vector<Int> remaining;
-    for (Int j = 0; j < n+m; j++) {
+    for (Int j = 0; j < n; j++) {
+        // Structural variables with zero weight must not be in the crash basis.
+        if (colweights[j] == 0.0)
+            assert(map2basis_[j] < 0);
+    }
+    for (Int j = n; j < n+m; j++) {
         if (colweights[j] == 0.0 && map2basis_[j] >= 0)
             remaining.push_back(j);
     }
@@ -792,15 +797,18 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
         double rmax = 0.0;
         double rmax_nonfixed = 0.0;
         auto update_max = [&](Int j, double r) {
-            r = std::abs(r);
-            if (r > rmax) {
-                rmax = r;
-                jmax = j;
-            }
-            if (colweights[j] != 0.0) {
-                if (r > rmax_nonfixed) {
-                    rmax_nonfixed = r;
-                    jmax_nonfixed = j;
+            // Ignore structural variables with zero weight.
+            if (j >= n || colweights[j] != 0.0) {
+                r = std::abs(r);
+                if (r > rmax) {
+                    rmax = r;
+                    jmax = j;
+                }
+                if (colweights[j] != 0.0) {
+                    if (r > rmax_nonfixed) {
+                        rmax_nonfixed = r;
+                        jmax_nonfixed = j;
+                    }
                 }
             }
         };
