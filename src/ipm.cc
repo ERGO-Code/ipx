@@ -303,29 +303,22 @@ void IPM::AddCorrector(Step& step) {
     double maxd = std::min(step_zl, step_zu);
     double muaff = 0.0;
     Int num_finite = 0;
-    double ef = 0.0;
     for (Int j = 0; j < n+m; j++) {
         if (iterate_->has_barrier_lb(j)) {
             assert(std::isfinite(xl[j]));
             assert(xl[j] != 0.0);
             muaff += (xl[j]+maxp*dxl[j]) * (zl[j]+maxd*dzl[j]);
-            ef += dxl[j]*dxl[j] * zl[j]/xl[j];
-            ef += dzl[j]*dzl[j] * xl[j]/zl[j];
             num_finite++;
         }
         if (iterate_->has_barrier_ub(j)) {
             assert(std::isfinite(xu[j]));
             assert(xu[j] != 0.0);
             muaff += (xu[j]+maxp*dxu[j]) * (zu[j]+maxd*dzu[j]);
-            ef += dxu[j]*dxu[j] * zu[j]/xu[j];
-            ef += dzu[j]*dzu[j] * xu[j]/zu[j];
             num_finite++;
         }
     }
     assert(std::isfinite(muaff));
-    assert(std::isfinite(ef));
     muaff /= num_finite;
-    ef /= mu*num_finite;
     double ratio = muaff / mu;
     double sigma = ratio * ratio * ratio;
 
