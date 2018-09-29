@@ -27,7 +27,7 @@ Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
             control_.CloseLogfile();
             return info_.status = IPX_STATUS_invalid_input;
         }
-        RunIPM();
+        InteriorPointSolve();
         if ((info_.status_ipm == IPX_STATUS_optimal ||
              info_.status_ipm == IPX_STATUS_imprecise) && control_.crossover())
             RunCrossover();
@@ -197,7 +197,7 @@ Int LpSolver::SymbolicInvert(Int* rowcounts, Int* colcounts) {
     return IPX_STATUS_ok;
 }
 
-void LpSolver::RunIPM() {
+void LpSolver::InteriorPointSolve() {
     control_.Log() << "Interior Point Solve\n";
 
     // Allocate new iterate and set tolerances for IPM termination test.
@@ -207,12 +207,8 @@ void LpSolver::RunIPM() {
     if (control_.crossover())
         iterate_->crossover_start(control_.crossover_start());
 
-    IPM ipm(control_);
-    RunInitialIPM(ipm);
-    if (info_.status_ipm == IPX_STATUS_not_run)
-        RunMainIPM(ipm);
-    if (info_.status_ipm == IPX_STATUS_debug)
-        return;
+    RunIPM();
+
     iterate_->Postprocess();
     iterate_->EvaluatePostsolved(&info_);
 
@@ -226,17 +222,35 @@ void LpSolver::RunIPM() {
     }
 }
 
-void LpSolver::RunInitialIPM(IPM& ipm) {
+void LpSolver::RunIPM() {
+    IPM ipm(control_);
+
+    ComputeStartingPoint(ipm);
+    if (info_.status_ipm != IPX_STATUS_not_run)
+        return;
+    RunInitialIPM(ipm);
+    if (info_.status_ipm != IPX_STATUS_not_run)
+        return;
+    BuildStartingBasis();
+    if (info_.status_ipm != IPX_STATUS_not_run)
+        return;
+    RunMainIPM(ipm);
+}
+
+void LpSolver::ComputeStartingPoint(IPM& ipm) {
     Timer timer;
     KKTSolverDiag kkt(control_, model_);
 
-    // Compute starting point. If that fails, then status_ipm has been set to
-    // anything but IPX_STATUS_not_run, so that RunMainIPM() will not be called.
-    // In this case iterate_ remains as initialized by the constructor, which is
-    // a valid state for postprocessing/postsolving.
+    // If the starting point procedure fails, then iterate_ remains as
+    // initialized by the constructor, which is a valid state for
+    // postprocessing/postsolving.
     ipm.StartingPoint(&kkt, iterate_.get(), &info_);
-    if (info_.status_ipm != IPX_STATUS_not_run)
-        return;
+    info_.time_ipm1 += timer.Elapsed();
+}
+
+void LpSolver::RunInitialIPM(IPM& ipm) {
+    Timer timer;
+    KKTSolverDiag kkt(control_, model_);
 
     Int switchiter = control_.switchiter();
     if (switchiter < 0) {
@@ -249,22 +263,34 @@ void LpSolver::RunInitialIPM(IPM& ipm) {
         ipm.maxiter(std::min(switchiter, control_.maxiter()));
     }
     ipm.Driver(&kkt, iterate_.get(), &info_);
-    if (info_.status_ipm == IPX_STATUS_failed ||
-        info_.status_ipm == IPX_STATUS_no_progress) {
-        // Failure or no progress in initial IPM iterations indicates switch to
-        // basis preconditioning.
+    switch (info_.status_ipm) {
+    case IPX_STATUS_optimal:
+        // If the IPM reached its termination criterion in the initial
+        // iterations (happens rarely), we still call the IPM again with basis
+        // preconditioning. In exact arithmetic it would terminate without an
+        // additional iteration. A starting basis is then available for
+        // crossover.
+        info_.status_ipm = IPX_STATUS_not_run;
+        break;
+    case IPX_STATUS_no_progress:
+        info_.status_ipm = IPX_STATUS_not_run;
+        break;
+    case IPX_STATUS_failed:
         info_.status_ipm = IPX_STATUS_not_run;
         info_.errflag = 0;
+        break;
+    case IPX_STATUS_iter_limit:
+        if (info_.iter < control_.maxiter()) // stopped at switchiter
+            info_.status_ipm = IPX_STATUS_not_run;
     }
-    info_.time_ipm1 = timer.Elapsed();
+    info_.time_ipm1 += timer.Elapsed();
 }
 
-void LpSolver::RunMainIPM(IPM& ipm) {
+void LpSolver::BuildStartingBasis() {
     if (control_.stop_at_switch() < 0) {
         info_.status_ipm = IPX_STATUS_debug;
         return;
     }
-    // Initialize basis.
     basis_.reset(new Basis(control_, model_));
     control_.Log() << " Constructing starting basis...\n";
     StartingBasis(iterate_.get(), basis_.get(), &info_);
@@ -280,7 +306,9 @@ void LpSolver::RunMainIPM(IPM& ipm) {
         info_.status_ipm = IPX_STATUS_debug;
         return;
     }
-    // Call IPM with new KKT solver.
+}
+
+void LpSolver::RunMainIPM(IPM& ipm) {
     KKTSolverBasis kkt(control_, *basis_);
     Timer timer;
     ipm.maxiter(control_.maxiter());
@@ -291,28 +319,7 @@ void LpSolver::RunMainIPM(IPM& ipm) {
 void LpSolver::RunCrossover() {
     control_.Log() << "Crossover\n";
     basic_solution_.reset(nullptr);
-
-    // If we have not switched to basis preconditioning (happens rarely),
-    // then construct a starting basis now. StartingBasis() can change the
-    // state of variables to Iterate::State::fixed or Iterate::State::free.
-    // We therefore have to call Postprocess() before DropToComplementarity()
-    // to recompute the dual solution of fixed variables.
-    // TODO: make that more elegant; possibly write a starting basis procedure
-    //       specifically for crossover that can be used with any IPM.
-    if (!basis_) {
-        basis_.reset(new Basis(control_, model_));
-        control_.Log() << " Constructing starting basis for crossover...\n";
-        StartingBasis(iterate_.get(), basis_.get(), &info_);
-        if (info_.errflag == IPX_ERROR_interrupt_time) {
-            info_.errflag = 0;
-            info_.status_crossover = IPX_STATUS_time_limit;
-            return;
-        } else if (info_.errflag) {
-            info_.status_crossover = IPX_STATUS_failed;
-            return;
-        }
-        iterate_->Postprocess();
-    }
+    assert(basis_);
 
     // Call crossover. If it failed, discard the basic solution.
     basic_solution_.reset(new BasicSolution(model_));

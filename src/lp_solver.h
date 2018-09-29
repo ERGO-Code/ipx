@@ -100,8 +100,11 @@ public:
     Int SymbolicInvert(Int* rowcounts, Int* colcounts);
 
 private:
+    void InteriorPointSolve();
     void RunIPM();
+    void ComputeStartingPoint(IPM& ipm);
     void RunInitialIPM(IPM& ipm);
+    void BuildStartingBasis();
     void RunMainIPM(IPM& ipm);
     void RunCrossover();
     void PrintSummary();
