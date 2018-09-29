@@ -32,7 +32,12 @@ public:
     //
     // In the latter case, @resscale must be an array of dimension @rhs.size().
     // The method also stops after @maxiter iterations. If @maxiter < 0, a
-    // maximum of @rhs.size() iterations is performed.
+    // maximum of @rhs.size()+100 iterations is performed. (In exact arithmetic
+    // the solution would be found after @rhs.size() iterations. It happened on
+    // some LP models with m << n, e.g. "rvb-sub" from MIPLIB2010, that the CR
+    // method did not reach the termination criterion within m iterations,
+    // causing the IPM to fail. Giving the CR method 100 extra iterations
+    // resolved the issue on all LP models from our test set where it occured.)
     //
     // If the @P argument is given, it is used as preconditioner (which
     // approximates inverse(C)) and must be symmetric positive definite.

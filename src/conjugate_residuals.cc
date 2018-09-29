@@ -26,7 +26,7 @@ void ConjugateResiduals::Solve(LinearOperator& C, const Vector& rhs,
     iter_ = 0;
     time_ = 0.0;
     if (maxiter < 0)
-        maxiter = m;
+        maxiter = m+100;
 
     // Initialize residual, step and Cstep.
     if (Infnorm(lhs) == 0.0) {
@@ -112,7 +112,7 @@ void ConjugateResiduals::Solve(LinearOperator& C, LinearOperator& P,
     iter_ = 0;
     time_ = 0.0;
     if (maxiter < 0)
-        maxiter = m;
+        maxiter = m+100;
 
     // Initialize residual, sresidual, step and Cstep.
     if (Infnorm(lhs) == 0.0) {
