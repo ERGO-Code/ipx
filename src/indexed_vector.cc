@@ -20,4 +20,13 @@ void IndexedVector::set_to_zero() {
     nnz_ = 0;
 }
 
+double Dot(const IndexedVector& x, const Vector& y) {
+    double d = 0.0;
+    auto add = [&](Int p, double f) {
+        d += y[p] * f;
+    };
+    for_each_nonzero(x, add);
+    return d;
+}
+
 }  // namespace ipx
