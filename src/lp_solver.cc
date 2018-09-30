@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <vector>
+#include <utility>
 #include "info.h"
 #include "kkt_solver_basis.h"
 #include "kkt_solver_diag.h"
@@ -302,8 +303,20 @@ void LpSolver::BuildStartingBasis() {
         info_.status_ipm = IPX_STATUS_failed;
         return;
     }
+    if (model_.dualized()) {
+        std::swap(info_.dependent_rows, info_.dependent_cols);
+        std::swap(info_.rows_inconsistent, info_.cols_inconsistent);
+    }
     if (control_.stop_at_switch() > 0) {
         info_.status_ipm = IPX_STATUS_debug;
+        return;
+    }
+    if (info_.rows_inconsistent) {
+        info_.status_ipm = IPX_STATUS_primal_infeas;
+        return;
+    }
+    if (info_.cols_inconsistent) {
+        info_.status_ipm = IPX_STATUS_dual_infeas;
         return;
     }
 }

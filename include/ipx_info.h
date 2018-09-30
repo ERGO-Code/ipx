@@ -25,6 +25,8 @@ struct ipx_info {
     /* reductions in IPM */
     ipxint dependent_rows;      /* # dependent rows (to eq constr) removed */
     ipxint dependent_cols;      /* # dependent cols (to free vars) removed */
+    ipxint rows_inconsistent;   /* dependent rows inconsistent? */
+    ipxint cols_inconsistent;   /* dependent cols inconsistent? */
     ipxint primal_dropped;      /* # primal variables dropped to bound */
     ipxint dual_dropped;        /* # dual variables dropped to zero */
 

@@ -31,6 +31,7 @@ struct ipx_parameters {
     /* Basis construction in IPM */
     ipxint crash_basis;
     double dependency_tol;
+    double objchange_tol;
     double volume_tol;
     ipxint update_heuristic;
     ipxint maxpasses;
@@ -67,6 +68,7 @@ struct ipx_parameters {
         stop_at_switch = 0;
         crash_basis = 1;
         dependency_tol = 1e-7;
+        objchange_tol = 1e-6;
         volume_tol = 2.0;
         update_heuristic = 1;
         maxpasses = -1;

@@ -42,6 +42,7 @@ type Parameters
     stop_at_switch::ipxint
     crash_basis::ipxint
     dependency_tol::Cdouble
+    objchange_tol::Cdouble
     volume_tol::Cdouble
     update_heuristic::ipxint
     maxpasses::ipxint
@@ -73,6 +74,8 @@ type Info
     dense_cols::ipxint
     dependent_rows::ipxint
     dependent_cols::ipxint
+    rows_inconsistent::ipxint
+    cols_inconsistent::ipxint
     primal_dropped::ipxint
     dual_dropped::ipxint
     abs_presidual::Cdouble

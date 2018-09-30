@@ -71,6 +71,7 @@ public:
     ipxint stop_at_switch() const { return parameters_.stop_at_switch; }
     ipxint crash_basis() const { return parameters_.crash_basis; }
     double dependency_tol() const { return parameters_.dependency_tol; }
+    double objchange_tol() const { return parameters_.objchange_tol; }
     double volume_tol() const { return parameters_.volume_tol; }
     ipxint update_heuristic() const { return parameters_.update_heuristic; }
     ipxint maxpasses() const { return parameters_.maxpasses; }

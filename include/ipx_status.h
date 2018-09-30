@@ -12,10 +12,12 @@
 /* for status_ipm and status_crossover */
 #define IPX_STATUS_optimal                  1
 #define IPX_STATUS_imprecise                2
-#define IPX_STATUS_no_progress              3
-#define IPX_STATUS_iter_limit               4
+#define IPX_STATUS_primal_infeas            3
+#define IPX_STATUS_dual_infeas              4
 #define IPX_STATUS_time_limit               5
-#define IPX_STATUS_failed                   7
+#define IPX_STATUS_iter_limit               6
+#define IPX_STATUS_no_progress              7
+#define IPX_STATUS_failed                   8
 #define IPX_STATUS_debug                    9
 
 /* error flags for invalid input */

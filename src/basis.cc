@@ -723,7 +723,29 @@ void Basis::PivotFreeVariablesIntoBasis(const double* colweights, Info* info) {
             stability_pivots++;
         } else {
             if (fmax_nonfree <= dependency_tol) {
-                // jn cannot be pivoted into the basis.
+                // jn cannot be pivoted into the basis. If we do not have an
+                // unbounded primal ray yet, then test if column jn yields one.
+                // Compute the change in the primal objective that is caused by
+                // a unit increase of x[jn] with corresponding adjustment of
+                // free basic variables.
+                if (!info->cols_inconsistent) {
+                    const Vector& c = model_.c();
+                    double delta_obj = c[jn];
+                    auto update_delta_obj = [&](Int p, double f) {
+                        Int j = basis_[p];
+                        if (std::isinf(colweights[j]))
+                            delta_obj -= c[j] * f;
+                    };
+                    for_each_nonzero(ftran, update_delta_obj);
+                    double tol = std::max(0.0, control_.objchange_tol()); 
+                    if (std::abs(delta_obj) > tol) {
+                        control_.Debug()
+                            << Textline(
+                                "Unbounded primal ray with objective change:")
+                            << sci2(delta_obj) << '\n';
+                        info->cols_inconsistent = true;
+                    }
+                }
                 info->dependent_cols++;
                 remaining.pop_back();
             } else {
@@ -829,7 +851,22 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
             stability_pivots++;
         } else {
             if (rmax_nonfixed <= dependency_tol) {
-                // jb cannot be pivoted out of the basis.
+                // jb cannot be pivoted out of the basis. If we do not have an
+                // unbounded dual ray yet, then test if row jb-n yields one.
+                // Compute the change in the dual objective that is caused by a
+                // unit increase of y[jb-n] with corresponding adjustment of the
+                // remaining y[i].
+                if (!info->rows_inconsistent) {
+                    double delta_obj = Dot(btran, model_.b());
+                    double tol = std::max(0.0, control_.objchange_tol()); 
+                    if (std::abs(delta_obj) > tol) {
+                        control_.Debug()
+                            << Textline(
+                                "Unbounded dual ray with objective change:")
+                            << sci2(delta_obj) << '\n';
+                        info->rows_inconsistent = true;
+                    }
+                }
                 info->dependent_rows++;
                 remaining.pop_back();
             } else {

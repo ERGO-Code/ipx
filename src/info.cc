@@ -36,6 +36,8 @@ std::ostream& operator<<(std::ostream& os, const Info& info) {
 
     dump(os, "dependent_rows", info.dependent_rows);
     dump(os, "dependent_cols", info.dependent_cols);
+    dump(os, "rows_inconsistent", info.rows_inconsistent);
+    dump(os, "cols_inconsistent", info.cols_inconsistent);
     dump(os, "primal_dropped", info.primal_dropped);
     dump(os, "dual_dropped", info.dual_dropped);
 
@@ -112,9 +114,11 @@ std::string StatusString(Int status) {
         {IPX_STATUS_internal_error, "internal error"},
         {IPX_STATUS_optimal, "optimal"},
         {IPX_STATUS_imprecise, "imprecise"},
-        {IPX_STATUS_no_progress, "no progress"},
-        {IPX_STATUS_iter_limit, "iter limit"},
+        {IPX_STATUS_primal_infeas, "primal infeas"},
+        {IPX_STATUS_dual_infeas, "dual infeas"},
         {IPX_STATUS_time_limit, "time limit"},
+        {IPX_STATUS_iter_limit, "iter limit"},
+        {IPX_STATUS_no_progress, "no progress"},
         {IPX_STATUS_failed, "failed"},
         {IPX_STATUS_debug, "debug"}
     };
