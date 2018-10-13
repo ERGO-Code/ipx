@@ -24,7 +24,6 @@ type Model
 end
 
 type Parameters
-    debug::ipxint
     display::ipxint
     logfile_ptr::Ptr{Cchar}
     print_interval::Cdouble
@@ -38,11 +37,8 @@ type Parameters
     maxiter::ipxint
     kkt_tol::Cdouble
     precond_dense_cols::ipxint
-    switchiter::ipxint
-    stop_at_switch::ipxint
     crash_basis::ipxint
     dependency_tol::Cdouble
-    objchange_tol::Cdouble
     volume_tol::Cdouble
     update_heuristic::ipxint
     maxpasses::ipxint
@@ -54,6 +50,9 @@ type Parameters
     crossover_start::Cdouble
     pfeastol::Cdouble
     dfeastol::Cdouble
+    debug::ipxint
+    switchiter::ipxint
+    stop_at_switch::ipxint
     function Parameters()
         return ccall((:ipx_default_parameters, "libipx.so"), Parameters, ())
     end

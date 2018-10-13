@@ -737,8 +737,7 @@ void Basis::PivotFreeVariablesIntoBasis(const double* colweights, Info* info) {
                             delta_obj -= c[j] * f;
                     };
                     for_each_nonzero(ftran, update_delta_obj);
-                    double tol = std::max(0.0, control_.objchange_tol()); 
-                    if (std::abs(delta_obj) > tol) {
+                    if (std::abs(delta_obj) > dependency_tol) {
                         control_.Debug()
                             << Textline(
                                 "Unbounded primal ray with objective change:")
@@ -858,8 +857,7 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
                 // remaining y[i].
                 if (!info->rows_inconsistent) {
                     double delta_obj = Dot(btran, model_.b());
-                    double tol = std::max(0.0, control_.objchange_tol()); 
-                    if (std::abs(delta_obj) > tol) {
+                    if (std::abs(delta_obj) > dependency_tol) {
                         control_.Debug()
                             << Textline(
                                 "Unbounded dual ray with objective change:")

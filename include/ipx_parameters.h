@@ -5,7 +5,6 @@
 
 struct ipx_parameters {
     /* Solver control */
-    ipxint debug;
     ipxint display;
     const char* logfile;
     double print_interval;
@@ -25,13 +24,10 @@ struct ipx_parameters {
     /* Linear solver */
     double kkt_tol;
     ipxint precond_dense_cols;
-    ipxint switchiter;
-    ipxint stop_at_switch;
 
     /* Basis construction in IPM */
     ipxint crash_basis;
     double dependency_tol;
-    double objchange_tol;
     double volume_tol;
     ipxint update_heuristic;
     ipxint maxpasses;
@@ -48,9 +44,13 @@ struct ipx_parameters {
     double pfeastol;
     double dfeastol;
 
+    /* Debugging */
+    ipxint debug;
+    ipxint switchiter;
+    ipxint stop_at_switch;
+
     #ifdef __cplusplus
     ipx_parameters() {
-        debug = 0;
         display = 1;
         logfile = nullptr;
         print_interval = 5.0;
@@ -64,11 +64,8 @@ struct ipx_parameters {
         maxiter = 300;
         kkt_tol = 0.3;
         precond_dense_cols = 1;
-        switchiter = -1;
-        stop_at_switch = 0;
         crash_basis = 1;
         dependency_tol = 1e-7;
-        objchange_tol = 1e-6;
         volume_tol = 2.0;
         update_heuristic = 1;
         maxpasses = -1;
@@ -80,6 +77,9 @@ struct ipx_parameters {
         crossover_start = 1e-8;
         pfeastol = 1e-7;
         dfeastol = 1e-7;
+        debug = 0;
+        switchiter = -1;
+        stop_at_switch = 0;
     }
     #endif
 };

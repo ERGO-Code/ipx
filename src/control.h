@@ -67,11 +67,8 @@ public:
     ipxint maxiter() const { return parameters_.maxiter; }
     double kkt_tol() const { return parameters_.kkt_tol; }
     ipxint precond_dense_cols() const { return parameters_.precond_dense_cols; }
-    ipxint switchiter() const { return parameters_.switchiter; }
-    ipxint stop_at_switch() const { return parameters_.stop_at_switch; }
     ipxint crash_basis() const { return parameters_.crash_basis; }
     double dependency_tol() const { return parameters_.dependency_tol; }
-    double objchange_tol() const { return parameters_.objchange_tol; }
     double volume_tol() const { return parameters_.volume_tol; }
     ipxint update_heuristic() const { return parameters_.update_heuristic; }
     ipxint maxpasses() const { return parameters_.maxpasses; }
@@ -83,6 +80,8 @@ public:
     double crossover_start() const { return parameters_.crossover_start; }
     double pfeastol() const { return parameters_.pfeastol; }
     double dfeastol() const { return parameters_.dfeastol; }
+    ipxint switchiter() const { return parameters_.switchiter; }
+    ipxint stop_at_switch() const { return parameters_.stop_at_switch; }
 
     const Parameters& parameters() const;
     void parameters(const Parameters& new_parameters);
