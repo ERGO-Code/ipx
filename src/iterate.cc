@@ -7,6 +7,10 @@
 
 namespace ipx {
 
+// Iterate::kBarrierMin is odr-used because std::max() takes references as
+// arguments. Hence we require a namespace scope definition.
+constexpr double Iterate::kBarrierMin;
+
 Iterate::Iterate(const Model& model) : model_(model) {
     const Int m = model_.rows();
     const Int n = model_.cols();
