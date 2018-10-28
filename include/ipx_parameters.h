@@ -65,7 +65,7 @@ struct ipx_parameters {
         kkt_tol = 0.3;
         precond_dense_cols = 1;
         crash_basis = 1;
-        dependency_tol = 1e-7;
+        dependency_tol = 1e-6;
         volume_tol = 2.0;
         update_heuristic = 1;
         maxpasses = -1;
