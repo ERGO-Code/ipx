@@ -23,29 +23,29 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         "time_limit",
         "dualize",
         "scale",
-        "residual_tol",
-        "optimality_tol",
-        "drop_primal",
-        "drop_dual",
-        "maxiter",
+        "ipm_maxiter",
+        "ipm_feasibility_tol",
+        "ipm_optimality_tol",
+        "ipm_drop_primal",
+        "ipm_drop_dual",
         "kkt_tol",
         "precond_dense_cols",
         "crash_basis",
         "dependency_tol",
         "volume_tol",
-        "update_heuristic",
-        "maxpasses",
+        "rows_per_slice",
         "maxskip_updates",
-        "slices",
         "lu_kernel",
         "lu_pivottol",
         "crossover",
         "crossover_start",
-        "pfeastol",
-        "dfeastol",
+        "pfeasibility_tol",
+        "dfeasibility_tol",
         "debug",
         "switchiter",
         "stop_at_switch"
+        "update_heuristic",
+        "maxpasses",
     };
 
     if (nrhs != 0)
@@ -65,27 +65,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     set_double(plhs[0], "time_limit",       defaults.time_limit);
     set_double(plhs[0], "dualize",          defaults.dualize);
     set_double(plhs[0], "scale",            defaults.scale);
-    set_double(plhs[0], "residual_tol",     defaults.residual_tol);
-    set_double(plhs[0], "optimality_tol",   defaults.optimality_tol);
-    set_double(plhs[0], "drop_primal",      defaults.drop_primal);
-    set_double(plhs[0], "drop_dual",        defaults.drop_dual);
-    set_double(plhs[0], "maxiter",          defaults.maxiter);
+    set_double(plhs[0], "ipm_maxiter",      defaults.ipm_maxiter);
+    set_double(plhs[0], "ipm_feasibility_tol", defaults.ipm_feasibility_tol);
+    set_double(plhs[0], "ipm_optimality_tol",  defaults.ipm_optimality_tol);
+    set_double(plhs[0], "ipm_drop_primal",  defaults.ipm_drop_primal);
+    set_double(plhs[0], "ipm_drop_dual",    defaults.ipm_drop_dual);
     set_double(plhs[0], "kkt_tol",          defaults.kkt_tol);
     set_double(plhs[0], "precond_dense_cols", defaults.precond_dense_cols);
     set_double(plhs[0], "crash_basis",      defaults.crash_basis);
     set_double(plhs[0], "dependency_tol",   defaults.dependency_tol);
     set_double(plhs[0], "volume_tol",       defaults.volume_tol);
-    set_double(plhs[0], "update_heuristic", defaults.update_heuristic);
-    set_double(plhs[0], "maxpasses",        defaults.maxpasses);
+    set_double(plhs[0], "rows_per_slice",   defaults.rows_per_slice);
     set_double(plhs[0], "maxskip_updates",  defaults.maxskip_updates);
-    set_double(plhs[0], "slices",           defaults.slices);
     set_double(plhs[0], "lu_kernel",        defaults.lu_kernel);
     set_double(plhs[0], "lu_pivottol",      defaults.lu_pivottol);
     set_double(plhs[0], "crossover",        defaults.crossover);
     set_double(plhs[0], "crossover_start",  defaults.crossover_start);
-    set_double(plhs[0], "pfeastol",         defaults.pfeastol);
-    set_double(plhs[0], "dfeastol",         defaults.dfeastol);
+    set_double(plhs[0], "pfeasibility_tol", defaults.pfeasibility_tol);
+    set_double(plhs[0], "dfeasibility_tol", defaults.dfeasibility_tol);
     set_double(plhs[0], "debug",            defaults.debug);
     set_double(plhs[0], "switchiter",       defaults.switchiter);
     set_double(plhs[0], "stop_at_switch",   defaults.stop_at_switch);
+    set_double(plhs[0], "update_heuristic", defaults.update_heuristic);
+    set_double(plhs[0], "maxpasses",        defaults.maxpasses);
 }

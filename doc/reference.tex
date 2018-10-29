@@ -12,10 +12,15 @@
 
 \newcommand{\ct}{\texttt}
 \newcommand{\NULL}{\ct{NULL}}
-\setlength{\parindent}{0pt}
-\newcommand{\param}[1]{\vspace{2em}\ct{#1}\nopagebreak\\[0.5em]\nopagebreak}
-\newcommand{\default}[1]{\\Default: #1}
 \newcommand{\rvec}[1]{\left(#1\right)}
+\newcommand{\param}[4]{
+  \noindent\textbf{#1}\\
+  \begin{tabular}{@{\hskip 0pt}ll}
+    Type: & \ct{#2} \\
+    Default: & \ct{#3}
+  \end{tabular}\\
+  #4 \vskip 1\baselineskip
+}
 
 \newcommand{\obj}{\ct{obj}}
 \newcommand{\rhs}{\ct{rhs}}
@@ -39,7 +44,7 @@
 \newcommand{\nonbasicub}{\ct{IPX\_nonbasic\_ub}}
 \newcommand{\superbasic}{\ct{IPX\_superbasic}}
 
-\title{IPX Reference}
+\title{IPX Reference Guide}
 \author{Version 1.0}
 
 \begin{document}
@@ -138,5 +143,185 @@ The IPX crossover consists of a primal and dual push phase. Depending on the
 accuracy of the interior solution and the numerical stability of the LP problem,
 the obtained basis may not be primal and/or dual feasible. In this case
 reoptimization with an external simplex code is required.
+
+%-------------------------------------------------------------------------------
+\section*{Parameters}
+%-------------------------------------------------------------------------------
+
+\param{display}{ipxint}{1}{
+  If nonzero, then solver log is printed to standard output.
+}
+
+\param{logfile}{const char*}{\NULL}{
+  Name of file to which solver log is appended. The file is created if it does
+  not exist. If \ct{logfile} is \NULL\ or the empty string (\ct{""}), file
+  logging is turned off.
+}
+
+\param{print\_interval}{double}{5.0}{
+  Frequency (in seconds) for printing progress reports during construction of
+  the starting basis and crossover. If negative, progress reports are turned
+  off. If zero, a progress line is printed after each basis update.
+}
+
+\param{time\_limit}{double}{-1.0}{
+  Time limit (in seconds) for the solver. If negative, no time limit is
+  imposed.
+}
+
+\param{dualize}{ipxint}{-1}{
+  Controls dualization of the LP model by the preprocessor. \\
+  \begin{tabular}{rl}
+    0 & model is not dualized \\
+    $\ge1$ & model is dualized \\
+    $<0$ & an automatic choice is made
+  \end{tabular}
+}
+
+\param{scale}{ipxint}{1}{
+  Controls the automatic scaling of the LP model by the preprocessor. \\
+  \begin{tabular}{rl}
+    $\le0$ & no scaling is applied \\
+    1 & recursive equilibration of rows and columns of the constraint matrix \\
+    $>1$ & currently the same as 1, but reserved for future options
+  \end{tabular}
+}
+
+\param{ipm\_maxiter}{ipxint}{300}{
+  Maximum number of interior point iterations.
+}
+
+\param{ipm\_feasibility\_tol}{double}{1e-6}{
+  The interior point solver terminates when a feasibility and an optimality
+  criterion are satisfied. The feasibility criterion requires that the relative
+  primal and dual residuals are not larger than \ct{ipm\_feasibility\_tol}.
+}
+
+\param{ipm\_optimality\_tol}{double}{1e-8}{
+  The interior point solver terminates when a feasibility and an optimality
+  criterion are satisfied. The optimality criterion requires that the relative
+  gap between the primal and dual objective values is not larger than
+  \ct{ipm\_optimality\_tol}.
+}
+
+\param{ipm\_drop\_primal}{double}{1e-9}{
+  Controls handling of primal degeneracies in the interior point solve. If a
+  degenerate variable $\xl[j]$ or $\xu[j]$ is not larger than
+  \ct{ipm\_drop\_primal}, then its dual variable is fixed at its current value
+  and eliminated from the optimization; $\x[j]$ will then be at its bound in the
+  solution. If \ct{ipm\_drop\_primal} is zero or negative, no primal variables
+  are dropped. If the model was dualized by the preprocessor, then this option
+  affects dual degeneracies in the input model.
+}
+
+\param{ipm\_drop\_dual}{double}{1e-9}{
+  Controls handling of dual degeneracies in the interior point solve. If the
+  dual variables $\zl[j]$ and $\zu[j]$ are degenerate and not larger than
+  \ct{ipm\_drop\_dual}, then $\x[j]$ is fixed at its current value and
+  eliminated from the optimization. The dual variables will then be zero in the
+  solution. If \ct{ipm\_drop\_dual} is zero or negative, no dual variables are
+  dropped. If the model was dualized by the preprocessor, then this option
+  affects primal degeneracies in the input model.
+}
+
+\param{kkt\_tol}{double}{0.3}{
+  Controls the accuracy to which the KKT linear equation systems are solved by
+  an iterative method. A smaller value reduces the number of interior point
+  iterations but increases the computational cost per iteration. Typical values
+  are within the interval $[0.05,0.5]$.
+}
+
+\param{precond\_dense\_cols}{ipxint}{1}{
+  In combination with diagonal preconditioning, controls handling of ``dense''
+  columns (i.\,e.\ columns with a relatively large number of entries). If
+  nonzero, dense columns are treated separately by a low rank update.
+}
+
+\param{crash\_basis}{ipxint}{1}{
+  Controls the construction of the starting basis for the preconditioner. \\
+  \begin{tabular}{rl}
+    $\le0$ & slack basis \\
+    1 & crash method that prefers variables with a larger interior point scaling
+    factor \\
+    $>1$ & currently the same 1, but reserved for future options
+  \end{tabular} \\
+  The chosen procedure (slack basis, crash) is followed by a sequence of basis
+  updates that makes free variables basic and fixed (slack) variables nonbasic.
+}
+
+\param{dependency\_tol}{double}{1e-6}{
+  Controls the detection of linearly dependent rows and columns while
+  constructing the starting basis. If possible, columns corresponding to free
+  variables are pivoted into the basis, and slack columns corresponding to
+  equality constraints are pivoted out of the basis. Hereby a nonbasic variable
+  cannot replace a basic variable if the pivot element is less than or equal to
+  \ct{dependency\_tol}. A negative value is treated as 0.0.
+}
+
+\param{volume\_tol}{double}{2.0}{
+  Controls the update of the basis matrix from one interior point iteration to
+  the next. An entry of the scaled tableau matrix is used as pivot element if it
+  is larger than \ct{volume\_tol} in absolute value. Increasing the parameter
+  usually leads to fewer basis updates but more iterations of the linear solver.
+  Typical values are in the interval $[1.1,10.0]$. A value smaller than 1.0 is
+  treated as 1.0.
+}
+
+\param{rows\_per\_slice}{ipxint}{10000}{
+  Controls the update of the basis matrix from one interior point iteration to
+  the next. The search for pivot elements partitions the tableau matrix into
+  slices, each slice containing approximately \ct{rows\_per\_slice} rows. A
+  smaller value leads a finer pivot search and possibly a better preconditioner,
+  but makes the update procedure more expensive.
+}
+
+\param{maxskip\_updates}{ipxint}{10}{
+  Controls the update of the basis matrix from one interior point iteration to
+  the next. For each slice of the tableau matrix, the update search is
+  terminated after computing \ct{maxskip\_updates} columns of the tableau matrix
+  that do not contain eligible pivot elements. Decreasing the parameter makes
+  the update procedure faster, but may affect the quality of the basis.
+}
+
+\param{lu\_kernel}{ipxint}{0}{
+  Chooses the method/package for computing and updating the $LU$ factorization
+  of basis matrices.\\
+  \begin{tabular}{rl}
+    $\le0$ & BASICLU for factorization and update \\
+       1 & BASICLU for factorization, Forrest-Tomlin update without
+       hypersparsity \\
+       $>1$ & currently the same as 1, but reserved for future options
+  \end{tabular}
+}
+
+\param{lu\_pivottol}{double}{0.0625}{
+  Partial pivoting tolerance for the LU factorization. The tolerance is
+  tightened automatically if a factorization is detected unstable.
+}
+
+\param{crossover}{ipxint}{1}{
+  If nonzero, crossover is used for recovering an optimal basis.
+}
+
+\param{crossover\_start}{double}{1e-8}{
+  Tightens the IPM termination criterion for crossover. At the beginning of
+  crossover, the final IPM iterate is dropped to complementarity (i.\,e.\ for
+  each pair of variables either the primal is set to its bound or the dual is
+  set to zero). In addition to the standard IPM termination criterion, it is
+  required that the relative primal or dual residual caused by dropping any
+  variable is not larger than \ct{crossover\_start}. A nonpositive value means
+  that the standard criterion is used. This parameter has no effect if crossover
+  is turned off.
+}
+
+\param{pfeasibility\_tol}{double}{1e-7}{
+  A basic solution is considered primal feasible if the primal variables do not
+  violate their bounds by more than \ct{pfeasibility\_tol}.
+}
+
+\param{dfeasibility\_tol}{double}{1e-7}{
+  A basic solution is considered dual feasible if the dual variables do not
+  violate their sign condition by more than \ct{dfeasibility\_tol}.
+}
 
 \end{document}

@@ -184,7 +184,7 @@ void Crossover::DualPushPhase(Info* info) {
     Vector& z = solution_->z();
     IndexedVector btran(m), row(n+m);
     const double feastol = model.dualized() ?
-        control_.pfeastol() : control_.dfeastol();
+        control_.pfeasibility_tol() : control_.dfeasibility_tol();
     std::vector<Int> superbasics = DualSuperbasics();
 
     std::vector<Bound> atbound(n+m);
@@ -292,7 +292,7 @@ void Crossover::PrimalPushPhase(Info* info) {
     Basis& basis = *basis_;
     IndexedVector ftran(m);
     const double feastol = model.dualized() ?
-        control_.dfeastol() : control_.pfeastol();
+        control_.dfeasibility_tol() : control_.pfeasibility_tol();
     std::vector<Int> superbasics = PrimalSuperbasics();
 
     // Maintain a copy of primal basic variables and their bounds for faster

@@ -114,9 +114,8 @@ Int Maxvolume::RunHeuristic(const double* colscale, Basis& basis) {
     Timer timer;
 
     Reset();
-    Int num_slices = control_.slices();
-    if (num_slices <= 0)
-        num_slices = 5 + m/10000;
+    Int num_slices = 5 + std::max((long)(m/control_.rows_per_slice()), 0l);
+    num_slices = std::min(num_slices, m);
 
     // Maintain a copy of the inverse scaling factors of basic variables.
     for (Int p = 0; p < m; p++) {

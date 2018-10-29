@@ -181,20 +181,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 params.dualize = parse_int(pp, i);
             else if (strcmp(name, "scale") == 0)
                 params.scale = parse_int(pp, i);
-            else if (strcmp(name, "maxiter") == 0)
-                params.maxiter = parse_int(pp, i);
+            else if (strcmp(name, "ipm_maxiter") == 0)
+                params.ipm_maxiter = parse_int(pp, i);
             else if (strcmp(name, "precond_dense_cols") == 0)
                 params.precond_dense_cols = parse_int(pp, i);
             else if (strcmp(name, "crash_basis") == 0)
                 params.crash_basis = parse_int(pp, i);
-            else if (strcmp(name, "update_heuristic") == 0)
-                params.update_heuristic = parse_int(pp, i);
-            else if (strcmp(name, "maxpasses") == 0)
-                params.maxpasses = parse_int(pp, i);
+            else if (strcmp(name, "rows_per_slice") == 0)
+                params.rows_per_slice = parse_int(pp, i);
             else if (strcmp(name, "maxskip_updates") == 0)
                 params.maxskip_updates = parse_int(pp, i);
-            else if (strcmp(name, "slices") == 0)
-                params.slices = parse_int(pp, i);
             else if (strcmp(name, "lu_kernel") == 0)
                 params.lu_kernel = parse_int(pp, i);
             else if (strcmp(name, "crossover") == 0)
@@ -205,19 +201,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 params.switchiter = parse_int(pp, i);
             else if (strcmp(name, "stop_at_switch") == 0)
                 params.stop_at_switch = parse_int(pp, i);
+            else if (strcmp(name, "update_heuristic") == 0)
+                params.update_heuristic = parse_int(pp, i);
+            else if (strcmp(name, "maxpasses") == 0)
+                params.maxpasses = parse_int(pp, i);
 
             else if (strcmp(name, "print_interval") == 0)
                 params.print_interval = parse_double(pp, i);
             else if (strcmp(name, "time_limit") == 0)
                 params.time_limit = parse_double(pp, i);
-            else if (strcmp(name, "residual_tol") == 0)
-                params.residual_tol = parse_double(pp, i);
-            else if (strcmp(name, "optimality_tol") == 0)
-                params.optimality_tol = parse_double(pp, i);
-            else if (strcmp(name, "drop_primal") == 0)
-                params.drop_primal = parse_double(pp, i);
-            else if (strcmp(name, "drop_dual") == 0)
-                params.drop_dual = parse_double(pp, i);
+            else if (strcmp(name, "ipm_feasibility_tol") == 0)
+                params.ipm_feasibility_tol = parse_double(pp, i);
+            else if (strcmp(name, "ipm_optimality_tol") == 0)
+                params.ipm_optimality_tol = parse_double(pp, i);
+            else if (strcmp(name, "ipm_drop_primal") == 0)
+                params.ipm_drop_primal = parse_double(pp, i);
+            else if (strcmp(name, "ipm_drop_dual") == 0)
+                params.ipm_drop_dual = parse_double(pp, i);
             else if (strcmp(name, "kkt_tol") == 0)
                 params.kkt_tol = parse_double(pp, i);
             else if (strcmp(name, "dependency_tol") == 0)
@@ -228,10 +228,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 params.lu_pivottol = parse_double(pp, i);
             else if (strcmp(name, "crossover_start") == 0)
                 params.crossover_start = parse_double(pp, i);
-            else if (strcmp(name, "pfeastol") == 0)
-                params.pfeastol = parse_double(pp, i);
-            else if (strcmp(name, "dfeastol") == 0)
-                params.dfeastol = parse_double(pp, i);
+            else if (strcmp(name, "pfeasibility_tol") == 0)
+                params.pfeasibility_tol = parse_double(pp, i);
+            else if (strcmp(name, "dfeasibility_tol") == 0)
+                params.dfeasibility_tol = parse_double(pp, i);
 
             else
                 mexPrintf("warning: unrecognized parameter name ('%s')\n",

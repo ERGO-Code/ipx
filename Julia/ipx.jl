@@ -30,29 +30,29 @@ type Parameters
     time_limit::Cdouble
     dualize::ipxint
     scale::ipxint
-    residual_tol::Cdouble
-    optimality_tol::Cdouble
-    drop_primal::Cdouble
-    drop_dual::Cdouble
-    maxiter::ipxint
+    ipm_maxiter::ipxint
+    ipm_feasibility_tol::Cdouble
+    ipm_optimality_tol::Cdouble
+    ipm_drop_primal::Cdouble
+    ipm_drop_dual::Cdouble
     kkt_tol::Cdouble
     precond_dense_cols::ipxint
     crash_basis::ipxint
     dependency_tol::Cdouble
     volume_tol::Cdouble
-    update_heuristic::ipxint
-    maxpasses::ipxint
+    rows_per_slice::ipxint
     maxskip_updates::ipxint
-    slices::ipxint
     lu_kernel::ipxint
     lu_pivottol::Cdouble
     crossover::ipxint
     crossover_start::Cdouble
-    pfeastol::Cdouble
-    dfeastol::Cdouble
+    pfeasibility_tol::Cdouble
+    dfeasibility_tol::Cdouble
     debug::ipxint
     switchiter::ipxint
     stop_at_switch::ipxint
+    update_heuristic::ipxint
+    maxpasses::ipxint
     function Parameters()
         return ccall((:ipx_default_parameters, "libipx.so"), Parameters, ())
     end

@@ -201,7 +201,7 @@ void KKTSolverBasis::DropPrimal(Iterate* iterate, Info* info) {
     const Vector& zl = iterate->zl();
     const Vector& zu = iterate->zu();
     IndexedVector btran(m), row(n+m);
-    const double drop_primal = control_.drop_primal();
+    const double drop_primal = control_.ipm_drop_primal();
     const double volume_tol = 2.0;
     info->errflag = 0;
 
@@ -300,7 +300,7 @@ void KKTSolverBasis::DropDual(Iterate* iterate, Info* info) {
     const Vector& zl = iterate->zl();
     const Vector& zu = iterate->zu();
     IndexedVector ftran(m);
-    const double drop_dual = control_.drop_dual();
+    const double drop_dual = control_.ipm_drop_dual();
     const double volume_tol = 2.0;
     info->errflag = 0;
 

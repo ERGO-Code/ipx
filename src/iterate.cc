@@ -221,8 +221,8 @@ double Iterate::mu_max() const { Evaluate(); return mu_max_; }
 bool Iterate::feasible() const {
     Evaluate();
     return
-        presidual_ <= residual_tol_ * (1.0+model_.norm_bounds()) &&
-        dresidual_ <= residual_tol_ * (1.0+model_.norm_c());
+        presidual_ <= feasibility_tol_ * (1.0+model_.norm_bounds()) &&
+        dresidual_ <= feasibility_tol_ * (1.0+model_.norm_c());
 }
 
 bool Iterate::optimal() const {

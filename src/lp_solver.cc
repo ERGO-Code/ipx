@@ -203,8 +203,8 @@ void LpSolver::InteriorPointSolve() {
 
     // Allocate new iterate and set tolerances for IPM termination test.
     iterate_.reset(new Iterate(model_));
-    iterate_->residual_tol(control_.residual_tol());
-    iterate_->optimality_tol(control_.optimality_tol());
+    iterate_->feasibility_tol(control_.ipm_feasibility_tol());
+    iterate_->optimality_tol(control_.ipm_optimality_tol());
     if (control_.crossover())
         iterate_->crossover_start(control_.crossover_start());
 
@@ -216,9 +216,9 @@ void LpSolver::InteriorPointSolve() {
     // Declare status_ipm "imprecise" if the IPM terminated optimal but the
     // solution after postprocessing/postsolve does not satisfy tolerances.
     if (info_.status_ipm == IPX_STATUS_optimal) {
-        if (std::abs(info_.rel_objgap) > control_.optimality_tol() ||
-            info_.rel_presidual > control_.residual_tol() ||
-            info_.rel_dresidual > control_.residual_tol())
+        if (std::abs(info_.rel_objgap) > control_.ipm_optimality_tol() ||
+            info_.rel_presidual > control_.ipm_feasibility_tol() ||
+            info_.rel_dresidual > control_.ipm_feasibility_tol())
             info_.status_ipm = IPX_STATUS_imprecise;
     }
 }
@@ -259,9 +259,9 @@ void LpSolver::RunInitialIPM(IPM& ipm) {
         // converges within min(500,10+m/20) iterations.
         Int m = model_.rows();
         kkt.maxiter(std::min(500l, (long) (10+m/20) ));
-        ipm.maxiter(control_.maxiter());
+        ipm.maxiter(control_.ipm_maxiter());
     } else {
-        ipm.maxiter(std::min(switchiter, control_.maxiter()));
+        ipm.maxiter(std::min(switchiter, control_.ipm_maxiter()));
     }
     ipm.Driver(&kkt, iterate_.get(), &info_);
     switch (info_.status_ipm) {
@@ -281,7 +281,7 @@ void LpSolver::RunInitialIPM(IPM& ipm) {
         info_.errflag = 0;
         break;
     case IPX_STATUS_iter_limit:
-        if (info_.iter < control_.maxiter()) // stopped at switchiter
+        if (info_.iter < control_.ipm_maxiter()) // stopped at switchiter
             info_.status_ipm = IPX_STATUS_not_run;
     }
     info_.time_ipm1 += timer.Elapsed();
@@ -324,7 +324,7 @@ void LpSolver::BuildStartingBasis() {
 void LpSolver::RunMainIPM(IPM& ipm) {
     KKTSolverBasis kkt(control_, *basis_);
     Timer timer;
-    ipm.maxiter(control_.maxiter());
+    ipm.maxiter(control_.ipm_maxiter());
     ipm.Driver(&kkt, iterate_.get(), &info_);
     info_.time_ipm2 = timer.Elapsed();
 }
@@ -355,8 +355,8 @@ void LpSolver::RunCrossover() {
     // Declare status_crossover "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
     basic_solution_->EvaluatePostsolved(&info_);
-    if (info_.primal_infeas > control_.pfeastol() ||
-        info_.dual_infeas > control_.dfeastol())
+    if (info_.primal_infeas > control_.pfeasibility_tol() ||
+        info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;
 }
 

@@ -166,7 +166,7 @@ public:
     double mu_max() const;
 
     // Returns true if the relative primal and dual residuals are <=
-    // residual_tol().
+    // feasibility_tol().
     bool feasible() const;
 
     // Returns true if the relative objective gap is <= optimality_tol().
@@ -179,11 +179,11 @@ public:
     // complementarity are <= crossover_start().
     bool term_crit_reached() const;
 
-    double residual_tol() const { return residual_tol_; }
+    double feasibility_tol() const { return feasibility_tol_; }
     double optimality_tol() const { return optimality_tol_; }
     double crossover_start() const { return crossover_start_; }
 
-    void residual_tol(double new_tol) { residual_tol_ = new_tol; }
+    void feasibility_tol(double new_tol) { feasibility_tol_ = new_tol; }
     void optimality_tol(double new_tol) { optimality_tol_ = new_tol; }
     void crossover_start(double new_tol) { crossover_start_ = new_tol; }
 
@@ -289,7 +289,7 @@ private:
     mutable bool evaluated_{false};
     bool postprocessed_{false};
 
-    double residual_tol_{1e-6};
+    double feasibility_tol_{1e-6};
     double optimality_tol_{1e-8};
     double crossover_start_{-1.0};
 };
