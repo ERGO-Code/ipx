@@ -1,0 +1,140 @@
+IPX version 1.0
+Input
+    Number of variables:                                72546
+    Number of free variables:                           0
+    Number of constraints:                              14098
+    Number of equality constraints:                     14044
+    Number of matrix entries:                           281906
+    Matrix range:                                       [1e+00, 1e+00]
+    RHS range:                                          [1e+00, 1e+00]
+    Objective range:                                    [2e+00, 1e+02]
+    Bounds range:                                       [1e+00, 1e+00]
+Preprocessing
+    Dualized model:                                     no
+    Number of dense columns:                            0
+    Range of scaling factors:                           [1.00e+00, 1.00e+00]
+Interior Point Solve
+ Iter     P.res    D.res            P.obj           D.obj        mu     Time  stepsizes   pivots kktiter  P.fixed D.fixed
+   0   1.64e+00 1.94e+02   3.03000172e+03 -7.39391681e+04  3.20e+02       0s  0.00 0.00        0      17        0       0
+   1   1.34e+00 1.94e-04   8.64812613e+03 -1.12806788e+05  3.75e+02       0s  0.18 1.00        0      34        0       0
+   2   1.13e-01 1.94e-10   5.25970783e+03 -8.26986918e+04  3.48e+01       0s  0.92 1.00        0      49        0       0
+   3   9.34e-03 2.40e-12   3.53630337e+03 -6.10889437e+04  3.65e+00       0s  0.92 1.00        0     124        0       0
+   4   1.86e-03 1.97e-12   3.39363449e+03 -4.28562473e+04  9.62e-01       0s  0.80 0.80        0     254        0       0
+ Constructing starting basis...
+    Number of free variables in starting basis:         0
+    Number of singletons in starting basis:             0
+    Number of other columns matched:                    13395
+    Number of other columns failed:                     7036
+    Number of columns dropped from guessed basis:       828
+    Minimum singular value of crash basis:              4.98e-05
+    Number of free variables nonbasic:                  0
+    Number of free variables swapped for stability:     0
+    Number of fixed variables basic:                    1531
+    Number of fixed variables swapped for stability:    0
+   5   1.86e-09 1.48e-12   3.33269232e+03 -2.20704687e+04  3.48e-01     494s  1.00 0.62      161    4427        0       0
+   6   1.38e-14 9.73e-13   3.20889903e+03 -3.67717653e+03  9.43e-02     665s  1.00 0.85        2    4231        0       0
+   7   5.03e-14 6.81e-13   2.84462977e+03  9.93850148e+02  2.54e-02     834s  1.00 0.88        3    3523        0       0
+   8   3.47e-13 7.31e-13   2.51701214e+03  1.85906640e+03  9.01e-03    1467s  0.81 0.69      267    3038        0       0
+   9   3.49e-13 7.21e-13   2.38996890e+03  2.04782989e+03  4.69e-03    2022s  0.55 0.69     1903    2332        0       0
+  10   5.53e-13 5.50e-13   2.29764375e+03  2.10281847e+03  2.67e-03    2884s  0.53 0.48     1848    1858        0       0
+  11   4.43e-13 5.45e-13   2.25545939e+03  2.13554142e+03  1.64e-03    3702s  0.52 0.53     1214    1377        0       0
+  12   3.88e-13 5.77e-13   2.22360096e+03  2.15574990e+03  9.29e-04    4243s  0.65 0.56      669    1174        0       0
+  13   1.61e-13 5.55e-13   2.20517603e+03  2.16822613e+03  5.06e-04    4784s  0.61 0.56      774     959        0       0
+  14   2.21e-13 7.36e-13   2.19840701e+03  2.17495056e+03  3.21e-04    5263s  0.41 0.59      573     723        0       0
+  15   1.87e-13 7.07e-13   2.19124599e+03  2.17814188e+03  1.80e-04    5802s  0.51 0.55      317     652        0       0
+  16   9.92e-14 6.60e-13   2.18692342e+03  2.17990786e+03  9.61e-05    6041s  0.57 0.60      303     556        0       0
+  17   4.07e-14 7.01e-13   2.18485122e+03  2.18063369e+03  5.78e-05    6439s  0.59 0.58      258     468        0       0
+  18   2.92e-14 9.49e-13   2.18320593e+03  2.18113278e+03  2.84e-05    6751s  0.59 0.58      181     446        0       0
+  19   1.74e-14 5.88e-13   2.18249626e+03  2.18131574e+03  1.62e-05    7465s  0.69 0.55      211     355        0       0
+  20   2.54e-14 7.49e-13   2.18206810e+03  2.18147287e+03  8.15e-06    7864s  0.60 0.64       77     312        0       0
+  21   1.25e-14 8.58e-13   2.18183285e+03  2.18154738e+03  3.91e-06    8102s  0.61 0.67       83     305        0       0
+  22   9.60e-15 7.29e-13   2.18170435e+03  2.18157228e+03  1.81e-06    8341s  0.85 0.65       48     284        0       0
+  23   4.72e-15 5.50e-13   2.18163874e+03  2.18158608e+03  7.21e-07    8658s  0.72 0.48       62     268        0       0
+  24   3.10e-15 6.28e-13   2.18162245e+03  2.18159494e+03  3.77e-07    8978s  0.63 0.59       23     275        0       0
+  25   2.67e-15 5.92e-13   2.18161268e+03  2.18159838e+03  1.96e-07    9302s  0.61 0.45       20     273        0       0
+  26   2.22e-15 8.31e-13   2.18160774e+03  2.18160202e+03  7.84e-08    9541s  0.68 0.82       20     259        0       0
+  27   1.03e-15 6.69e-13   2.18160451e+03  2.18160286e+03  2.27e-08    9700s  0.90 0.75       10     272        0       0
+  28   7.08e-16 1.02e-12   2.18160419e+03  2.18160308e+03  1.52e-08    9857s  0.46 0.64       12     270        0       0
+  29   1.05e-15 8.94e-13   2.18160401e+03  2.18160328e+03  9.98e-09   10170s  0.26 0.93       10     311        0       0
+  30   5.07e-15 6.90e-13   2.18160343e+03  2.18160329e+03  1.94e-09   10561s  1.00 0.69       20     269        0       0
+  31   3.00e-15 8.68e-13   2.18160338e+03  2.18160332e+03  9.10e-10   10718s  0.46 0.85        5     298        0       0
+  32*  8.97e-16 7.09e-13   2.18160332e+03  2.18160332e+03  2.01e-11   10873s  0.98 0.91        1     339        0       0
+Summary
+    Runtime:                                            10873.28s
+    Status interior point solve:                        optimal
+    Status crossover:                                   not run
+    objective value:                                    2.18160332e+03
+    interior solution primal residual (abs/rel):        8.97e-16 / 4.48e-16
+    interior solution dual residual (abs/rel):          7.09e-13 / 5.03e-15
+    interior solution objective gap (abs/rel):          1.46e-06 / 6.71e-10
+    info.status                                         1000
+    info.status_ipm                                     1
+    info.status_crossover                               0
+    info.errflag                                        0
+    info.num_var                                        72546
+    info.num_constr                                     14098
+    info.num_entries                                    281906
+    info.num_rows_solver                                14098
+    info.num_cols_solver                                86644
+    info.num_entries_solver                             296004
+    info.dualized                                       0
+    info.dense_cols                                     0
+    info.dependent_rows                                 0
+    info.dependent_cols                                 0
+    info.rows_inconsistent                              0
+    info.cols_inconsistent                              0
+    info.primal_dropped                                 0
+    info.dual_dropped                                   0
+    info.abs_presidual                                  8.97e-16
+    info.abs_dresidual                                  7.09e-13
+    info.rel_presidual                                  4.48e-16
+    info.rel_dresidual                                  5.03e-15
+    info.pobjval                                        2.18160332e+03
+    info.dobjval                                        2.18160332e+03
+    info.rel_objgap                                     6.71e-10
+    info.complementarity                                1.46e-06
+    info.normx                                          1.95e-01
+    info.normy                                          9.84e+02
+    info.normz                                          8.95e+01
+    info.objval                                         0.00000000e+00
+    info.primal_infeas                                  0.00e+00
+    info.dual_infeas                                    0.00e+00
+    info.iter                                           32
+    info.kktiter1                                       978
+    info.kktiter2                                       29854
+    info.basis_repairs                                  0
+    info.updates_start                                  1531
+    info.updates_ipm                                    9075
+    info.updates_crossover                              0
+    info.time_total                                     10873.28
+    info.time_ipm1                                      0.88
+    info.time_ipm2                                      10868.44
+    info.time_starting_basis                            3.93
+    info.time_crossover                                 0.00
+    info.time_kkt_factorize                             10808.17
+    info.time_kkt_solve                                 60.83
+    info.time_maxvol                                    10791.54
+    info.time_cr1                                       0.81
+    info.time_cr1_AAt                                   0.65
+    info.time_cr1_pre                                   0.07
+    info.time_cr2                                       59.58
+    info.time_cr2_NNt                                   16.36
+    info.time_cr2_B                                     20.13
+    info.time_cr2_Bt                                    20.09
+    info.ftran_sparse                                   0.00
+    info.btran_sparse                                   0.12
+    info.time_ftran                                     10488.44
+    info.time_btran                                     5.10
+    info.time_lu_invert                                 79.89
+    info.time_lu_update                                 2.06
+    info.mean_fill                                      9.23
+    info.max_fill                                       13.79
+    info.time_symb_invert                               0.00
+    info.maxvol_updates                                 0
+    info.maxvol_skipped                                 0
+    info.maxvol_passes                                  0
+    info.tbl_nnz                                        0
+    info.tbl_max                                        0.00e+00
+    info.frobnorm_squared                               0.00e+00
+    info.lambdamax                                      0.00e+00
+    info.volume_increase                                0.00e+00
