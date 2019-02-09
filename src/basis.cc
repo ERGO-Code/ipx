@@ -320,6 +320,32 @@ Int Basis::ExchangeIfStable(Int jb, Int jn, double tableau_entry, int sys,
     return 0;
 }
 
+void Basis::ComputeBasicSolution(Vector& x, Vector& y, Vector& z) const {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& b = model_.b();
+    const Vector& c = model_.c();
+    const SparseMatrix& AI = model_.AI();
+
+    // Compute x[basic] so that Ax=b. Use y as workspace.
+    y = b;
+    for (Int j = 0; j < n+m; j++)
+        if (IsNonbasic(j))
+            ScatterColumn(AI, j, -x[j], y);
+    SolveDense(y, y, 'N');
+    for (Int p = 0; p < m; p++)
+        x[basis_[p]] = y[p];
+
+    // Compute y and z[nonbasic] so that AI'y+z=c.
+    for (Int p = 0; p < m; p++)
+        y[p] = c[basis_[p]] - z[basis_[p]];
+    SolveDense(y, y, 'T');
+    for (Int j = 0; j < n+m; j++) {
+        if (IsNonbasic(j))
+            z[j] = c[j] - DotColumn(AI, j, y);
+    }
+}
+
 void Basis::ConstructBasisFromWeights(const double* colscale, Info* info) {
     const Int m = model_.rows();
     const Int n = model_.cols();

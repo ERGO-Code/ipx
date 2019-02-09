@@ -174,6 +174,13 @@ public:
     Int ExchangeIfStable(Int jb, Int jn, double tableau_entry, int sys,
                          bool* exchanged);
 
+    // Computes x[basic], y and z[nonbasic] such that Ax=b and A'y+z=c.
+    // @x vector of size n+m. On entry the nonbasic components of x must be set.
+    // @y vector of size m, undefined on entry.
+    // @z vector of size n+m. On entry the basic components of z must be set.
+    // On return the remaining components have been computed.
+    void ComputeBasicSolution(Vector& x, Vector& y, Vector& z) const;
+
     // Constructs a (nonsingular) basis. Given a nonnegative weight for each
     // column of AI, columns with larger weight are preferably chosen as basic
     // columns. Columns with infinite weight will always become basic unless the

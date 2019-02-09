@@ -381,40 +381,17 @@ void Crossover::PrimalPushPhase(Info* info) {
 
 void Crossover::BuildBasicSolution() {
     const Model& model = solution_->model();
-    const Int m = model.rows();
-    const Int n = model.cols();
-    const Vector& b = model.b();
-    const Vector& c = model.c();
     const Vector& lb = model.lb();
     const Vector& ub = model.ub();
-    const SparseMatrix& AI = model.AI();
     Vector& x = solution_->x();
     Vector& y = solution_->y();
     Vector& z = solution_->z();
     std::vector<Int>& basic_statuses = solution_->basic_statuses();
-    const Basis& basis = *basis_;
 
-    // Compute x[basic] so that AI*x=b.
-    Vector work = b;
-    for (Int j = 0; j < n+m; j++)
-        if (basis.IsNonbasic(j))
-            ScatterColumn(AI, j, -x[j], work);
-    basis.SolveDense(work, work, 'N');
-    for (Int p = 0; p < m; p++)
-        x[basis[p]] = work[p];
+    // Compute x[basic], y and z[nonbasic] so that Ax=b and A'y+z=c.
+    basis_->ComputeBasicSolution(x, y, z);
 
-    // Compute y and z so that AI'y+z=c.
-    for (Int p = 0; p < m; p++)
-        work[p] = c[basis[p]];
-    basis.SolveDense(work, y, 'T');
-    for (Int j = 0; j < n+m; j++) {
-        if (basis.IsNonbasic(j))
-            z[j] = c[j] - DotColumn(AI, j, y);
-        else
-            z[j] = 0.0;
-    }
-
-    for (Int j = 0; j < n+m; j++) {
+    for (Int j = 0; j < basic_statuses.size(); j++) {
         if (basis_->IsBasic(j)) {
             basic_statuses[j] = IPX_basic;
         } else {
