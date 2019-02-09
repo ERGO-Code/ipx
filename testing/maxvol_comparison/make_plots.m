@@ -1,4 +1,5 @@
-function updates = make_plots(probname, startiter)
+function [updates_hrt, updates_seq, kktiter_hrt, kktiter_seq] = ...
+        make_plots(probname, startiter)
   figwidth = 410;
   figheight = 280;
   maxvol_tol = [10.0; 4.0; 2.0; 1.1];
