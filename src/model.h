@@ -316,6 +316,22 @@ private:
     Vector rowscale_;
 };
 
+// Returns the maximum violation of lb <= x <= ub.
+double PrimalInfeasibility(const Model& model, const Vector& x);
+
+// Returns the maximum violation of the dual feasibility condition
+//   z[j] <= 0 if x[j] > lb[j],
+//   z[j] >= 0 if x[j] < ub[j].
+// Note that dual feasibility implies complementarity, i.e.
+//   x[j] == lb[j] || x[j] == ub[j] || z[j] == 0.
+double DualInfeasibility(const Model& model, const Vector& x, const Vector& z);
+
+// Returns the maximum violation of Ax=b.
+double PrimalResidual(const Model& model, const Vector& x);
+
+// Returns the maximum violation of A'y+z=c.
+double DualResidual(const Model& model, const Vector& y, const Vector& z);
+
 }  // namespace ipx
 
 #endif  // IPX_MODEL_H_

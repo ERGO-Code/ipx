@@ -1168,4 +1168,61 @@ void Model::MultiplyWithScaledMatrix(const Vector& rhs, double alpha,
     }
 }
 
+double PrimalInfeasibility(const Model& model, const Vector& x) {
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+    assert(x.size() == lb.size());
+
+    double infeas = 0.0;
+    for (Int j = 0; j < x.size(); j++) {
+        infeas = std::max(infeas, lb[j]-x[j]);
+        infeas = std::max(infeas, x[j]-ub[j]);
+    }
+    return infeas;
+}
+
+double DualInfeasibility(const Model& model, const Vector& x,
+                                const Vector& z) {
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+    assert(x.size() == lb.size());
+    assert(z.size() == lb.size());
+
+    double infeas = 0.0;
+    for (Int j = 0; j < x.size(); j++) {
+        if (x[j] > lb[j])
+            infeas = std::max(infeas, z[j]);
+        if (x[j] < ub[j])
+            infeas = std::max(infeas, -z[j]);
+    }
+    return infeas;
+}
+
+double PrimalResidual(const Model& model, const Vector& x) {
+    const SparseMatrix& AIt = model.AIt();
+    const Vector& b = model.b();
+    assert(x.size() == AIt.rows());
+
+    double res = 0.0;
+    for (Int i = 0; i < b.size(); i++) {
+        double r = b[i] - DotColumn(AIt, i, x);
+        res = std::max(res, std::abs(r));
+    }
+    return res;
+}
+
+double DualResidual(const Model& model, const Vector& y, const Vector& z) {
+    const SparseMatrix& AI = model.AI();
+    const Vector& c = model.c();
+    assert(y.size() == AI.rows());
+    assert(z.size() == AI.cols());
+
+    double res = 0.0;
+    for (Int j = 0; j < c.size(); j++) {
+        double r = c[j] - z[j] - DotColumn(AI, j, y);
+        res = std::max(res, std::abs(r));
+    }
+    return res;
+}
+
 }  // namespace ipx
