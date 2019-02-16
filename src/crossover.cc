@@ -3,329 +3,145 @@
 #include "crossover.h"
 #include <algorithm>
 #include <cassert>
-#include "indexed_vector.h"
+#include <stdexcept>
+#include <valarray>
 #include "time.h"
 #include "utils.h"
 
 namespace ipx {
 
-BasicSolution::BasicSolution(const Model& model) : model_(model) {
-        Int m = model.rows();
-        Int n = model.cols();
-        x_.resize(n+m);
-        y_.resize(m);
-        z_.resize(n+m);
-        basic_statuses_.resize(n+m);
-        for (Int j = 0; j < n; j++)
-            basic_statuses_[j] = IPX_superbasic;
-        for (Int i = 0; i < m; i++)
-            basic_statuses_[n+i] = IPX_basic;
-}
-
-double BasicSolution::presidual() const {
-    const Int m = model_.rows();
-    const SparseMatrix& AIt = model_.AIt();
-    const Vector& b = model_.b();
-
-    double res = 0.0;
-    for (Int i = 0; i < m; i++) {
-        double r = b[i] - DotColumn(AIt, i, x_);
-        res = std::max(res, std::abs(r));
-    }
-    return res;
-}
-
-double BasicSolution::dresidual() const {
-    const SparseMatrix& AI = model_.AI();
-    const Vector& c = model_.c();
-
-    double res = 0.0;
-    for (Int j = 0; j < c.size(); j++) {
-        double r = c[j] - z_[j] - DotColumn(AI, j, y_);
-        res = std::max(res, std::abs(r));
-    }
-    return res;
-}
-
-double BasicSolution::pinfeas() const {
-    const Vector& lb = model_.lb();
-    const Vector& ub = model_.ub();
-
-    double infeas = 0.0;
-    for (Int j = 0; j < x_.size(); j++) {
-        infeas = std::max(infeas, lb[j]-x_[j]);
-        infeas = std::max(infeas, x_[j]-ub[j]);
-    }
-    return infeas;
-}
-
-double BasicSolution::dinfeas() const {
-    const Vector& lb = model_.lb();
-    const Vector& ub = model_.ub();
-
-    double infeas = 0.0;
-    for (Int j = 0; j < x_.size(); j++) {
-        if (x_[j] > lb[j])
-            infeas = std::max(infeas, z_[j]);
-        if (x_[j] < ub[j])
-            infeas = std::max(infeas, -z_[j]);
-    }
-    return infeas;
-}
-
-bool BasicSolution::complementary() const {
-    const Vector& lb = model_.lb();
-    const Vector& ub = model_.ub();
-
-    for (Int j = 0; j < x_.size(); j++) {
-        if (x_[j] != lb[j] && x_[j] != ub[j] && z_[j] != 0.0)
-            return false;
-    }
-    return true;
-}
-
-void BasicSolution::EvaluatePostsolved(Info* info) const {
-    model_.EvaluateBasicSolution(x_, y_, z_, basic_statuses_, info);
-}
-
 Crossover::Crossover(const Control& control) : control_(control) {}
 
-void Crossover::Run(const double* weights, BasicSolution* solution,
-                    Basis* basis, Info* info) {
-    Timer timer;
-    PushPhase(weights, solution, basis, info);
-    if (info->errflag == IPX_ERROR_interrupt_time) {
-        info->errflag = 0;
-        info->status_crossover = IPX_STATUS_time_limit;
-        return;
-    }
-    if (info->errflag) {
-        info->status_crossover = IPX_STATUS_failed;
-        return;
-    }
-    info->status_crossover = IPX_STATUS_optimal;
-    BuildBasicSolution();
-    control_.Debug()
-        << Textline("Bound violation of basic solution:")
-        << sci2(solution_->pinfeas()) << '\n'
-        << Textline("Dual sign violation of basic solution:")
-        << sci2(solution_->dinfeas()) << '\n';
-    control_.Debug()
-        << Textline("Minimum singular value of basis matrix:")
-        << sci2(basis_->MinSingularValue()) << '\n';
-    time_ = timer.Elapsed();
-}
-
-void Crossover::PushPhase(const double* weights, BasicSolution* solution,
-                          Basis* basis, Info* info) {
-    Timer timer;
-    solution_ = solution;
-    basis_ = basis;
-    weights_ = weights;
-    ppushes_ = 0;
-    dpushes_ = 0;
-    pivots_ = 0;
-    assert(solution_->pinfeas() == 0.0);
-    assert(solution_->dinfeas() == 0.0);
-    info->errflag = 0;
+void Crossover::PushAll(Basis* basis, Vector& x, Vector& y, Vector& z,
+                        const double* weights, Info* info) {
+    const Model& model = basis->model();
+    const Int m = model.rows();
+    const Int n = model.cols();
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+    std::vector<Int> perm = Sortperm(n+m, weights, false);
 
     control_.Log()
         << Textline("Primal residual before push phase:")
-        << sci2(solution_->presidual()) << '\n'
+        << sci2(PrimalResidual(model, x)) << '\n'
         << Textline("Dual residual before push phase:")
-        << sci2(solution_->dresidual()) << '\n'
-        << Textline("Number of primal pushes required:")
-        << ppush_remain() << '\n'
+        << sci2(DualResidual(model, y, z)) << '\n';
+
+    // Run dual push phase.
+    std::vector<Int> dual_superbasics;
+    for (Int p = 0; p < perm.size(); p++) {
+        Int j = perm[p];
+        if (basis->IsBasic(j) && z[j] != 0.0)
+            dual_superbasics.push_back(j);
+    }
+    control_.Log()
         << Textline("Number of dual pushes required:")
-        << dpush_remain() << '\n';
-
-    // Should we do this here or in caller?
-    basis_->UnfixVariables();
-    basis_->UnfreeVariables();
-
-    DualPushPhase(info);
-    assert(solution_->pinfeas() == 0.0);
-    assert(solution_->dinfeas() == 0.0);
-    if (info->errflag != 0) {
-        control_.Debug()
-            << Textline("Minimum singular value of basis matrix:")
-            << sci2(basis_->MinSingularValue()) << '\n';
-        time_ = timer.Elapsed();
+        << dual_superbasics.size() << '\n';
+    PushDual(basis, y, z, dual_superbasics, x, info);
+    assert(DualInfeasibility(model, x, z) == 0.0);
+    if (info->status_crossover != IPX_STATUS_optimal)
         return;
-    }
 
-    PrimalPushPhase(info);
-    assert(solution_->pinfeas() == 0.0);
-    assert(solution_->dinfeas() == 0.0);
-    if (info->errflag != 0) {
-        control_.Debug()
-            << Textline("Minimum singular value of basis matrix:")
-            << sci2(basis_->MinSingularValue()) << '\n';
-        time_ = timer.Elapsed();
-        return;
+    // Run primal push phase. Because z[j]==0 for all basic variables, none of
+    // the primal variables is fixed at its bound.
+    std::vector<Int> primal_superbasics;
+    for (Int p = perm.size()-1; p >= 0; p--) {
+        Int j = perm[p];
+        if (basis->IsNonbasic(j) && x[j] != lb[j] && x[j] != ub[j] &&
+            !(std::isinf(lb[j]) && std::isinf(ub[j]) && x[j] == 0.0))
+            primal_superbasics.push_back(j);
     }
+    control_.Log()
+        << Textline("Number of primal pushes required:")
+        << primal_superbasics.size() << '\n';
+    PushPrimal(basis, x, primal_superbasics, nullptr, info);
+    assert(PrimalInfeasibility(model, x) == 0.0);
+    if (info->status_crossover != IPX_STATUS_optimal)
+        return;
 
     control_.Debug()
         << Textline("Primal residual after push phase:")
-        << sci2(solution_->presidual()) << '\n'
+        << sci2(PrimalResidual(model, x)) << '\n'
         << Textline("Dual residual after push phase:")
-        << sci2(solution_->dresidual()) << '\n';
-    time_ = timer.Elapsed();
+        << sci2(DualResidual(model, y, z)) << '\n';
+    info->status_crossover = IPX_STATUS_optimal;
 }
 
-void Crossover::DualPushPhase(Info* info) {
-    const Model& model = solution_->model();
+void Crossover::PushPrimal(Basis* basis, Vector& x,
+                           const std::vector<Int>& variables,
+                           const bool* fixed_at_bound, Info* info) {
+    Timer timer;
+    const Model& model = basis->model();
     const Int m = model.rows();
     const Int n = model.cols();
     const Vector& lb = model.lb();
     const Vector& ub = model.ub();
-    Vector& x = solution_->x();
-    Vector& y = solution_->y();
-    Vector& z = solution_->z();
-    IndexedVector btran(m), row(n+m);
-    const double feastol = model.dualized() ?
-        control_.pfeasibility_tol() : control_.dfeasibility_tol();
-    std::vector<Int> superbasics = DualSuperbasics();
-
-    std::vector<Bound> atbound(n+m);
-    for (Int j = 0; j < n+m; j++) {
-        if (lb[j] == ub[j])
-            atbound[j] = Bound::EQ;
-        else if (x[j] == lb[j])
-            atbound[j] = Bound::LOWER;
-        else if (x[j] == ub[j])
-            atbound[j] = Bound::UPPER;
-        else
-            atbound[j] = Bound::NONE;
-    }
-
-    // A "wrong" pivot occurs at the dual push of jb if for a primal superbasic
-    // variable jn the dual is moved away from zero. In this case we must pivot
-    // immediately (without step) on jn, since otherwise complementarity would
-    // be lost. The pivot is called "wrong" because it would not occur in exact
-    // arithmetic and if the initial basis would minimize the number of
-    // superbasics regarding any strictly complementary LP solution.
-    Int num_wrong_pivots = 0;
-    control_.ResetPrintInterval();
-
-    while (!superbasics.empty()) {
-        const Int jb = superbasics.back();
-        assert(basis_->IsBasic(jb));
-        assert(z[jb] != 0.0);
-        assert(atbound[jb] == Bound::LOWER || atbound[jb] == Bound::UPPER);
-        if ((info->errflag = control_.InterruptCheck()) != 0)
-            break;
-
-        basis_->TableauRow(jb, btran, row);
-        double step = z[jb];
-        Int jn = DualRatioTest(z, row, atbound, step, feastol);
-
-        // If step was blocked, update basis and compute step size.
-        if (jn >= 0) {
-            assert(basis_->IsNonbasic(jn));
-            double pivot = row[jn];
-            assert(pivot);
-            if (std::abs(pivot) < 1e-4)
-                control_.Debug(3)
-                    << " |pivot| = " << sci2(std::abs(pivot)) << '\n';
-            bool exchanged;
-            info->errflag = basis_->ExchangeIfStable(jb, jn, pivot, 1,
-                                                     &exchanged);
-            if (info->errflag)
-                break;
-            if (!exchanged)     // factorization was unstable, try again
-                continue;
-            pivots_++;
-            if (atbound[jn] == Bound::NONE) {
-                step = 0.0;
-                num_wrong_pivots++;
-            } else {
-                step = z[jn]/row[jn];
-                if (atbound[jb] == Bound::UPPER)
-                    assert(step <= 0.0);
-                else
-                    assert(step >= 0.0);
-            }
-        }
-        // Update solution.
-        if (step != 0.0) {
-            auto update_y = [&](Int i, double x) {
-                y[i] += step*x;
-            };
-            for_each_nonzero(btran, update_y);
-            auto update_z = [&](Int j, double pivot) {
-                z[j] -= step * pivot;
-                if (atbound[j] == Bound::LOWER)
-                    z[j] = std::max(z[j], 0.0);
-                if (atbound[j] == Bound::UPPER)
-                    z[j] = std::min(z[j], 0.0);
-                if (atbound[j] == Bound::NONE)
-                    z[j] = 0.0;
-            };
-            for_each_nonzero(row, update_z);
-            z[jb] -= step;
-        }
-        if (jn >= 0)
-            z[jn] = 0.0; // make clean
-        else
-            assert(z[jb] == 0.0);
-
-        superbasics.pop_back();
-        dpushes_++;
-        control_.IntervalLog()
-            << " " << Format(static_cast<Int>(superbasics.size()), 8)
-            << " dual pushes remaining"
-            << " (" << Format(pivots_, 7) << " pivots)\n";
-    }
-    control_.Debug()
-        << Textline("Number of wrong pivots in dual push phase:")
-        << num_wrong_pivots << '\n';
-}
-
-void Crossover::PrimalPushPhase(Info* info) {
-    const Model& model = solution_->model();
-    const Int m = model.rows();
-    const Int n = model.cols();
-    const Vector& lb = model.lb();
-    const Vector& ub = model.ub();
-    Vector& x = solution_->x();
-    Basis& basis = *basis_;
     IndexedVector ftran(m);
     const double feastol = model.dualized() ?
         control_.dfeasibility_tol() : control_.pfeasibility_tol();
-    std::vector<Int> superbasics = PrimalSuperbasics();
+    primal_pushes_ = 0;
+    primal_pivots_ = 0;
+
+    // Check that variables are nonbasic and that x satisfies bound condition.
+    for (Int j : variables) {
+        if (!basis->IsNonbasic(j))
+            throw std::logic_error("invalid variable in Crossover::PushPrimal");
+    }
+    for (Int j = 0; j < n+m; j++) {
+        if (x[j] < lb[j] || x[j] > ub[j])
+            throw std::logic_error(
+                "bound condition violated in Crossover::PushPrimal");
+        if (fixed_at_bound && fixed_at_bound[j] &&
+            x[j] != lb[j] && x[j] != ub[j])
+            throw std::logic_error(
+                "bound condition violated in Crossover::PushPrimal");
+    }
 
     // Maintain a copy of primal basic variables and their bounds for faster
-    // ratio test.
-    Vector xbasic  = CopyBasic(x,  basis);
-    Vector lbbasic = CopyBasic(lb, basis);
-    Vector ubbasic = CopyBasic(ub, basis);
+    // ratio test. Fixed-at-bound variables are handled by setting their bounds
+    // equal.
+    Vector xbasic  = CopyBasic(x,  *basis);
+    Vector lbbasic = CopyBasic(lb, *basis);
+    Vector ubbasic = CopyBasic(ub, *basis);
+    if (fixed_at_bound) {
+        for (Int p = 0; p < m; p++) {
+            Int j = (*basis)[p];
+            if (fixed_at_bound[j])
+                lbbasic[p] = ubbasic[p] = x[j];
+        }
+    }
 
     control_.ResetPrintInterval();
-
-    while (!superbasics.empty()) {
-        const Int jn = superbasics.back();
-        assert(basis.IsNonbasic(jn));
-        assert(lb[jn] < x[jn] && x[jn] < ub[jn]);
-        assert(std::isfinite(lb[jn]) || std::isfinite(ub[jn]));
+    Int next = 0;
+    while (next < variables.size()) {
         if ((info->errflag = control_.InterruptCheck()) != 0)
             break;
 
-        // If the variable has two finite bounds, move to the nearer.
-        bool move_to_lb;
+        const Int jn = variables[next];
+        if (x[jn] == lb[jn] || x[jn] == ub[jn] ||
+            x[jn] == 0.0 && std::isinf(lb[jn]) && std::isinf(ub[jn])) {
+            // nothing to do
+            next++;
+            continue;
+        }
+        // Choose bound to push to. If the variable has two finite bounds, move
+        // to the nearer. If it has none, move to zero.
+        double move_to = 0.0;
         if (std::isfinite(lb[jn]) && std::isfinite(ub[jn]))
-            move_to_lb = x[jn]-lb[jn] <= ub[jn]-x[jn];
-        else
-            move_to_lb = std::isfinite(lb[jn]);
+            move_to = x[jn]-lb[jn] <= ub[jn]-x[jn] ? lb[jn] : ub[jn];
+        else if (std::isfinite(lb[jn]))
+            move_to = lb[jn];
+        else if (std::isfinite(ub[jn]))
+            move_to = ub[jn];
 
         // A full step is such that x[jn]-step is at its bound.
-        double step = move_to_lb ? x[jn]-lb[jn] : x[jn]-ub[jn];
+        double step = x[jn]-move_to;
 
-        basis.SolveForUpdate(jn, ftran);
+        basis->SolveForUpdate(jn, ftran);
         bool block_at_lb;
-        Int pblock = PrimalRatioTest(xbasic, ftran, lbbasic, ubbasic, step,
-                                     feastol, &block_at_lb);
-        Int jb = pblock >= 0 ? basis[pblock] : -1;
+        Int pblock = PrimalRatioTest(xbasic, ftran, lbbasic, ubbasic,
+                                     step, feastol, &block_at_lb);
+        Int jb = pblock >= 0 ? (*basis)[pblock] : -1;
 
         // If step was blocked, update basis and compute step size.
         if (pblock >= 0) {
@@ -335,13 +151,20 @@ void Crossover::PrimalPushPhase(Info* info) {
                 control_.Debug(3)
                     << " |pivot| = " << sci2(std::abs(pivot)) << '\n';
             bool exchanged;
-            info->errflag = basis.ExchangeIfStable(jb, jn, pivot, -1,
-                                                   &exchanged);
-            if (info->errflag)
+            info->errflag = basis->ExchangeIfStable(jb, jn, pivot, -1,
+                                                    &exchanged);
+            if (info->errflag) {
+                control_.Debug()
+                    << Textline("Minimum singular value of basis matrix:")
+                    << sci2(basis->MinSingularValue()) << '\n';
                 break;
+            }
             if (!exchanged)     // factorization was unstable, try again
                 continue;
-            pivots_++;
+            primal_pivots_++;
+            // We must use lbbasic[pblock] and ubbasic[pblock] (and not lb[jb]
+            // and ub[jb]) so that step is 0.0 if a fixed-at-bound variable
+            // blocked.
             if (block_at_lb)
                 step = (lbbasic[pblock]-xbasic[pblock]) / ftran[pblock];
             else
@@ -358,111 +181,176 @@ void Crossover::PrimalPushPhase(Info* info) {
             x[jn] -= step;
         }
         if (pblock >= 0) {
+            // make clean
+            x[jb] = block_at_lb ? lbbasic[pblock] : ubbasic[pblock];
+            assert(std::isfinite(x[jb]));
+            // Update copy of basic variables and bounds. Note: jn cannot be
+            // a fixed-at-bound variable since it was pushed to a bound.
             xbasic[pblock] = x[jn];
             lbbasic[pblock] = lb[jn];
             ubbasic[pblock] = ub[jn];
-            x[jb] = block_at_lb ? lb[jb] : ub[jb];
-            assert(std::isfinite(x[jb]));
         } else {
-            x[jn] = move_to_lb ? lb[jn] : ub[jn]; // make clean
+            x[jn] = move_to; // make clean
             assert(std::isfinite(x[jn]));
         }
 
-        superbasics.pop_back();
-        ppushes_++;
+        primal_pushes_++;
+        next++;
         control_.IntervalLog()
-            << " " << Format(static_cast<Int>(superbasics.size()), 8)
+            << " " << Format(static_cast<Int>(variables.size()-next), 8)
             << " primal pushes remaining"
-            << " (" << Format(pivots_, 7) << " pivots)\n";
+            << " (" << Format(primal_pivots_, 7) << " pivots)\n";
     }
     for (Int p = 0; p < m; p++)
-        x[basis[p]] = xbasic[p];
+        x[(*basis)[p]] = xbasic[p];
+
+    // Set status flag.
+    if (info->errflag == IPX_ERROR_interrupt_time) {
+        info->errflag = 0;
+        info->status_crossover = IPX_STATUS_time_limit;
+    } else if (info->errflag != 0) {
+        info->status_crossover = IPX_STATUS_failed;
+    } else {
+        info->status_crossover = IPX_STATUS_optimal;
+    }
+    time_primal_ = timer.Elapsed();
 }
 
-void Crossover::BuildBasicSolution() {
-    const Model& model = solution_->model();
+void Crossover::PushPrimal(Basis* basis, Vector& x,
+                           const std::vector<Int>& variables,
+                           const Vector& z, Info* info) {
+    std::valarray<bool> bound_restrict = z != 0.0;
+    PushPrimal(basis, x, variables, &bound_restrict[0], info);
+}
+
+void Crossover::PushDual(Basis* basis, Vector& y, Vector& z,
+                         const std::vector<Int>& variables,
+                         const int sign_restrict[], Info* info) {
+    Timer timer;
+    const Model& model = basis->model();
+    const Int m = model.rows();
+    const Int n = model.cols();
+    IndexedVector btran(m), row(n+m);
+    const double feastol = model.dualized() ?
+        control_.pfeasibility_tol() : control_.dfeasibility_tol();
+    dual_pushes_ = 0;
+    dual_pivots_ = 0;
+
+    // Check that variables are basic and that z satisfies sign condition.
+    for (Int j : variables) {
+        if (!basis->IsBasic(j))
+            throw std::logic_error("invalid variable in Crossover::PushDual");
+    }
+    for (Int j = 0; j < n+m; j++) {
+        if ((sign_restrict[j] & 1) && z[j] < 0.0 ||
+            (sign_restrict[j] & 2) && z[j] > 0.0)
+            throw std::logic_error(
+                "sign condition violated in Crossover::PushDual");
+    }
+
+    control_.ResetPrintInterval();
+    Int next = 0;
+    while (next < variables.size()) {
+        if ((info->errflag = control_.InterruptCheck()) != 0)
+            break;
+
+        const Int jb = variables[next];
+        if (z[jb] == 0.0) {
+            // nothing to do
+            next++;
+            continue;
+        }
+        // The update operation applied below is
+        // y := y + step*btran, z := z - step*row, z[jb] := z[jb] - step,
+        // where row is the tableau row for variable jb. In exact arithmetic
+        // this leaves A'y+z unchanged.
+        basis->TableauRow(jb, btran, row);
+        double step = z[jb];
+        Int jn = DualRatioTest(z, row, sign_restrict, step, feastol);
+
+        // If step was blocked, update basis and compute step size.
+        if (jn >= 0) {
+            assert(basis->IsNonbasic(jn));
+            double pivot = row[jn];
+            assert(pivot);
+            if (std::abs(pivot) < 1e-4)
+                control_.Debug(3)
+                    << " |pivot| = " << sci2(std::abs(pivot)) << '\n';
+            bool exchanged;
+            info->errflag = basis->ExchangeIfStable(jb, jn, pivot, 1,
+                                                    &exchanged);
+            if (info->errflag) {
+                control_.Debug()
+                    << Textline("Minimum singular value of basis matrix:")
+                    << sci2(basis->MinSingularValue()) << '\n';
+                break;
+            }
+            if (!exchanged)     // factorization was unstable, try again
+                continue;
+            dual_pivots_++;
+            step = z[jn]/row[jn];
+            // Update must move z[jb] toward zero.
+            if (sign_restrict[jb] & 1)
+                assert(step >= 0.0);
+            if (sign_restrict[jb] & 2)
+                assert(step <= 0.0);
+        }
+        // Update solution.
+        if (step != 0.0) {
+            auto update_y = [&](Int i, double x) {
+                y[i] += step*x;
+            };
+            for_each_nonzero(btran, update_y);
+            auto update_z = [&](Int j, double pivot) {
+                z[j] -= step * pivot;
+                if (sign_restrict[j] & 1)
+                    z[j] = std::max(z[j], 0.0);
+                if (sign_restrict[j] & 2)
+                    z[j] = std::min(z[j], 0.0);
+            };
+            for_each_nonzero(row, update_z);
+            z[jb] -= step;
+        }
+        if (jn >= 0)
+            z[jn] = 0.0; // make clean
+        else
+            assert(z[jb] == 0.0);
+
+        dual_pushes_++;
+        next++;
+        control_.IntervalLog()
+            << " " << Format(static_cast<Int>(variables.size()-next), 8)
+            << " dual pushes remaining"
+            << " (" << Format(dual_pivots_, 7) << " pivots)\n";
+    }
+
+    // Set status flag.
+    if (info->errflag == IPX_ERROR_interrupt_time) {
+        info->errflag = 0;
+        info->status_crossover = IPX_STATUS_time_limit;
+    } else if (info->errflag != 0) {
+        info->status_crossover = IPX_STATUS_failed;
+    } else {
+        info->status_crossover = IPX_STATUS_optimal;
+    }
+    time_dual_ = timer.Elapsed();
+}
+
+void Crossover::PushDual(Basis* basis, Vector& y, Vector& z,
+                         const std::vector<Int>& variables,
+                         const Vector& x, Info* info) {
+    const Model& model = basis->model();
+    const Int m = model.rows();
+    const Int n = model.cols();
     const Vector& lb = model.lb();
     const Vector& ub = model.ub();
-    Vector& x = solution_->x();
-    Vector& y = solution_->y();
-    Vector& z = solution_->z();
-    std::vector<Int>& basic_statuses = solution_->basic_statuses();
 
-    // Compute x[basic], y and z[nonbasic] so that Ax=b and A'y+z=c.
-    basis_->ComputeBasicSolution(x, y, z);
-
-    for (Int j = 0; j < basic_statuses.size(); j++) {
-        if (basis_->IsBasic(j)) {
-            basic_statuses[j] = IPX_basic;
-        } else {
-            if (lb[j] == ub[j])
-                basic_statuses[j] = z[j] >= 0.0 ?
-                    IPX_nonbasic_lb : IPX_nonbasic_ub;
-            else if (x[j] == lb[j])
-                basic_statuses[j] = IPX_nonbasic_lb;
-            else if (x[j] == ub[j])
-                basic_statuses[j] = IPX_nonbasic_ub;
-            else
-                basic_statuses[j] = IPX_superbasic;
-        }
+    std::vector<int> sign_restrict(n+m);
+    for (Int j = 0; j < sign_restrict.size(); j++) {
+        if (x[j] != ub[j]) sign_restrict[j] |= 1;
+        if (x[j] != lb[j]) sign_restrict[j] |= 2;
     }
-}
-
-Int Crossover::DualRatioTest(const Vector& z, const IndexedVector& row,
-                             const std::vector<Bound>& atbound, double step,
-                             double feastol) {
-    Int jblock = -1;            // return value
-
-    // First pass: determine maximum step size exploiting feasibility tol.
-    // If wrong pivots occur, choose the maximum one.
-    double max_wrong_pivot = 0.0;
-    auto update_step = [&](Int j, double pivot) {
-        if (std::abs(pivot) > kPivotZeroTol) {
-            if (atbound[j] == Bound::NONE && std::abs(pivot) > max_wrong_pivot){
-                assert(z[j] == 0.0);
-                jblock = j;
-                max_wrong_pivot = std::abs(pivot);
-                step = 0.0;
-            }
-            else if (atbound[j] == Bound::LOWER && z[j]-step*pivot < -feastol) {
-                step = (z[j]+feastol) / pivot;
-                jblock = j;
-                assert(z[j] >= 0.0);
-                assert(step*pivot > 0.0);
-            }
-            else if (atbound[j] == Bound::UPPER && z[j]-step*pivot > feastol) {
-                step = (z[j]-feastol) / pivot;
-                jblock = j;
-                assert(z[j] <= 0.0);
-                assert(step*pivot < 0.0);
-            }
-        }
-    };
-    for_each_nonzero(row, update_step);
-
-    // If step was not block or a wrong pivot was found, we are done.
-    if (jblock < 0 || atbound[jblock] == Bound::NONE)
-        return jblock;
-
-    // Second pass: choose maximum pivot among all that block within step.
-    jblock = -1;
-    double max_pivot = kPivotZeroTol;
-    auto update_max = [&](Int j, double pivot) {
-        if (std::abs(pivot) > max_pivot &&
-            std::abs(z[j]/pivot) <= std::abs(step)) {
-            if (atbound[j] == Bound::LOWER && step*pivot > 0.0) {
-                jblock = j;
-                max_pivot = std::abs(pivot);
-            }
-            if (atbound[j] == Bound::UPPER && step*pivot < 0.0) {
-                jblock = j;
-                max_pivot = std::abs(pivot);
-            }
-        }
-    };
-    for_each_nonzero(row, update_max);
-    assert(jblock >= 0);
-    return jblock;
+    PushDual(basis, y, z, variables, sign_restrict.data(), info);
 }
 
 Int Crossover::PrimalRatioTest(const Vector& xbasic, const IndexedVector& ftran,
@@ -524,62 +412,53 @@ Int Crossover::PrimalRatioTest(const Vector& xbasic, const IndexedVector& ftran,
     return pblock;
 }
 
-std::vector<Int> Crossover::DualSuperbasics() const {
-    const Vector& z = solution_->z();
+Int Crossover::DualRatioTest(const Vector& z, const IndexedVector& row,
+                             const int sign_restrict[], double step,
+                             double feastol) {
+    Int jblock = -1;            // return value
 
-    std::vector<Int> perm = Sortperm(z.size(), weights_, true);
-    std::vector<Int> superbasics;
-    for (Int j : perm) {
-        if (basis_->IsBasic(j) && z[j] != 0.0)
-            superbasics.push_back(j);
-    }
-    return superbasics;
-}
-
-std::vector<Int> Crossover::PrimalSuperbasics() const {
-    const Model& model = solution_->model();
-    const Vector& lb = model.lb();
-    const Vector& ub = model.ub();
-    const Vector& x = solution_->x();
-
-    std::vector<Int> perm = Sortperm(x.size(), weights_, false);
-    std::vector<Int> superbasics;
-    for (Int j : perm) {
-        if (basis_->IsNonbasic(j)) {
-            if ((std::isfinite(lb[j]) || std::isfinite(ub[j])) &&
-                (x[j] != lb[j] && x[j] != ub[j])) {
-                superbasics.push_back(j);
+    // First pass: determine maximum step size exploiting feasibility tol.
+    auto update_step = [&](Int j, double pivot) {
+        if (std::abs(pivot) > kPivotZeroTol) {
+            if ((sign_restrict[j] & 1) && z[j]-step*pivot < -feastol) {
+                step = (z[j]+feastol) / pivot;
+                jblock = j;
+                assert(z[j] >= 0.0);
+                assert(step*pivot > 0.0);
+            }
+            if ((sign_restrict[j] & 2) && z[j]-step*pivot > feastol) {
+                step = (z[j]-feastol) / pivot;
+                jblock = j;
+                assert(z[j] <= 0.0);
+                assert(step*pivot < 0.0);
             }
         }
-    }
-    return superbasics;
-}
+    };
+    for_each_nonzero(row, update_step);
 
-Int Crossover::dpush_remain() const {
-    const Vector& z = solution_->z();
+    // If step was not block, we are done.
+    if (jblock < 0)
+        return jblock;
 
-    Int cnt = 0;
-    for (Int j = 0; j < z.size(); j++) {
-        if (basis_->IsBasic(j) && z[j] != 0.0)
-            cnt++;
-    }
-    return cnt;
-}
-
-Int Crossover::ppush_remain() const {
-    const Model& model = solution_->model();
-    const Vector& lb = model.lb();
-    const Vector& ub = model.ub();
-    const Vector& x = solution_->x();
-
-    Int cnt = 0;
-    for (Int j = 0; j < x.size(); j++) {
-        if (basis_->IsNonbasic(j))
-            if ((std::isfinite(lb[j]) || std::isfinite(ub[j])) &&
-                (x[j] != lb[j] && x[j] != ub[j]))
-                cnt++;
-    }
-    return cnt;
+    // Second pass: choose maximum pivot among all that block within step.
+    jblock = -1;
+    double max_pivot = kPivotZeroTol;
+    auto update_max = [&](Int j, double pivot) {
+        if (std::abs(pivot) > max_pivot &&
+            std::abs(z[j]/pivot) <= std::abs(step)) {
+            if ((sign_restrict[j] & 1) && step*pivot > 0.0) {
+                jblock = j;
+                max_pivot = std::abs(pivot);
+            }
+            if ((sign_restrict[j] & 2) && step*pivot < 0.0) {
+                jblock = j;
+                max_pivot = std::abs(pivot);
+            }
+        }
+    };
+    for_each_nonzero(row, update_max);
+    assert(jblock >= 0);
+    return jblock;
 }
 
 }  // namespace ipx

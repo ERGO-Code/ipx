@@ -6,7 +6,6 @@
 #include <memory>
 #include "basis.h"
 #include "control.h"
-#include "crossover.h"
 #include "ipm.h"
 #include "iterate.h"
 #include "model.h"
@@ -114,7 +113,12 @@ private:
     Model model_;
     std::unique_ptr<Iterate> iterate_;
     std::unique_ptr<Basis> basis_;
-    std::unique_ptr<BasicSolution> basic_solution_;
+
+    // Basic solution computed by crossover and basic status of each variable
+    // (one of IPX_nonbasic_lb, IPX_nonbasic_ub, IPX_basic, IPX_superbasic).
+    // If crossover was not run or failed, then basic_statuses_ is empty.
+    Vector x_crossover_, y_crossover_, z_crossover_;
+    std::vector<Int> basic_statuses_;
 };
 
 }  // namespace ipx

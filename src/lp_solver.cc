@@ -5,6 +5,7 @@
 #include <cassert>
 #include <vector>
 #include <utility>
+#include "crossover.h"
 #include "info.h"
 #include "kkt_solver_basis.h"
 #include "kkt_solver_diag.h"
@@ -77,12 +78,11 @@ Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
 
 Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
-    if (!basic_solution_)
+    if (basic_statuses_.empty())
         return IPX_STATUS_invalid_call;
-    model_.PostsolveBasicSolution(
-        basic_solution_->x(), basic_solution_->y(), basic_solution_->z(),
-        basic_solution_->basic_statuses(), x, slack, y, z);
-    model_.PostsolveBasis(basic_solution_->basic_statuses(), cbasis, vbasis);
+    model_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                  basic_statuses_, x, slack, y, z);
+    model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     return IPX_STATUS_ok;
 }
 
@@ -99,7 +99,11 @@ void LpSolver::ClearModel() {
     model_.clear();
     iterate_.reset(nullptr);
     basis_.reset(nullptr);
-    basic_solution_.reset(nullptr);
+    x_crossover_.resize(0);
+    y_crossover_.resize(0);
+    z_crossover_.resize(0);
+    basic_statuses_.clear();
+    basic_statuses_.shrink_to_fit();
 }
 
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
@@ -147,10 +151,9 @@ static std::vector<Int> BuildBasicStatuses(const Basis& basis) {
 Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
     if (!basis_)
         return IPX_STATUS_invalid_call;
-    if (basic_solution_) {
+    if (!basic_statuses_.empty()) {
         // crossover provides basic statuses
-        model_.PostsolveBasis(basic_solution_->basic_statuses(), cbasis,
-                              vbasis);
+        model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     } else {
         model_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
@@ -331,30 +334,76 @@ void LpSolver::RunMainIPM(IPM& ipm) {
 
 void LpSolver::RunCrossover() {
     control_.Log() << "Crossover\n";
-    basic_solution_.reset(nullptr);
     assert(basis_);
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& lb = model_.lb();
+    const Vector& ub = model_.ub();
+    basic_statuses_.clear();
 
-    // Call crossover. If it failed, discard the basic solution.
-    basic_solution_.reset(new BasicSolution(model_));
-    iterate_->DropToComplementarity(basic_solution_->x(), basic_solution_->y(),
-                                    basic_solution_->z());
-    Int m = model_.rows();
-    Int n = model_.cols();
-    Vector weights(n+m);
-    for (Int j = 0; j < n+m; j++)
-        weights[j] = iterate_->ScalingFactor(j);
-    Crossover crossover(control_);
-    crossover.Run(&weights[0], basic_solution_.get(), basis_.get(), &info_);
-    info_.time_crossover = crossover.time();
-    info_.updates_crossover = crossover.pivots();
-    if (info_.status_crossover != IPX_STATUS_optimal) {
-        basic_solution_.reset(nullptr);
-        return;
+    // Construct a complementary primal-dual point from the final IPM iterate.
+    // This usually increases the residuals to Ax=b and A'y+z=c.
+    x_crossover_.resize(n+m);
+    y_crossover_.resize(m);
+    z_crossover_.resize(n+m);
+    iterate_->DropToComplementarity(x_crossover_, y_crossover_, z_crossover_);
+
+    basis_->UnfixVariables();
+    basis_->UnfreeVariables();
+
+    // Run crossover. Perform dual pushes in increasing order and primal pushes
+    // in decreasing order of the scaling factors from the final IPM iterate.
+    {
+        Vector weights(n+m);
+        for (Int j = 0; j < n+m; j++)
+            weights[j] = iterate_->ScalingFactor(j);
+        Crossover crossover(control_);
+        crossover.PushAll(basis_.get(), x_crossover_, y_crossover_,
+                          z_crossover_, &weights[0], &info_);
+        info_.time_crossover =
+            crossover.time_primal() + crossover.time_dual();
+        info_.updates_crossover =
+            crossover.primal_pivots() + crossover.dual_pivots();
+        if (info_.status_crossover != IPX_STATUS_optimal) {
+            // Crossover failed. Discard solution.
+            x_crossover_.resize(0);
+            y_crossover_.resize(0);
+            z_crossover_.resize(0);
+            return;
+        }
     }
 
-    // Declare status_crossover "imprecise" if the vertex solution defined by
+    // Recompute vertex solution and set basic statuses.
+    basis_->ComputeBasicSolution(x_crossover_, y_crossover_, z_crossover_);
+    basic_statuses_.resize(n+m);
+    for (Int j = 0; j < basic_statuses_.size(); j++) {
+        if (basis_->IsBasic(j)) {
+            basic_statuses_[j] = IPX_basic;
+        } else {
+            if (lb[j] == ub[j])
+                basic_statuses_[j] = z_crossover_[j] >= 0.0 ?
+                    IPX_nonbasic_lb : IPX_nonbasic_ub;
+            else if (x_crossover_[j] == lb[j])
+                basic_statuses_[j] = IPX_nonbasic_lb;
+            else if (x_crossover_[j] == ub[j])
+                basic_statuses_[j] = IPX_nonbasic_ub;
+            else
+                basic_statuses_[j] = IPX_superbasic;
+        }
+    }
+    control_.Debug()
+        << Textline("Bound violation of basic solution:")
+        << sci2(PrimalInfeasibility(model_, x_crossover_)) << '\n'
+        << Textline("Dual sign violation of basic solution:")
+        << sci2(DualInfeasibility(model_, x_crossover_, z_crossover_)) << '\n';
+    control_.Debug()
+        << Textline("Minimum singular value of basis matrix:")
+        << sci2(basis_->MinSingularValue()) << '\n';
+
+    // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
-    basic_solution_->EvaluatePostsolved(&info_);
+    model_.EvaluateBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                 basic_statuses_, &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;
