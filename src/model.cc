@@ -89,6 +89,36 @@ void Model::clear() {
     rowscale_.resize(0);
 }
 
+void Model::PresolveStartingPoint(const double* x_user,
+                                  const double* slack_user,
+                                  const double* y_user,
+                                  const double* z_user,
+                                  Vector& x_solver,
+                                  Vector& y_solver,
+                                  Vector& z_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+    assert(x_solver.size() == n+m);
+    assert(y_solver.size() == m);
+    assert(z_solver.size() == n+m);
+
+    Vector x_temp(num_var_);
+    Vector slack_temp(num_constr_);
+    Vector y_temp(num_constr_);
+    Vector z_temp(num_var_);
+    if (x_user)
+        std::copy_n(x_user, num_var_, std::begin(x_temp));
+    if (slack_user)
+        std::copy_n(slack_user, num_constr_, std::begin(slack_temp));
+    if (y_user)
+        std::copy_n(y_user, num_constr_, std::begin(y_temp));
+    if (z_user)
+        std::copy_n(z_user, num_var_, std::begin(z_temp));
+    ScaleBasicSolution(x_temp, slack_temp, y_temp, z_temp);
+    DualizeBasicSolution(x_temp, slack_temp, y_temp, z_temp,
+                         x_solver, y_solver, z_solver);
+}
+
 void Model::PostsolveInteriorSolution(const Vector& x_solver,
                                       const Vector& xl_solver,
                                       const Vector& xu_solver,
@@ -830,6 +860,22 @@ void Model::WriteInfo(Info *info) const {
     info->dense_cols = num_dense_cols();
 }
 
+void Model::ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
+    const {
+    if (colscale_.size() > 0) {
+        x /= colscale_;
+        z *= colscale_;
+    }
+    if (rowscale_.size() > 0) {
+        y /= rowscale_;
+        slack *= rowscale_;
+    }
+    for (Int j : flipped_vars_) {
+        x[j] *= -1.0;
+        z[j] *= -1.0;
+    }
+}
+
 void Model::ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
                                       Vector& slack, Vector& y, Vector& zl,
                                       Vector& zu) const {
@@ -895,6 +941,57 @@ void Model::ScaleBackBasis(std::vector<Int>& cbasis,
         assert(vbasis[j] != IPX_nonbasic_ub);
         if (vbasis[j] == IPX_nonbasic_lb)
             vbasis[j] = IPX_nonbasic_ub;
+    }
+}
+
+void Model::DualizeBasicSolution(const Vector& x_user,
+                                 const Vector& slack_user,
+                                 const Vector& y_user,
+                                 const Vector& z_user,
+                                 Vector& x_solver,
+                                 Vector& y_solver,
+                                 Vector& z_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+
+        // Build dual solver variables from primal user variables.
+        y_solver = -x_user;
+        for (Int i = 0; i < num_constr_; i++)
+            z_solver[i] = -slack_user[i];
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            z_solver[num_constr_+k] = c(num_constr_+k) + y_solver[j];
+        }
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
+
+        // Build primal solver variables from dual user variables.
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(x_solver));
+        std::copy_n(std::begin(z_user), num_var_, std::begin(x_solver) + n);
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            if (x_solver[n+j] < 0.0) {
+                // j is a boxed variable and z_user[j] < 0
+                x_solver[num_constr_+k] = -x_solver[n+j];
+                x_solver[n+j] = 0.0;
+            } else {
+                x_solver[num_constr_+k] = 0.0;
+            }
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        std::copy_n(std::begin(x_user), n, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), m, std::begin(x_solver) + n);
+        std::copy_n(std::begin(y_user), m, std::begin(y_solver));
+        std::copy_n(std::begin(z_user), n, std::begin(z_solver));
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
     }
 }
 

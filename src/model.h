@@ -103,6 +103,13 @@ public:
     // Returns the infinity norm of c.
     double norm_c() const { return norm_c_; }
 
+    // Transforms point from user model to solver model. Each of the pointer
+    // arguments can be NULL, in which case its components are assumed 0.0.
+    void PresolveStartingPoint(const double* x_user, const double* slack_user,
+                               const double* y_user, const double* z_user,
+                               Vector& x_solver, Vector& y_solver,
+                               Vector& z_solver) const;
+
     // Given an IPM iterate, recovers the solution to the user model (see the
     // reference documentation). Each of the pointer arguments can be NULL, in
     // which case the quantity is not returned. The sign conditions on the dual
@@ -228,6 +235,11 @@ private:
     // Writes statistics of input data and preprocessing to @info.
     void WriteInfo(Info* info) const;
 
+    // ScaleBasicSolution() applies the operations from ScaleModel() to a
+    // primal-dual point.
+    void ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
+        const;
+
     // ScaleBack*() do the reverse operation of ScaleModel().
     void ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
                                    Vector& slack, Vector& y, Vector& zl,
@@ -238,6 +250,13 @@ private:
                                 Vector& z) const;
     void ScaleBackBasis(std::vector<Int>& cbasis,
                         std::vector<Int>& vbasis) const;
+
+    // DualizeBasicSolution() applies the operations of LoadPrimal() or
+    // LoadDual() to a primal-dual point.
+    void DualizeBasicSolution(const Vector& x_user, const Vector& slack_user,
+                              const Vector& y_user, const Vector& z_user,
+                              Vector& x_solver, Vector& y_solver,
+                              Vector& z_solver) const;
 
     // DualizeBack*() do the reverse operations of LoadPrimal() or LoadDual().
     // Given the solution from the solver, they recover the solution to the
