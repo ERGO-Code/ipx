@@ -137,12 +137,14 @@ public:
     // @jb:    basic variable. When jb is at position p in the basis, then row p
     //         of the tableau matrix is computed.
     // @btran: BTRAN solution
-    // @row:   tableau row. Only variables with status NONBASIC are computed.
-    //         The solution for all other variables is zero.
-    // For computing the tableau row, the method chooses between a sparse-vector
-    // * sparse-matrix and dense-vector * sparse-matrix operation. Accordingly
-    // the pattern of row is or is not set up.
-    void TableauRow(Int jb, IndexedVector& btran, IndexedVector& row);
+    // @row:   returns the tableau row. Basic variables have value zero.
+    // @ignore_fixed: If true, then the tableau row entry of variables with
+    //                status NONBASIC_FIXED is set to zero.
+    // The method chooses between a sparse-vector*sparse-matrix and a
+    // dense-vector*sparse-matrix operation. Accordingly the pattern of row is
+    // or is not set up.
+    void TableauRow(Int jb, IndexedVector& btran, IndexedVector& row,
+                    bool ignore_fixed = false);
 
     // Exchanges basic variable jb with nonbasic variable jn if the update to
     // the factorization is stable. In detail, the following steps are done:

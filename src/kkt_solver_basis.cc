@@ -243,7 +243,7 @@ void KKTSolverBasis::DropPrimal(Iterate* iterate, Info* info) {
         assert(p >= 0);
         // Pivot jb out of the basis if the volume increase sufficiently.
         const double s = invscale_basic[p];
-        basis_.TableauRow(jb, btran, row);
+        basis_.TableauRow(jb, btran, row, true);
         Int jmax = -1;
         double vmax = volume_tol;
         auto search_pivot = [&](Int j, double pivot) {

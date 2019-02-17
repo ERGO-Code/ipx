@@ -348,9 +348,6 @@ void LpSolver::RunCrossover() {
     z_crossover_.resize(n+m);
     iterate_->DropToComplementarity(x_crossover_, y_crossover_, z_crossover_);
 
-    basis_->UnfixVariables();
-    basis_->UnfreeVariables();
-
     // Run crossover. Perform dual pushes in increasing order and primal pushes
     // in decreasing order of the scaling factors from the final IPM iterate.
     {

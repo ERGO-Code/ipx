@@ -213,7 +213,8 @@ void Basis::SolveForUpdate(Int j) {
     }
 }
 
-void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
+void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row,
+                       bool ignore_fixed) {
     const Int m = model_.rows();
     const Int n = model_.cols();
     assert(IsBasic(jb));
@@ -250,18 +251,17 @@ void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
             Int end = AIt.end(i);
             for (Int p = begin; p < end; p++) {
                 Int j = Ati[p];
-                switch (map2basis_[j]) {
-                case -1:
-                    map2basis_[j] = -3; // mark column j
+                if (map2basis_[j] == -1 || map2basis_[j] == -2 && !ignore_fixed)
+                {
+                    map2basis_[j] -= 2; // mark column
                     row_pattern[nz++] = j;
-                    // fall through
-                case -3:
-                    row[j] += temp * Atx[p];
                 }
+                if (map2basis_[j] < -2) // marked column
+                    row[j] += temp * Atx[p];
             }
         }
-        for (Int k = 0; k < nz; k++) // resets marked
-            map2basis_[row_pattern[k]] = -1;
+        for (Int k = 0; k < nz; k++) // reset marked
+            map2basis_[row_pattern[k]] += 2;
         row.set_nnz(nz);
     } else {
         // dense vector * sparse matrix: accesses A columnwise
@@ -270,7 +270,7 @@ void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
         const double* Ax = AI.values();
         for (Int j = 0; j < n+m; j++) {
             double result = 0.0;
-            if (map2basis_[j] == -1) {
+            if (map2basis_[j] == -1 || map2basis_[j] == -2 && !ignore_fixed) {
                 Int begin = AI.begin(j);
                 Int end = AI.end(j);
                 for (Int p = begin; p < end; p++)
@@ -838,7 +838,7 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
         if ((info->errflag = control_.InterruptCheck()) != 0)
             return;
 
-        TableauRow(jb, btran, row);
+        TableauRow(jb, btran, row, true);
         Int jmax = -1;
         Int jmax_nonfixed = -1;
         double rmax = 0.0;
