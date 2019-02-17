@@ -380,22 +380,6 @@ void Basis::ConstructBasisFromWeights(const double* colscale, Info* info) {
     PivotFixedVariablesOutOfBasis(colscale, info);
     if (info->errflag)
         return;
-
-    // Assert variable statuses after successful completion of
-    // PivotFreeVariablesIntoBasis() and PivotFixedVariablesOutOfBasis().
-    // Variables with infinite weight must have status BASIC_FREE or (if the
-    // column is linearly dependent on basic columns with infinite weights),
-    // NONBASIC_FIXED. Variables with zero weight must have status
-    // NONBASIC_FIXED or (if it is a slack variable and cannot be replaced in
-    // the basis by a variable with nonzero weight), BASIC_FREE.
-    #ifndef NDEBUG
-    for (Int j = 0; j < n+m; j++) {
-        if (std::isinf(colscale[j]) || colscale[j] == 0.0)
-            assert(StatusOf(j) == NONBASIC_FIXED || StatusOf(j) == BASIC_FREE);
-        else
-            assert(StatusOf(j) == NONBASIC || StatusOf(j) == BASIC);
-    }
-    #endif
 }
 
 double Basis::MinSingularValue() const {
@@ -792,19 +776,6 @@ void Basis::PivotFreeVariablesIntoBasis(const double* colweights, Info* info) {
     control_.Debug()
         << Textline("Number of free variables swapped for stability:")
         << stability_pivots << '\n';
-
-    // Change status of free variables either to BASIC_FREE or NONBASIC_FIXED.
-    for (Int j = 0; j < n+m; j++) {
-        if (std::isinf(colweights[j])) {
-            if (map2basis_[j] >= 0) {
-                assert(map2basis_[j] < m);
-                map2basis_[j] += m;
-            } else {
-                assert(map2basis_[j] == -1);
-                map2basis_[j] = -2;
-            }
-        }
-    }
 }
 
 void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
@@ -838,7 +809,7 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
         if ((info->errflag = control_.InterruptCheck()) != 0)
             return;
 
-        TableauRow(jb, btran, row, true);
+        TableauRow(jb, btran, row);
         Int jmax = -1;
         Int jmax_nonfixed = -1;
         double rmax = 0.0;
@@ -927,19 +898,6 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
     control_.Debug()
         << Textline("Number of fixed variables swapped for stability:")
         << stability_pivots << '\n';
-
-    // Change status of fixed variables either to NONBASIC_FIXED or BASIC_FREE.
-    for (Int j = 0; j < n+m; j++) {
-        if (colweights[j] == 0.0) {
-            if (map2basis_[j] < 0) {
-                assert(map2basis_[j] == -1);
-                map2basis_[j] = -2;
-            } else {
-                assert(StatusOf(j) == BASIC);
-                map2basis_[j] += m;
-            }
-        }
-    }
 }
 
 Vector CopyBasic(const Vector& x, const Basis& basis) {

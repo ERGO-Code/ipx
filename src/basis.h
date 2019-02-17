@@ -58,8 +58,8 @@ public:
     //
     // The notes in () are not enforced or required by the implementation.
     // From the view point of the class the two nonbasic and the two basic
-    // statuses behave (almost) the same (exceptions are noted in the methods
-    // below). The four statuses are provided to make user code more convenient.
+    // statuses behave the same. The four statuses are provided to make writing
+    // user code more convenient.
     enum BasicStatus { NONBASIC_FIXED = -2, NONBASIC, BASIC, BASIC_FREE };
 
     // Returns status of variable j.
@@ -194,10 +194,6 @@ public:
     // Otherwise the method starts with the slack basis and pivots columns with
     // zero or infinite weight out of or into the basis one at a time.
     //
-    // On successful return, the status of each variable with infinite or zero
-    // weight will be BASIC_FREE or NONBASIC_FIXED. The status of all other
-    // variables will be BASIC or NONBASIC.
-    //
     // @colweights: vector of length n+m with nonnegative entries
     void ConstructBasisFromWeights(const double* colweights, Info* info);
 
@@ -273,17 +269,17 @@ private:
                        Int* num_dropped);
 
     // Pivots free variables into the basis if they can replace a nonfree
-    // basic variable. A variable is "free" if its weight is infinite. On return
-    // the status of each free variable is either BASIC_FREE or NONBASIC_FIXED.
-    // In the latter case the column is linearly dependent on columns of free
-    // basic variables. info->dependent_cols reports the # such variables.
+    // basic variable. A variable is "free" if its weight is infinite. If a free
+    // variable cannot be pivoted into the basis, then its column is linearly
+    // dependent on columns of free basic variables. info->dependent_cols
+    // reports the # such variables.
     void PivotFreeVariablesIntoBasis(const double* colweights, Info* info);
 
     // Pivots fixed variables out of the basis if they can be replaced by a
-    // nonfixed variable. A variable is "fixed" if its weight is zero. On return
-    // the status of each fixed variable is either NONBASIC_FIXED or BASIC_FREE.
-    // In the latter case the rows of AI without the variable are linearly
-    // dependent. info->dependent_rows reports the # such variables.
+    // nonfixed variable. A variable is "fixed" if its weight is zero. If a
+    // fixed variable cannot be pivoted out of the basis, then
+    // the rows of AI without that variable are linearly dependent.
+    // info->dependent_rows reports the # such variables.
     void PivotFixedVariablesOutOfBasis(const double* colweights, Info* info);
 
     const Control& control_;

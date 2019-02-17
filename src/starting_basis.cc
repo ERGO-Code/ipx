@@ -153,6 +153,17 @@ void StartingBasis(Iterate* iterate, Basis* p_basis, Info* info) {
     if (info->errflag)
         return;
 
+    // Change status of free variables either to BASIC_FREE or NONBASIC_FIXED.
+    // Change status of fixed variables either to NONBASIC_FIXED or BASIC_FREE.
+    for (Int j = 0; j < n+m; j++) {
+        if (colscale[j] == 0.0 || std::isinf(colscale[j])) {
+            if (basis.IsBasic(j))
+                basis.FreeBasicVariable(j);
+            else
+                basis.FixNonbasicVariable(j);
+        }
+    }
+
     // Variables with equal lower and upper bounds can be removed from the
     // interior point solve if their basic status is NONBASIC_FIXED. Setting
     // x[j] to its bound alters the residual in AI*x=b; this can be ignored
