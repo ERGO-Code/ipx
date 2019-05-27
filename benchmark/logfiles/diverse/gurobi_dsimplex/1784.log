@@ -1,0 +1,30 @@
+id: 1784
+name: pds-100
+group: mittelmann/pds
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 24 01:26:35 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 24 01:26:35 2018
+
+Optimize a model with 156243 rows, 505360 columns and 1086785 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [3e+01, 1e+05]
+  Bounds range     [8e+00, 9e+04]
+  RHS range        [3e+01, 9e+04]
+Presolve removed 76273 rows and 86517 columns
+Presolve time: 0.92s
+Presolved: 79970 rows, 418843 columns, 946279 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.1476159e+09   6.799330e+06   0.000000e+00      1s
+   58094    1.0629914e+10   2.492301e+06   0.000000e+00      5s
+   95356    1.0926245e+10   5.269771e+05   0.000000e+00     10s
+  109419    1.0928230e+10   9.288852e+03   0.000000e+00     15s
+  110211    1.0928230e+10   0.000000e+00   0.000000e+00     16s
+
+Solved in 110211 iterations and 16.36 seconds
+Optimal objective  1.092822997e+10
+status: OPTIMAL

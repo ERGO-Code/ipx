@@ -1,0 +1,29 @@
+id: 310
+name: ex3sta1
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:57:08 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:57:09 2018
+
+Optimize a model with 17443 rows, 8156 columns and 59419 nonzeros
+Coefficient statistics:
+  Matrix range     [3e-01, 1e+02]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [4e+01, 4e+01]
+Presolve removed 8240 rows and 3560 columns
+Presolve time: 0.06s
+Presolved: 9203 rows, 9276 columns, 52899 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0      handle free variables                          0s
+    9344   -6.8855311e+01   1.233235e+06   0.000000e+00      5s
+   14029   -6.3011313e+01   0.000000e+00   0.000000e+00     10s
+   14029   -6.3075403e+01   0.000000e+00   0.000000e+00     10s
+
+Solved in 14029 iterations and 10.08 seconds
+Optimal objective -6.307540325e+01
+status: OPTIMAL

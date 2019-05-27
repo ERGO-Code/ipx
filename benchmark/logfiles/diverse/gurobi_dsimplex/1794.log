@@ -1,0 +1,42 @@
+id: 1794
+name: rail4284
+group: mittelmann/rail
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 24 01:28:33 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 24 01:28:33 2018
+
+Optimize a model with 4284 rows, 1092610 columns and 11279748 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 2e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 108 rows and 2084 columns
+Presolve time: 3.11s
+Presolved: 4176 rows, 1090526 columns, 11174639 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.0000000e+01   4.176000e+03   0.000000e+00      3s
+
+Starting sifting (using dual simplex for sub-problems)...
+
+    Iter     Pivots    Primal Obj      Dual Obj        Time
+       0          0     infinity      2.0000000e+01      3s
+       1       3272   1.8590000e+03   2.8271429e+02      4s
+       2       9459   1.3029754e+03   4.8488101e+02      4s
+       3      18477   1.1583526e+03   6.4375556e+02      7s
+       4      31704   1.0945657e+03   7.8376220e+02     12s
+       5      47890   1.0627556e+03   8.8121448e+02     19s
+       6      62088   1.0550961e+03   9.6548311e+02     26s
+       7      75529   1.0540684e+03   1.0282587e+03     33s
+
+Sifting complete
+
+   84265    1.0540545e+03   0.000000e+00   0.000000e+00     37s
+
+Solved in 84265 iterations and 37.28 seconds
+Optimal objective  1.054054491e+03
+status: OPTIMAL

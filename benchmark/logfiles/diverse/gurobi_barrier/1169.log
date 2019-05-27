@@ -1,0 +1,58 @@
+id: 1169
+name: neos-824661
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:15:39 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:15:39 2018
+
+Optimize a model with 18804 rows, 45390 columns and 138890 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+03]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 3e+01]
+Presolve removed 0 rows and 15470 columns
+Presolve time: 0.03s
+Presolved: 18804 rows, 29920 columns, 122230 nonzeros
+
+Ordering time: 0.02s
+
+Barrier statistics:
+ AA' NZ     : 1.903e+05
+ Factor NZ  : 9.246e+05 (roughly 30 MBytes of memory)
+ Factor Ops : 7.409e+07 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   3.49690582e+02  9.65067807e+00  1.94e+03 4.97e-03  7.65e-02     0s
+   1   4.92867870e+01 -2.82465014e+01  2.32e+00 3.33e-16  2.12e-03     0s
+   2   3.38173665e+01  1.95374084e+01  3.31e-01 2.44e-04  1.95e-04     0s
+   3   3.54880936e+01  3.10820561e+01  1.16e-11 1.11e-16  5.61e-05     0s
+   4   3.30267335e+01  3.26836559e+01  5.49e-10 2.22e-16  4.37e-06     0s
+   5   3.30015244e+01  3.29998089e+01  7.38e-09 3.33e-16  2.18e-08     0s
+   6   3.30000015e+01  3.29999998e+01  4.80e-12 2.28e-16  2.18e-11     0s
+   7   3.30000000e+01  3.30000000e+01  4.97e-14 3.33e-16  1.63e-15     0s
+
+Barrier solved model in 7 iterations and 0.23 seconds
+Optimal objective 3.30000000e+01
+
+Crossover log...
+
+       0 DPushes remaining with DInf 0.0000000e+00                 0s
+
+   28668 PPushes remaining with PInf 0.0000000e+00                 0s
+       0 PPushes remaining with PInf 0.0000000e+00                 0s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 0.0000000e+00      0s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   28691    3.3000000e+01   0.000000e+00   0.000000e+00      0s
+   28691    3.3000000e+01   0.000000e+00   0.000000e+00      0s
+
+Solved in 28691 iterations and 0.38 seconds
+Optimal objective  3.300000000e+01
+status: OPTIMAL

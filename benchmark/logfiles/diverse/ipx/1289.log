@@ -1,0 +1,157 @@
+id: 1289
+name: reblock420
+group: miplib2010
+IPX version 1.0
+Input
+    Number of variables:                                4200
+    Number of free variables:                           0
+    Number of constraints:                              62800
+    Number of equality constraints:                     0
+    Number of matrix entries:                           138670
+    Matrix range:                                       [1e+00, 9e+03]
+    RHS range:                                          [1e+05, 2e+05]
+    Objective range:                                    [5e+02, 1e+07]
+    Bounds range:                                       [1e+00, 1e+00]
+Preprocessing
+    Dualized model:                                     yes
+    Number of dense columns:                            20
+    Range of scaling factors:                           [1.56e-02, 3.20e+01]
+Interior Point Solve
+ Iter     P.res    D.res            P.obj           D.obj        mu     Time  stepsizes   pivots kktiter  P.fixed D.fixed
+   0   7.56e+04 5.97e+01   1.10492991e+09  1.07112501e+09  4.65e+06       0s  0.00 0.00        0       4        0       0
+   1   6.04e+04 4.44e+01   3.77743024e+09 -2.67630631e+08  4.03e+06       0s  0.20 0.26        0       9        0       0
+   2   4.91e+04 2.95e+01   6.88818880e+09 -4.62316654e+08  2.99e+06       0s  0.19 0.34        0       8        0       0
+   3   2.79e+04 1.37e+01   1.14933541e+10 -1.55882875e+08  1.62e+06       0s  0.43 0.54        0       6        0       0
+   4   1.58e+04 4.62e+00   1.18801105e+10 -3.64143217e+07  6.78e+05       0s  0.43 0.66        0      12        0       0
+   5   4.38e+03 1.13e+00   8.00303469e+09  6.60699202e+07  2.17e+05       0s  0.72 0.76        0      10        0       0
+   6   1.78e+03 3.91e-01   4.93745173e+09  1.57244101e+08  9.68e+04       0s  0.59 0.65        0      23        0       0
+   7   8.41e+02 1.11e-01   3.24959161e+09  2.64863332e+08  4.98e+04       0s  0.53 0.72        0      25        0       0
+   8   4.28e+02 4.44e-02   2.34393836e+09  3.75514103e+08  3.06e+04       0s  0.49 0.60        0      30        0       0
+   9   2.56e+02 2.80e-02   1.88250968e+09  4.40169127e+08  2.18e+04       0s  0.40 0.37        0      40        0       0
+  10   2.46e+02 2.57e-02   1.85564051e+09  4.40042384e+08  2.14e+04       0s  0.04 0.08        0      47        0       0
+  11   9.17e+01 1.52e-02   1.36497265e+09  5.41795550e+08  1.21e+04       0s  0.63 0.41        0      45        0       0
+  12   8.99e+01 1.34e-02   1.35708522e+09  5.51275106e+08  1.18e+04       0s  0.02 0.12        0      54        0       0
+  13   8.89e+01 1.33e-02   1.35484093e+09  5.50969743e+08  1.18e+04       0s  0.01 0.01        0      61        0       0
+  14   8.69e+01 1.20e-02   1.35657003e+09  5.64271379e+08  1.16e+04       0s  0.02 0.09        0      50        0       0
+  15   7.85e+01 6.95e-03   1.32360314e+09  6.50310167e+08  9.80e+03       0s  0.10 0.42        0      52        0       0
+  16   2.48e+01 4.30e-03   1.04031127e+09  7.00179318e+08  4.89e+03       0s  0.68 0.38        0      50        0       0
+  17   1.84e+01 3.02e-03   1.01549603e+09  7.35514357e+08  4.01e+03       0s  0.26 0.30        0      62        0       0
+  18   1.70e+01 2.69e-03   1.01456853e+09  7.36496887e+08  3.98e+03       0s  0.07 0.11        0      63        0       0
+  19   7.14e+00 1.18e-03   9.43709989e+08  8.01815493e+08  2.02e+03       0s  0.58 0.56        0      62        0       0
+  20   2.55e+00 8.52e-04   9.27563569e+08  8.09824162e+08  1.67e+03       0s  0.64 0.28        0      75        0       0
+  21   5.90e-01 4.34e-04   9.00313231e+08  8.41842233e+08  8.26e+02       1s  0.77 0.49        0      68        0       0
+  22   5.78e-01 4.18e-04   8.99136871e+08  8.40269448e+08  8.31e+02       1s  0.02 0.04        0      82        0       0
+  23   2.21e-01 2.77e-04   8.93639001e+08  8.53258036e+08  5.70e+02       1s  0.62 0.34        0      79        0       0
+  24   9.97e-02 1.28e-04   8.89933965e+08  8.70928691e+08  2.68e+02       1s  0.55 0.54        0      84        0       0
+  25   3.89e-02 6.31e-05   8.87905794e+08  8.78782651e+08  1.29e+02       1s  0.61 0.51        0      87        0       0
+  26   1.32e-02 2.97e-05   8.87012718e+08  8.82874805e+08  5.84e+01       1s  0.66 0.53        0      92        0       0
+  27   5.57e-03 1.45e-05   8.86738398e+08  8.84750149e+08  2.80e+01       1s  0.58 0.51        0     100        0       0
+  28   2.35e-03 5.44e-06   8.86621492e+08  8.85865410e+08  1.07e+01       1s  0.58 0.62        0     106        0       0
+  29   7.68e-04 9.25e-08   8.86563903e+08  8.86524455e+08  5.56e-01       1s  0.67 0.98        0     110        0       0
+  30   1.58e-04 2.86e-11   8.86541670e+08  8.86535823e+08  8.24e-02       1s  0.79 1.00        0     122        0       0
+  31   1.24e-04 3.18e-11   8.86540459e+08  8.86535486e+08  7.01e-02       1s  0.21 1.00        0     119        0       0
+  32   2.43e-05 3.96e-11   8.86536789e+08  8.86535890e+08  1.27e-02       1s  0.80 1.00        0     112        0       0
+  33   2.46e-06 3.05e-11   8.86535988e+08  8.86535897e+08  1.28e-03       1s  0.90 1.00        0     118        0       0
+  34   1.69e-07 2.55e-11   8.86535904e+08  8.86535895e+08  1.37e-04       1s  0.93 1.00        0     134        0       0
+  35*  1.41e-08 1.41e-11   8.86535898e+08  8.86535898e+08  7.97e-06       1s  0.92 1.00        0     146        0       0
+Crossover
+ Constructing starting basis for crossover...
+    Number of free variables in starting basis:         0
+    Number of singletons in starting basis:             93
+    Number of other columns matched:                    3077
+    Number of other columns failed:                     10300
+    Number of columns dropped from guessed basis:       10
+    Minimum singular value of crash basis:              2.87e-03
+    Number of free variables nonbasic:                  0
+    Number of free variables swapped for stability:     0
+    Number of fixed variables basic:                    0
+    Number of fixed variables swapped for stability:    0
+    Primal residual before push phase:                  1.35e-03
+    Dual residual before push phase:                    2.39e-10
+    Number of primal pushes required:                   56269
+    Number of dual pushes required:                     1040
+    Number of wrong pivots in dual push phase:          1040
+    Primal residual after push phase:                   1.35e-03
+    Dual residual after push phase:                     2.39e-10
+    Bound violation of basic solution:                  0.00e+00
+    Dual sign violation of basic solution:              0.00e+00
+    Minimum singular value of basis matrix:             2.50e-03
+Summary
+    Runtime:                                            1.95s
+    Status interior point solve:                        optimal
+    Status crossover:                                   optimal
+    objective value:                                    -8.86535898e+08
+    interior solution primal residual (abs/rel):        9.02e-10 / 4.51e-15
+    interior solution dual residual (abs/rel):          5.27e-06 / 3.81e-13
+    interior solution objective gap (abs/rel):          5.68e-01 / 6.41e-10
+    basic solution primal infeasibility:                0.00e+00
+    basic solution dual infeasibility:                  0.00e+00
+    info.status                                         1000
+    info.status_ipm                                     1
+    info.status_crossover                               1
+    info.errflag                                        0
+    info.num_var                                        4200
+    info.num_constr                                     62800
+    info.num_entries                                    138670
+    info.num_rows_solver                                4200
+    info.num_cols_solver                                71200
+    info.num_entries_solver                             147070
+    info.dualized                                       1
+    info.dense_cols                                     20
+    info.dependent_rows                                 0
+    info.dependent_cols                                 0
+    info.primal_dropped                                 0
+    info.dual_dropped                                   0
+    info.abs_presidual                                  9.02e-10
+    info.abs_dresidual                                  5.27e-06
+    info.rel_presidual                                  4.51e-15
+    info.rel_dresidual                                  3.81e-13
+    info.pobjval                                        -8.86535898e+08
+    info.dobjval                                        -8.86535898e+08
+    info.rel_objgap                                     6.41e-10
+    info.complementarity                                5.67e-01
+    info.normx                                          1.00e+00
+    info.normy                                          4.07e+06
+    info.normz                                          1.44e+07
+    info.objval                                         -8.86535898e+08
+    info.primal_infeas                                  0.00e+00
+    info.dual_infeas                                    0.00e+00
+    info.iter                                           35
+    info.kktiter1                                       2347
+    info.kktiter2                                       0
+    info.basis_repairs                                  0
+    info.updates_start                                  0
+    info.updates_ipm                                    0
+    info.updates_crossover                              14184
+    info.time_total                                     1.95
+    info.time_ipm1                                      1.14
+    info.time_ipm2                                      0.00
+    info.time_starting_basis                            0.02
+    info.time_crossover                                 0.77
+    info.time_kkt_factorize                             0.04
+    info.time_kkt_solve                                 0.88
+    info.time_maxvol                                    0.00
+    info.time_cr1                                       0.81
+    info.time_cr1_AAt                                   0.66
+    info.time_cr1_pre                                   0.09
+    info.time_cr2                                       0.00
+    info.time_cr2_NNt                                   0.00
+    info.time_cr2_B                                     0.00
+    info.time_cr2_Bt                                    0.00
+    info.ftran_sparse                                   1.00
+    info.btran_sparse                                   0.90
+    info.time_ftran                                     0.16
+    info.time_btran                                     0.04
+    info.time_lu_invert                                 0.24
+    info.time_lu_update                                 0.03
+    info.mean_fill                                      1.19
+    info.max_fill                                       1.23
+    info.time_symb_invert                               0.00
+    info.maxvol_updates                                 0
+    info.maxvol_skipped                                 0
+    info.maxvol_passes                                  0
+    info.tbl_nnz                                        0
+    info.tbl_max                                        0.00e+00
+    info.frobnorm_squared                               0.00e+00
+    info.lambdamax                                      0.00e+00
+    info.volume_increase                                0.00e+00

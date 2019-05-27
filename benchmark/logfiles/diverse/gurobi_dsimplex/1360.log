@@ -1,0 +1,26 @@
+id: 1360
+name: wnq-n100-mw99-14
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Sat Apr 21 02:09:07 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Sat Apr 21 02:09:07 2018
+
+Optimize a model with 656900 rows, 10000 columns and 1333400 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.41s
+Presolved: 10000 rows, 666900 columns, 1343400 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   2.000000e+02      0s
+    2860    1.8526316e+02   0.000000e+00   0.000000e+00      2s
+
+Solved in 2860 iterations and 2.15 seconds
+Optimal objective  1.852631579e+02
+status: OPTIMAL

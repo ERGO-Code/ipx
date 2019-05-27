@@ -1,0 +1,59 @@
+id: 310
+name: ex3sta1
+group: meszaros/misc
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:09:55 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:09:55 2018
+
+Optimize a model with 17443 rows, 8156 columns and 59419 nonzeros
+Coefficient statistics:
+  Matrix range     [3e-01, 1e+02]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [4e+01, 4e+01]
+Presolve removed 3521 rows and 3521 columns
+Presolve time: 0.09s
+Presolved: 4635 rows, 13922 columns, 59593 nonzeros
+
+Ordering time: 0.06s
+
+Barrier statistics:
+ Free vars  : 4562
+ AA' NZ     : 7.740e+04
+ Factor NZ  : 7.320e+05 (roughly 13 MBytes of memory)
+ Factor Ops : 1.531e+08 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0  -9.47653906e+05 -0.00000000e+00  1.00e+00 0.00e+00  1.52e+02     0s
+   1  -1.09909757e+05 -6.29584497e-01  1.27e-09 6.62e-07  1.17e+01     0s
+   2  -1.14773156e+04 -2.05475403e+00  1.21e-09 6.14e-08  1.23e+00     0s
+   3  -8.53334684e+02 -2.39912693e+01  5.92e-14 3.07e-13  8.86e-02     0s
+   4  -1.46096185e+02 -4.94997274e+01  4.97e-13 1.64e-13  1.03e-02     0s
+   5  -6.80212009e+01 -6.20624289e+01  1.93e-14 6.48e-14  6.37e-04     0s
+   6  -6.32055313e+01 -6.30070841e+01  2.35e-13 5.68e-14  2.12e-05     0s
+   7  -6.30754826e+01 -6.30753523e+01  8.32e-12 2.55e-11  1.39e-08     0s
+   8  -6.30754033e+01 -6.30754032e+01  6.04e-12 4.57e-14  1.39e-11     0s
+
+Barrier solved model in 8 iterations and 0.30 seconds
+Optimal objective -6.30754033e+01
+
+Crossover log...
+
+       0 DPushes remaining with DInf 4.5347710e-10                 0s
+
+       0 PPushes remaining with PInf 0.0000000e+00                 0s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 4.5347710e-10      0s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+      55   -6.3075403e+01   0.000000e+00   0.000000e+00      0s
+      55   -6.3075403e+01   0.000000e+00   0.000000e+00      1s
+
+Solved in 55 iterations and 0.53 seconds
+Optimal objective -6.307540325e+01
+status: OPTIMAL

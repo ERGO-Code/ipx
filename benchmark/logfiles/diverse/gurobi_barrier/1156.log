@@ -1,0 +1,61 @@
+id: 1156
+name: neos-506428
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:15:24 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:15:24 2018
+
+Optimize a model with 129925 rows, 42981 columns and 343466 nonzeros
+Coefficient statistics:
+  Matrix range     [5e-08, 3e+01]
+  Objective range  [1e+05, 1e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 3e+01]
+Presolve time: 0.07s
+Presolved: 129925 rows, 42981 columns, 343466 nonzeros
+
+Ordering time: 0.03s
+
+Barrier statistics:
+ Dense cols : 22
+ AA' NZ     : 2.236e+06
+ Factor NZ  : 5.796e+06 (roughly 120 MBytes of memory)
+ Factor Ops : 3.664e+08 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   4.37059913e+07 -3.20990021e+05  1.98e+03 0.00e+00  3.05e+02     0s
+   1   8.69833616e+06 -4.05240743e+05  3.83e+02 5.49e+00  6.67e+01     0s
+   2   1.15507627e+06 -3.92461891e+05  2.94e+01 2.65e-09  9.14e+00     0s
+   3   2.34427973e+05 -7.49299766e+04  6.28e+00 4.10e-09  1.67e+00     1s
+   4   1.96432837e+05 -3.75627627e+04  5.36e+00 2.94e-09  1.25e+00     1s
+   5   1.71065337e+05 -2.68817331e+04  4.67e+00 2.44e-09  1.05e+00     1s
+   6   1.60034405e+05 -1.42995578e+02  4.36e+00 1.22e-09  8.50e-01     1s
+   7   1.54970347e+05  1.07742745e+05  3.25e+00 3.14e-09  2.55e-01     1s
+   8   1.47740808e+05  1.39857923e+05  5.78e-01 1.31e-09  3.91e-02     1s
+   9   1.45947287e+05  1.45649722e+05  7.00e-04 1.80e-08  1.38e-03     1s
+  10   1.45945000e+05  1.45944999e+05  1.23e-10 2.39e-08  2.58e-09     1s
+
+Barrier solved model in 10 iterations and 1.03 seconds
+Optimal objective 1.45945000e+05
+
+Crossover log...
+
+       0 DPushes remaining with DInf 0.0000000e+00                 1s
+
+   40890 PPushes remaining with PInf 0.0000000e+00                 1s
+       0 PPushes remaining with PInf 0.0000000e+00                 1s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 0.0000000e+00      1s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   41009    1.4594500e+05   0.000000e+00   0.000000e+00      1s
+   41009    1.4594500e+05   0.000000e+00   0.000000e+00      1s
+
+Solved in 41009 iterations and 1.34 seconds
+Optimal objective  1.459450000e+05
+status: OPTIMAL

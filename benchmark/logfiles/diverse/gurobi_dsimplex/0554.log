@@ -1,0 +1,27 @@
+id: 554
+name: scfxm1-2r-256
+group: meszaros/stochlp
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 15:57:20 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 15:57:20 2018
+
+Optimize a model with 37980 rows, 57714 columns and 213159 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-03, 6e+01]
+  Objective range  [4e-03, 1e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [8e-01, 1e+03]
+Presolve removed 13855 rows and 13848 columns
+Presolve time: 0.08s
+Presolved: 24125 rows, 43866 columns, 163110 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -4.4800000e+30   1.377813e+33   4.480000e+00      0s
+   28800    2.8917061e+03   0.000000e+00   0.000000e+00      3s
+
+Solved in 28800 iterations and 2.63 seconds
+Optimal objective  2.891706114e+03
+status: OPTIMAL

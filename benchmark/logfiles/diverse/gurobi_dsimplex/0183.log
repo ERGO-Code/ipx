@@ -1,0 +1,27 @@
+id: 183
+name: ken-18
+group: kennington
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:56:21 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:56:21 2018
+
+Optimize a model with 105127 rows, 154699 columns and 358171 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [3e-01, 1e+04]
+  Bounds range     [7e+01, 4e+05]
+  RHS range        [1e+00, 2e+04]
+Presolve removed 65272 rows and 65353 columns
+Presolve time: 0.25s
+Presolved: 39855 rows, 89346 columns, 204936 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -1.2104028e+12   2.635727e+08   0.000000e+00      0s
+   50371   -5.2217025e+10   0.000000e+00   0.000000e+00      1s
+
+Solved in 50371 iterations and 1.37 seconds
+Optimal objective -5.221702529e+10
+status: OPTIMAL

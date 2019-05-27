@@ -1,0 +1,27 @@
+id: 254
+name: bas1lp
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:56:26 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:56:26 2018
+
+Optimize a model with 5411 rows, 4461 columns and 582411 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+01]
+  Objective range  [4e+02, 4e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+01]
+Presolve removed 2 rows and 18 columns
+Presolve time: 0.09s
+Presolved: 5409 rows, 4443 columns, 582390 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    3.6300000e+02   7.369375e+02   0.000000e+00      0s
+    1150    3.6300000e+02   0.000000e+00   0.000000e+00      0s
+
+Solved in 1150 iterations and 0.27 seconds
+Optimal objective  3.630000000e+02
+status: OPTIMAL

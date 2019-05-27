@@ -1,0 +1,31 @@
+id: 1115
+name: momentum3
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 03:00:29 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 03:00:29 2018
+
+Optimize a model with 56822 rows, 13532 columns and 588073 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-13, 2e+01]
+  Objective range  [5e-02, 1e+03]
+  Bounds range     [2e-01, 2e+02]
+  RHS range        [1e-06, 2e+02]
+Presolve removed 411 rows and 208 columns
+Presolve time: 0.12s
+Presolved: 56411 rows, 13324 columns, 566262 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    7.6100302e+04   6.258840e+02   0.000000e+00      0s
+   18698    9.1929145e+04   4.490467e+05   0.000000e+00      5s
+   30542    9.1949834e+04   6.894328e+03   0.000000e+00     10s
+Warning: Markowitz tolerance tightened to 0.0625
+   36739    9.1952156e+04   1.317180e+01   0.000000e+00     15s
+   39811    9.1952392e+04   0.000000e+00   0.000000e+00     18s
+
+Solved in 39811 iterations and 18.36 seconds
+Optimal objective  9.195239229e+04
+status: OPTIMAL

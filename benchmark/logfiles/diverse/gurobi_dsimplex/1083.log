@@ -1,0 +1,33 @@
+id: 1083
+name: ivu52
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 02:22:07 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 02:22:07 2018
+
+Optimize a model with 2116 rows, 157591 columns and 2179476 nonzeros
+Coefficient statistics:
+  Matrix range     [3e-03, 9e+00]
+  Objective range  [2e+00, 8e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+01]
+Presolve removed 0 rows and 48 columns
+Presolve time: 0.32s
+Presolved: 2116 rows, 157543 columns, 2178871 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.0754333e+02   1.419651e+03   0.000000e+00      0s
+    9869    4.7554694e+02   2.213089e+03   0.000000e+00      5s
+   15417    4.7801801e+02   1.132167e+04   0.000000e+00     10s
+   20235    4.7949743e+02   6.317896e+02   0.000000e+00     15s
+   23593    4.8003998e+02   5.819516e+02   0.000000e+00     20s
+   25783    4.8018863e+02   2.288904e+03   0.000000e+00     25s
+   27681    4.8024450e+02   1.885657e+01   0.000000e+00     30s
+   28092    4.8025044e+02   0.000000e+00   0.000000e+00     31s
+
+Solved in 28092 iterations and 31.24 seconds
+Optimal objective  4.802504409e+02
+status: OPTIMAL

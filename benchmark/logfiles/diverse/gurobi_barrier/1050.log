@@ -1,0 +1,88 @@
+id: 1050
+name: dolom1
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:13:39 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:13:39 2018
+
+Optimize a model with 1803 rows, 11612 columns and 190413 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+08]
+  Objective range  [2e+02, 1e+08]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+10]
+Warning: Model contains large rhs
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 1 rows and 787 columns
+Presolve time: 0.04s
+Presolved: 1802 rows, 10825 columns, 176976 nonzeros
+
+Ordering time: 0.07s
+
+Barrier statistics:
+ AA' NZ     : 1.316e+05
+ Factor NZ  : 5.807e+05 (roughly 10 MBytes of memory)
+ Factor Ops : 2.705e+08 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   2.51199547e+11 -1.48490310e+09  7.23e+05 0.00e+00  2.50e+07     0s
+   1   9.35568552e+10 -1.42167707e+09  2.67e+05 7.62e+04  9.33e+06     0s
+   2   1.57000030e+10 -1.35893964e+09  4.44e+04 3.89e+04  1.64e+06     0s
+   3   1.66887338e+09 -1.18953313e+09  4.61e+03 7.81e+03  2.20e+05     0s
+   4   3.96368790e+08 -4.16209923e+08  1.08e+03 7.87e+02  5.41e+04     0s
+   5   7.79945979e+07 -1.19331611e+08  1.95e+02 1.67e+02  1.19e+04     0s
+   6   3.36120719e+07 -5.89608491e+07  7.31e+01 8.02e+01  5.31e+03     0s
+   7   1.87832820e+07 -4.00365879e+07  3.27e+01 5.57e+01  3.23e+03     0s
+   8   1.30221350e+07 -2.10709747e+07  1.70e+01 3.18e+01  1.84e+03     0s
+   9   9.84751911e+06 -8.70890343e+06  8.36e+00 1.67e+01  9.80e+02     0s
+  10   7.64994834e+06 -2.09760097e+06  2.41e+00 9.15e+00  5.02e+02     0s
+  11   7.02232112e+06  4.62604472e+06  7.63e-01 2.01e+00  1.23e+02     0s
+  12   6.78955897e+06  5.44127844e+06  2.50e-01 1.16e+00  6.87e+01     0s
+  13   6.69020131e+06  5.87798212e+06  9.63e-02 7.06e-01  4.13e+01     0s
+  14   6.65842885e+06  6.17779880e+06  6.30e-02 3.79e-01  2.45e+01     0s
+  15   6.62847160e+06  6.33948588e+06  3.76e-02 2.22e-01  1.47e+01     0s
+  16   6.62105400e+06  6.37588105e+06  3.29e-02 1.84e-01  1.25e+01     0s
+  17   6.60061410e+06  6.44891391e+06  1.94e-02 1.11e-01  7.73e+00     0s
+  18   6.57859156e+06  6.48436954e+06  7.75e-03 7.32e-02  4.79e+00     0s
+  19   6.57225686e+06  6.51356155e+06  5.21e-03 4.29e-02  2.98e+00     0s
+  20   6.56474450e+06  6.53271870e+06  2.45e-03 2.34e-02  1.63e+00     0s
+  21   6.56097010e+06  6.54239522e+06  1.28e-03 1.36e-02  9.43e-01     0s
+  22   6.55864101e+06  6.54717868e+06  6.00e-04 8.75e-03  5.81e-01     0s
+  23   6.55728737e+06  6.55145712e+06  2.46e-04 4.50e-03  2.96e-01     0s
+  24   6.55649944e+06  6.55404878e+06  7.24e-05 1.92e-03  1.24e-01     0s
+  25   6.55633504e+06  6.55499594e+06  3.97e-05 1.00e-03  6.78e-02     0s
+  26   6.55620543e+06  6.55541747e+06  1.88e-05 5.92e-04  3.99e-02     0s
+  27   6.55618907e+06  6.55563778e+06  1.65e-05 3.90e-04  2.79e-02     0s
+  28   6.55609607e+06  6.55599223e+06  3.73e-06 5.86e-05  5.26e-03     1s
+  29   6.55608085e+06  6.55603718e+06  1.75e-06 2.21e-05  2.21e-03     1s
+  30   6.55606964e+06  6.55605295e+06  3.87e-07 1.00e-05  8.45e-04     1s
+  31   6.55606809e+06  6.55606397e+06  2.19e-07 1.37e-06  2.10e-04     1s
+  32   6.55606612e+06  6.55606601e+06  1.85e-09 2.98e-08  5.80e-06     1s
+  33   6.55606607e+06  6.55606607e+06  3.63e-09 1.49e-08  1.36e-07     1s
+  34   6.55606607e+06  6.55606607e+06  2.19e-10 2.98e-08  7.65e-09     1s
+
+Barrier solved model in 34 iterations and 0.58 seconds
+Optimal objective 6.55606607e+06
+
+Crossover log...
+
+       0 DPushes remaining with DInf 5.2180670e-07                 1s
+
+      28 PPushes remaining with PInf 0.0000000e+00                 1s
+       0 PPushes remaining with PInf 0.0000000e+00                 1s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 7.3234431e-07      1s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    1003    6.5560661e+06   0.000000e+00   0.000000e+00      1s
+    1003    6.5560661e+06   0.000000e+00   0.000000e+00      1s
+
+Solved in 1003 iterations and 0.62 seconds
+Optimal objective  6.556066068e+06
+status: OPTIMAL

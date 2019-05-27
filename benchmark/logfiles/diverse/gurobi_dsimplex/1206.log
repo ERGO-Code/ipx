@@ -1,0 +1,27 @@
+id: 1206
+name: netdiversion
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 03:28:05 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 03:28:05 2018
+
+Optimize a model with 119589 rows, 129180 columns and 615282 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+05]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 20008 rows and 212 columns
+Presolve time: 0.14s
+Presolved: 99581 rows, 128968 columns, 495878 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   1.130000e+02   0.000000e+00      0s
+   24282    2.3080000e+02   0.000000e+00   0.000000e+00      4s
+
+Solved in 24282 iterations and 3.61 seconds
+Optimal objective  2.308000000e+02
+status: OPTIMAL

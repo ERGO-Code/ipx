@@ -1,0 +1,53 @@
+id: 1082
+name: ivu06-big
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 02:19:00 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 02:19:00 2018
+
+Optimize a model with 1177 rows, 2277736 columns and 23125770 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [6e-01, 8e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 0 rows and 79962 columns (presolve time = 6s) ...
+Presolve removed 0 rows and 79962 columns
+Presolve time: 5.67s
+Presolved: 1177 rows, 2197774 columns, 22556378 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.9188336e+01   1.147000e+03   0.000000e+00      6s
+
+Starting sifting (using dual simplex for sub-problems)...
+
+    Iter     Pivots    Primal Obj      Dual Obj        Time
+       0          0     infinity      4.9188336e+01      6s
+       1       4524   8.0843574e+08   7.8682258e+01      7s
+       2      24668   5.0505909e+08   8.4032844e+01     12s
+       3      48912   3.5494142e+08   8.8235492e+01     19s
+       4      69893   2.4599017e+08   9.1325484e+01     26s
+       5     120957   1.8906252e+08   9.7160114e+01     43s
+       6     134313   1.2541787e+08   9.9695353e+01     51s
+       7     149040   7.1902201e+07   1.0105033e+02     61s
+       8     168209   3.4128797e+07   1.0288514e+02     74s
+       9     184247   7.6295017e+06   1.0322196e+02     87s
+      10     199699   1.3948754e+02   1.0322196e+02     97s
+      11     216042   1.3858676e+02   1.1651112e+02    109s
+      12     234000   1.3687762e+02   1.2610607e+02    121s
+      13     253805   1.3608325e+02   1.3066246e+02    134s
+      14     272808   1.3558801e+02   1.3234367e+02    147s
+      15     292286   1.3547218e+02   1.3439380e+02    160s
+      16     310854   1.3542785e+02   1.3515151e+02    173s
+      17     323879   1.3542772e+02   1.3538444e+02    182s
+
+Sifting complete
+
+  328757    1.3542772e+02   0.000000e+00   0.000000e+00    185s
+
+Solved in 328757 iterations and 185.20 seconds
+Optimal objective  1.354277185e+02
+status: OPTIMAL

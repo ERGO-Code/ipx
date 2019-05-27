@@ -1,0 +1,28 @@
+id: 1313
+name: satellites3-40-fs
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 15:41:47 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 15:41:47 2018
+
+Optimize a model with 35553 rows, 81681 columns and 291161 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-01, 2e+05]
+  Objective range  [1e+00, 1e+02]
+  Bounds range     [1e+00, 2e+05]
+  RHS range        [1e+00, 2e+05]
+Presolve removed 7635 rows and 12070 columns
+Presolve time: 0.13s
+Presolved: 27918 rows, 69611 columns, 216171 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0      handle free variables                          0s
+    8553   -3.8999966e+01   4.915201e-01   0.000000e+00      5s
+   10296   -3.9000000e+01   0.000000e+00   0.000000e+00      8s
+
+Solved in 10296 iterations and 7.61 seconds
+Optimal objective -3.900000000e+01
+status: OPTIMAL

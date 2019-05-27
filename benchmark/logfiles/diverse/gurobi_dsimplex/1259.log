@@ -1,0 +1,39 @@
+id: 1259
+name: opm2-z12-s7
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 04:50:17 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 04:50:17 2018
+
+Optimize a model with 319508 rows, 10800 columns and 725385 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+03]
+  Objective range  [1e+00, 6e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [4e+06, 4e+06]
+Presolve removed 439 rows and 21950 columns
+Presolve time: 0.55s
+Presolved: 10361 rows, 308358 columns, 689212 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -7.6929300e+05   0.000000e+00   3.204161e+08      1s
+   10300   -3.3335733e+05   0.000000e+00   8.221032e+08      5s
+   17320   -2.3940355e+05   0.000000e+00   5.727843e+08     10s
+   25120   -1.9574451e+05   0.000000e+00   5.882548e+09     15s
+   32144   -1.7213435e+05   0.000000e+00   7.356018e+08     20s
+   39949   -1.5094465e+05   0.000000e+00   9.195148e+08     25s
+   47762   -1.3546220e+05   0.000000e+00   8.415624e+08     30s
+   54788   -1.2144376e+05   0.000000e+00   8.546541e+08     35s
+   61808   -1.1100904e+05   0.000000e+00   3.128369e+08     40s
+   68836   -1.0300402e+05   0.000000e+00   2.292466e+08     45s
+   75097   -9.7484712e+04   0.000000e+00   4.835908e+08     50s
+   82127   -9.1982355e+04   0.000000e+00   1.259027e+07     55s
+   87361   -9.0514286e+04   2.389414e-04   0.000000e+00     60s
+   87364   -9.0514286e+04   0.000000e+00   0.000000e+00     60s
+
+Solved in 87364 iterations and 60.17 seconds
+Optimal objective -9.051428584e+04
+status: OPTIMAL

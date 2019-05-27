@@ -1,0 +1,27 @@
+id: 1098
+name: map06
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 02:22:41 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 02:22:41 2018
+
+Optimize a model with 328818 rows, 164547 columns and 549920 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+07]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 5e+07]
+Presolve removed 291314 rows and 145574 columns
+Presolve time: 0.31s
+Presolved: 37504 rows, 18973 columns, 81653 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -1.6750060e+03   3.315228e+03   0.000000e+00      0s
+   18491   -4.0618117e+02   0.000000e+00   0.000000e+00      3s
+
+Solved in 18491 iterations and 2.52 seconds
+Optimal objective -4.061811727e+02
+status: OPTIMAL

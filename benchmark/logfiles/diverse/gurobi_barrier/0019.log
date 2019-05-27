@@ -1,0 +1,86 @@
+id: 19
+name: L1_five20b
+group: castro/L1
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:05:36 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:05:36 2018
+
+Optimize a model with 52983 rows, 69104 columns and 416670 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e-06, 3e-01]
+  Bounds range     [1e+00, 8e+05]
+  RHS range        [0e+00, 0e+00]
+Presolve removed 25185 rows and 6662 columns
+Presolve time: 3.95s
+Presolved: 27798 rows, 62442 columns, 187103 nonzeros
+
+Ordering time: 0.44s
+
+Barrier statistics:
+ AA' NZ     : 1.418e+05
+ Factor NZ  : 6.638e+06 (roughly 90 MBytes of memory)
+ Factor Ops : 3.413e+09 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.66190689e+09 -9.25523622e+09  1.10e+08 5.68e-14  6.98e+09     5s
+   1   6.57693119e+08 -8.99918356e+09  4.22e+07 1.07e-12  2.75e+09     5s
+   2   4.05624384e+07 -7.96169368e+09  1.99e+06 1.53e-12  1.94e+08     5s
+   3   9.10944032e+06 -1.02504829e+09  4.56e+05 1.53e-11  3.53e+07     5s
+   4   4.18079007e+05 -1.92887680e+08  1.79e+04 7.62e-12  2.56e+06     5s
+   5   1.12629019e+05 -3.88901483e+07  1.93e+03 7.65e-12  3.66e+05     5s
+   6   7.46208912e+04 -5.34990430e+06  1.30e+02 4.21e-12  4.51e+04     5s
+   7   6.17382569e+04 -8.52383770e+05  2.16e+01 8.81e-13  7.51e+03     5s
+   8   5.37657823e+04 -1.24528141e+05  6.04e+00 1.71e-13  1.46e+03     5s
+   9   3.53352949e+04 -1.92754678e+04  7.93e-01 1.14e-13  4.48e+02     5s
+  10   6.34404355e+03 -4.20957994e+03  6.51e-02 1.14e-13  8.65e+01     5s
+  11   1.45927472e+03  4.95493309e+01  1.04e-02 1.14e-13  1.16e+01     6s
+  12   7.58307186e+02  2.80818012e+02  3.27e-03 1.14e-13  3.92e+00     6s
+  13   5.03095318e+02  4.31617631e+02  2.54e-04 1.71e-13  5.86e-01     6s
+  14   4.87485614e+02  4.61502530e+02  1.04e-04 1.14e-13  2.13e-01     6s
+  15   4.80299702e+02  4.66702859e+02  3.83e-05 1.14e-13  1.11e-01     6s
+  16   4.78329733e+02  4.70663532e+02  2.17e-05 1.14e-13  6.29e-02     6s
+  17   4.77196970e+02  4.72371492e+02  1.18e-05 1.14e-13  3.96e-02     6s
+  18   4.76546123e+02  4.73649430e+02  6.43e-06 1.14e-13  2.38e-02     6s
+  19   4.76114171e+02  4.74482367e+02  3.14e-06 1.14e-13  1.34e-02     6s
+  20   4.75853643e+02  4.75188349e+02  1.22e-06 5.68e-14  5.46e-03     6s
+  21   4.75737809e+02  4.75444632e+02  3.97e-07 5.68e-14  2.40e-03     6s
+  22   4.75705155e+02  4.75590748e+02  1.77e-07 1.14e-13  9.38e-04     7s
+  23   4.75686284e+02  4.75621769e+02  6.37e-08 5.68e-14  5.29e-04     7s
+  24   4.75679880e+02  4.75644733e+02  2.69e-08 1.14e-13  2.88e-04     7s
+  25   4.75676120e+02  4.75659228e+02  7.23e-09 5.68e-14  1.39e-04     7s
+  26   4.75674722e+02  4.75669918e+02  1.87e-09 5.68e-14  3.94e-05     7s
+  27   4.75674424e+02  4.75674026e+02  2.54e-09 1.71e-13  3.27e-06     7s
+  28   4.75674386e+02  4.75674222e+02  2.51e-08 5.68e-14  1.35e-06     7s
+  29   4.75674367e+02  4.75674325e+02  1.82e-06 5.68e-14  3.40e-07     7s
+  30   4.75674363e+02  4.75674358e+02  3.62e-07 1.14e-13  4.54e-08     7s
+  31   4.75674363e+02  4.75674359e+02  4.19e-07 1.14e-13  3.37e-08     8s
+  32   4.75674362e+02  4.75674362e+02  6.60e-07 1.14e-13  1.07e-09     8s
+  33   4.75674362e+02  4.75674362e+02  7.32e-08 5.68e-14  5.77e-11     8s
+
+Barrier solved model in 33 iterations and 7.69 seconds
+Optimal objective 4.75674362e+02
+
+Crossover log...
+
+    5687 DPushes remaining with DInf 0.0000000e+00                 8s
+     207 DPushes remaining with DInf 0.0000000e+00                10s
+       0 DPushes remaining with DInf 8.3288706e-12                10s
+
+      15 PPushes remaining with PInf 0.0000000e+00                10s
+       0 PPushes remaining with PInf 0.0000000e+00                10s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 6.8349024e-12     10s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    5705    4.7567436e+02   0.000000e+00   0.000000e+00     10s
+    5705    4.7567436e+02   0.000000e+00   0.000000e+00     10s
+
+Solved in 5705 iterations and 10.45 seconds
+Optimal objective  4.756743622e+02
+status: OPTIMAL

@@ -1,0 +1,29 @@
+id: 367
+name: mod2
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:57:42 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:57:42 2018
+
+Optimize a model with 34774 rows, 31728 columns and 165129 nonzeros
+Coefficient statistics:
+  Matrix range     [2e-03, 6e+03]
+  Objective range  [1e-03, 3e+08]
+  Bounds range     [9e-37, 1e+05]
+  RHS range        [2e-03, 8e+06]
+Presolve removed 11407 rows and 8105 columns
+Presolve time: 0.06s
+Presolved: 23367 rows, 23676 columns, 114866 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.6083253e+07   1.240680e+05   0.000000e+00      0s
+   24222    4.2545617e+07   2.139038e+06   0.000000e+00      5s
+Extra 13 simplex iterations after uncrush
+   32519    4.3647835e+07   0.000000e+00   0.000000e+00      8s
+
+Solved in 32519 iterations and 8.48 seconds
+Optimal objective  4.364783478e+07
+status: OPTIMAL
