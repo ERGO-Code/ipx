@@ -45,17 +45,19 @@
 \newcommand{\superbasic}{\ct{IPX\_superbasic}}
 
 \title{IPX Reference Guide}
-\author{Version 1.0}
 
 \begin{document}
 \maketitle
+\tableofcontents
 
 %-------------------------------------------------------------------------------
-\section*{Functionality}
+\section{Functionality}
 %-------------------------------------------------------------------------------
 
+\subsection{Problem Formulation}
 IPX solves linear programming (LP) problems in the form
 \begin{subequations}
+  \label{eq:lp}
   \begin{alignat}{2}
     \underset{\x}{\text{minimize}} &\quad& &\obj^T\x \\
     \label{eq:ax=b}
@@ -77,7 +79,7 @@ Associated with $\lb\le\x$ and $\x\le\ub$ are dual variable $\zl\ge0$ and
 $\zu\ge0$ respectively. Entries of $-\lb$ and $\ub$ can be infinity, in which
 case the dual is fixed at zero.
 
-\subsubsection*{Interior Point Method}
+\subsection{Interior Point Method}
 The interior point method (IPM) computes a primal-dual point
 $\rvec{\x,\slack,\xl,\xu,\y,\zl,\zu}$ that approximately satisfies
 \begin{subequations}
@@ -107,7 +109,7 @@ In theory, the IPM iterates will in the limit satisfy \eqref{eq:pres} and
 (Entries for which -\lb\ or \ub\ is infinity are understood to be dropped from
 the sum.)
 
-\subsubsection*{Crossover}
+\subsection{Crossover}
 The crossover method recovers an optimal basis from the interior solution. A
 basis is defined by variable and constraint statuses
 \begin{align}
@@ -145,7 +147,183 @@ the obtained basis may not be primal and/or dual feasible. In this case
 reoptimization with an external simplex code is required.
 
 %-------------------------------------------------------------------------------
-\section*{Parameters}
+\section{Usage}
+%-------------------------------------------------------------------------------
+
+\subsection{C++ Interface}
+User code written in C++ must include the header file \ct{src/lp\_solver.h}.
+Both the \ct{src/} and \ct{include/} directories must be in the compiler's
+search path for header files.
+
+The following code snippet illustrates the use of the C++ interface. The
+complete example program can be found in \ct{example/afiro.cc} and can be
+compiled by calling \ct{make} in the \ct{example/} directory.
+
+\newpage
+\begin{verbatim}
+#include <cmath>
+#include <iostream>
+#include "lp_solver.h"
+
+using Int = ipxint;
+
+constexpr Int num_var = 12;
+constexpr Int num_constr = 9;
+const double obj[] = { -0.2194, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.32,
+                       -0.5564, 0.6, -0.48 };
+const double lb[num_var] = { 0.0 };
+const double ub[] = { 80.0, 283.303, 283.303, 312.813, 349.187, INFINITY,
+                      INFINITY, INFINITY, 57.201, 500.0, 500.501, 357.501};
+// Constraint matrix in CSC format with 0-based indexing.
+const Int Ap[] = { 0, 2, 6, 10, 14, 18, 20, 22, 24, 26, 28, 30, 32 };
+const Int Ai[] = { 0, 5, ... };
+const double Ax[] = { -1.0, 0.301, ... };
+const double rhs[] = { 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.0, 300.0 };
+const char constr_type[] = { '<', '<', '=', '<', '<', '=', '<', '<', '<' };
+
+int main() {
+    ipx::LpSolver lps;
+
+    // Solve the LP.
+    Int status = lps.Solve(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax, rhs,
+                           constr_type);
+    if (status != IPX_STATUS_ok) {
+        // fatal error (invalid input, out of memory, etc.)
+        std::cout << " status: " << status << ','
+                  << " errflag: " << lps.GetInfo().errflag << '\n';
+        return 1;
+    }
+
+    // Get solver and solution information.
+    ipx::Info info = lps.GetInfo();
+
+    // Get the interior solution (available if IPM was started).
+    double x[num_var], xl[num_var], xu[num_var], slack[num_constr];
+    double y[num_constr], zl[num_var], zu[num_var];
+    lps.GetInteriorSolution(x, xl, xu, slack, y, zl, zu);
+
+    // Get the basic solution (available if crossover terminated without error).
+    double xbasic[num_var], sbasic[num_constr];
+    double ybasic[num_constr], zbasic[num_var];
+    Int cbasis[num_constr], vbasis[num_var];
+    lps.GetBasicSolution(xbasic, sbasic, ybasic, zbasic, cbasis, vbasis);
+
+    return 0;
+}
+\end{verbatim}
+
+\newpage
+All classes and functions belonging to IPX are declared in namespace \ct{ipx}.
+There are three classes that are intended for direct use from external code:
+\ct{ipx::LpSolver}, \ct{ipx::Parameters} and \ct{ipx::Info}. The \ct{Parameters}
+and \ct{Info} classes have no methods (except for a constructor that initializes
+them to default values). They are used to pass control parameters to IPX and to
+return information about the execution of the solver. They are documented in
+Sections \ref{sec:parameters} and \ref{sec:info}.
+
+The \ct{LpSolver} class provides the user interface to the LP solver. Its
+methods are documented through source code comments in \ct{src/lp\_solver.h}.
+The method
+\begin{verbatim}
+    Int Solve(Int num_var, const double* obj, const double* lb,
+              const double* ub, Int num_constr, const Int* Ap, const Int* Ai,
+              const double* Ax, const double* rhs, const char* constr_type);
+\end{verbatim}
+requires the LP problem in the form \eqref{eq:lp} with the constraint matrix $A$
+given in compressed sparse column (CSC) format. That means, \ct{Ap} is an array
+of size $\ct{num\_var}+1$ and \ct{Ai} and \ct{Ax} are arrays of size equal to
+the number of entries in $A$. They must be set such that
+\ct{Ai[Ap[j]..Ap[j+1]-1]} and \ct{Ax[Ap[j]..Ap[j+1]-1]} hold the row indices and
+nonzero values of the entries in column \ct{j} of $A$. The entries within each
+column can be in any order, but there must be no duplicates. The input is
+checked prior to running the solver and an error code is returned if it is
+invalid (see Section~\ref{sec:info}).
+
+\subsection{C Interface}
+C wrapper functions for the methods of class \ct{LpSolver} are provided to allow
+using the full functionality of IPX from C code. User code written in C must
+include the header file \ct{include/ipx\_c.h}.
+
+The following code snippet illustrates the use of the C interface. The
+complete example program can be found in \ct{example/afiro\_c.c} and can be
+compiled by calling \ct{make} in the \ct{example/} directory.
+
+\begin{verbatim}
+#include <math.h>
+#include <stdio.h>
+#include "ipx_c.h"
+
+typedef ipxint Int;
+
+#define NUM_VAR 12
+#define NUM_CONSTR 9
+const double obj[] = { -0.2194, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.32,
+                       -0.5564, 0.6, -0.48 };
+const double lb[NUM_VAR] = { 0.0 };
+const double ub[] = { 80.0, 283.303, 283.303, 312.813, 349.187, INFINITY,
+                      INFINITY, INFINITY, 57.201, 500.0, 500.501, 357.501};
+// Constraint matrix in CSC format with 0-based indexing.
+const Int Ap[] = { 0, 2, 6, 10, 14, 18, 20, 22, 24, 26, 28, 30, 32 };
+const Int Ai[] = { 0, 5, ... };
+const double Ax[] = { -1.0, 0.301, ... };
+const double rhs[] = { 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.0, 300.0 };
+const char constr_type[] = { '<', '<', '=', '<', '<', '=', '<', '<', '<' };
+
+int main() {
+    void *lps = NULL;
+
+    // Create new solver instance. This allocates a tiny amount of memory.
+    ipx_new(&lps);
+    if (!lps) return 1;
+
+    // Solve the LP.
+    Int status = ipx_solve(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai, Ax,
+                           rhs, constr_type);
+    if (status != IPX_STATUS_ok) {
+        // fatal error (invalid input, out of memory, etc.)
+        struct ipx_info info = ipx_get_info(lps);
+        printf(" status: %ld, errflag: %ld\n", (long) status,
+               (long) info.errflag);
+        return 2;
+    }
+
+    // Get solver and solution information.
+    struct ipx_info info = ipx_get_info(lps);
+
+    // Get the interior solution (available if IPM was started).
+    double x[NUM_VAR], xl[NUM_VAR], xu[NUM_VAR], slack[NUM_CONSTR];
+    double y[NUM_CONSTR], zl[NUM_VAR], zu[NUM_VAR];
+    ipx_get_interior_solution(lps, x, xl, xu, slack, y, zl, zu);
+
+    // Get the basic solution (available if crossover terminated without error).
+    double xbasic[NUM_VAR], sbasic[NUM_CONSTR];
+    double ybasic[NUM_CONSTR], zbasic[NUM_VAR];
+    Int cbasis[NUM_CONSTR], vbasis[NUM_VAR];
+    ipx_get_basic_solution(lps, xbasic, sbasic, ybasic, zbasic, cbasis, vbasis);
+
+    // Must call ipx_free() to deallocate memory in solver instance.
+    ipx_free(&lps);
+    return 0;
+}
+\end{verbatim}
+
+The solver is accessed through a \ct{void} pointer, which must be allocated by
+\ct{ipx\_new} and finally deallocated by \ct{ipx\_free} (see
+\ct{include/ipx\_c.h} for documentation of these functions). The remaining
+functions of the C interface are simply wrappers around the methods of class
+\ct{LpSolver}, which require the pointer to the solver as their first argument.
+
+Parameters and solver information are passed in and out through data types
+\ct{struct ipx\_parameters} and \ct{struct ipx\_info}, which are the same as
+\ct{ipx::Parameters} and \ct{ipx::Info} in the C++ interface and are documented
+in Sections \ref{sec:parameters} and \ref{sec:info}. In contrast to the C++
+interface, the struct members are uninitialized when a data type is defined.
+A \ct{struct ipx\_parameters} object with default parameter values is returned
+by \ct{ipx\_default\_parameters()}.
+
+%-------------------------------------------------------------------------------
+\section{Parameters}
+\label{sec:parameters}
 %-------------------------------------------------------------------------------
 
 \param{display}{ipxint}{1}{
@@ -323,5 +501,10 @@ reoptimization with an external simplex code is required.
   A basic solution is considered dual feasible if the dual variables do not
   violate their sign condition by more than \ct{dfeasibility\_tol}.
 }
+
+%-------------------------------------------------------------------------------
+\section{Info}
+\label{sec:info}
+%-------------------------------------------------------------------------------
 
 \end{document}

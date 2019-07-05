@@ -6,6 +6,7 @@ doc/*.aux
 doc/*.log
 doc/*.toc
 example/afiro
+example/afiro_c
 example/crossover
 Matlab/build/*/*.o
 Matlab/*.mexa64
