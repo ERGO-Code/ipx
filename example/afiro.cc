@@ -60,8 +60,9 @@ int main() {
     // Solve the LP.
     Int status = lps.Solve(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax, rhs,
                            constr_type);
-    if (status != IPX_STATUS_ok) {
-        // fatal error (invalid input, out of memory, etc.)
+    if (status != IPX_STATUS_solved) {
+        // no solution
+        // (invalid input, time/iter limit, numerical failure, out of memory)
         std::cout << " status: " << status << ','
                   << " errflag: " << lps.GetInfo().errflag << '\n';
         return 1;

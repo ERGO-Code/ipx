@@ -43,7 +43,13 @@ Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
             info_.mean_fill = basis_->mean_fill();
             info_.max_fill = basis_->max_fill();
         }
-        info_.status = IPX_STATUS_ok;
+        Int method_status = control_.crossover() ?
+            info_.status_crossover : info_.status_ipm;
+        if (method_status == IPX_STATUS_optimal ||
+            method_status == IPX_STATUS_imprecise)
+            info_.status = IPX_STATUS_solved;
+        else
+            info_.status = IPX_STATUS_stopped;
         PrintSummary();
     }
     catch (std::bad_alloc) {
@@ -68,22 +74,22 @@ Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* slack, double* y, double* zl,
                                   double* zu) const {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     model_.PostsolveInteriorSolution(
         iterate_->x(), iterate_->xl(), iterate_->xu(),
         iterate_->y(), iterate_->zl(), iterate_->zu(),
         x, xl, xu, slack, y, zl, zu);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
     if (basic_statuses_.empty())
-        return IPX_STATUS_invalid_call;
+        return -1;
     model_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
                                   basic_statuses_, x, slack, y, z);
     model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Parameters LpSolver::GetParameters() const {
@@ -109,7 +115,7 @@ void LpSolver::ClearModel() {
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
                          double* xl, double* xu) {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     if (x)
         std::copy(std::begin(iterate_->x()), std::end(iterate_->x()), x);
     if (y)
@@ -122,7 +128,7 @@ Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
         std::copy(std::begin(iterate_->xl()), std::end(iterate_->xl()), xl);
     if (xu)
         std::copy(std::begin(iterate_->xu()), std::end(iterate_->xu()), xu);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 // Returns a vector of basic statuses that is consistent with the basis and
@@ -150,19 +156,19 @@ static std::vector<Int> BuildBasicStatuses(const Basis& basis) {
 
 Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
     if (!basis_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     if (!basic_statuses_.empty()) {
         // crossover provides basic statuses
         model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     } else {
         model_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::GetKKTMatrix(Int* AIp, Int* AIi, double* AIx, double* g) {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     if (AIp && AIi && AIx) {
         const SparseMatrix& AI = model_.AI();
         std::copy_n(AI.colptr(), AI.cols()+1, AIp);
@@ -191,14 +197,14 @@ Int LpSolver::GetKKTMatrix(Int* AIp, Int* AIi, double* AIx, double* g) {
             }
         }
     }
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::SymbolicInvert(Int* rowcounts, Int* colcounts) {
     if (!basis_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     basis_->SymbolicInvert(rowcounts, colcounts);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 void LpSolver::InteriorPointSolve() {

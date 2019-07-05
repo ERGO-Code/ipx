@@ -63,8 +63,9 @@ int main() {
     // Solve the LP.
     Int status = ipx_solve(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai, Ax,
                            rhs, constr_type);
-    if (status != IPX_STATUS_ok) {
-        // fatal error (invalid input, out of memory, etc.)
+    if (status != IPX_STATUS_solved) {
+        // no solution
+        // (invalid input, time/iter limit, numerical failure, out of memory)
         struct ipx_info info = ipx_get_info(lps);
         printf(" status: %ld, errflag: %ld\n", (long) status,
                (long) info.errflag);

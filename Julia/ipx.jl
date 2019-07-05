@@ -2,7 +2,45 @@ module ipx
 
 const ipxint = Int64
 const spmatrix = SparseMatrixCSC{Cdouble,ipxint}
-const IPX_STATUS_ok = 1000
+const IPX_STATUS_not_run                  = 0
+const IPX_STATUS_solved                   = 1000
+const IPX_STATUS_stopped                  = 1005
+const IPX_STATUS_invalid_input            = 1002
+const IPX_STATUS_out_of_memory            = 1003
+const IPX_STATUS_internal_error           = 1004
+const IPX_STATUS_optimal                  = 1
+const IPX_STATUS_imprecise                = 2
+const IPX_STATUS_primal_infeas            = 3
+const IPX_STATUS_dual_infeas              = 4
+const IPX_STATUS_time_limit               = 5
+const IPX_STATUS_iter_limit               = 6
+const IPX_STATUS_no_progress              = 7
+const IPX_STATUS_failed                   = 8
+const IPX_STATUS_debug                    = 9
+const IPX_ERROR_argument_null             = 102
+const IPX_ERROR_invalid_dimension         = 103
+const IPX_ERROR_invalid_matrix            = 104
+const IPX_ERROR_invalid_vector            = 105
+const IPX_ERROR_invalid_bound             = 106
+const IPX_ERROR_invalid_basis             = 107
+const IPX_ERROR_cr_iter_limit             = 201
+const IPX_ERROR_cr_matrix_not_posdef      = 202
+const IPX_ERROR_cr_precond_not_posdef     = 203
+const IPX_ERROR_cr_no_progress            = 204
+const IPX_ERROR_cr_inf_or_nan             = 205
+const IPX_ERROR_basis_singular            = 301
+const IPX_ERROR_basis_almost_singular     = 302
+const IPX_ERROR_basis_update_singular     = 303
+const IPX_ERROR_basis_repair_overflow     = 304
+const IPX_ERROR_basis_repair_search       = 305
+const IPX_ERROR_basis_too_ill_conditioned = 306
+const IPX_ERROR_lapack_chol               = 401
+const IPX_ERROR_interrupt_time            = 999
+const IPX_basic                           = 0
+const IPX_nonbasic                        = -1
+const IPX_nonbasic_lb                     = -1
+const IPX_nonbasic_ub                     = -2
+const IPX_superbasic                      = -3
 
 # =============================================================================
 # LP model in the form
@@ -258,15 +296,14 @@ function GetInteriorSolution(this::LPSolver)
     m = solverinfo.num_constr
     n = solverinfo.num_var
     solution = InteriorSolution(m,n)
-    status = ccall((:ipx_get_interior_solution, "libipx.so"), ipxint,
-                   (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble},
-                    Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
-                    Ptr{Cdouble}, Ptr{Cdouble}),
-                   this.solver, solution.x, solution.xl, solution.xu,
-                   solution.slack, solution.y, solution.zl, solution.zu)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_get_interior_solution error (%d)", status)
-        error(msg)
+    err = ccall((:ipx_get_interior_solution, "libipx.so"), ipxint,
+                (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble},
+                 Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
+                 Ptr{Cdouble}, Ptr{Cdouble}),
+                this.solver, solution.x, solution.xl, solution.xu,
+                solution.slack, solution.y, solution.zl, solution.zu)
+    if err != 0
+        error("ipx_get_interior_solution failed")
     end
     return solution
 end
@@ -276,14 +313,13 @@ function GetBasicSolution(this::LPSolver)
     m = solverinfo.num_constr
     n = solverinfo.num_var
     solution = BasicSolution(m,n)
-    status = ccall((:ipx_get_basic_solution, "libipx.so"), ipxint,
-                   (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
-                    Ptr{Cdouble}, Ptr{ipxint}, Ptr{ipxint}),
-                   this.solver, solution.x, solution.slack, solution.y,
-                   solution.z, solution.cbasis, solution.vbasis)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_get_basic_solution error (%d)", status)
-        error(msg)
+    err = ccall((:ipx_get_basic_solution, "libipx.so"), ipxint,
+                (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
+                 Ptr{Cdouble}, Ptr{ipxint}, Ptr{ipxint}),
+                this.solver, solution.x, solution.slack, solution.y,
+                solution.z, solution.cbasis, solution.vbasis)
+    if err != 0
+        error("ipx_get_basic_solution failed")
     end
     return solution
 end
@@ -294,12 +330,11 @@ function GetBasis(this::LPSolver)
     n = solverinfo.num_var
     cbasis = Array{ipxint}(m)
     vbasis = Array{ipxint}(n)
-    status = ccall((:ipx_get_basis, "libipx.so"), ipxint,
-                   (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
-                   this.solver, cbasis, vbasis)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_get_basis error (%d)", status)
-        error(msg)
+    err = ccall((:ipx_get_basis, "libipx.so"), ipxint,
+                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
+                this.solver, cbasis, vbasis)
+    if err != 0
+        error("ipx_get_basis failed")
     end
     return (cbasis,vbasis)
 end
@@ -314,13 +349,12 @@ function GetIterate(this::LPSolver)
     zu = Array{Cdouble}(n)
     xl = Array{Cdouble}(n)
     xu = Array{Cdouble}(n)
-    status = ccall((:ipx_get_iterate, "libipx.so"), ipxint,
+    err = ccall((:ipx_get_iterate, "libipx.so"), ipxint,
                 (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
                  Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}),
                 this.solver, x, y, zl, zu, xl, xu)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_get_iterate error (%d)", status)
-        error(msg)
+    if err != 0
+        error("ipx_get_iterate failed")
     end
     return (x,y,zl,zu,xl,xu)
 end
@@ -334,13 +368,12 @@ function GetKKTMatrix(this::LPSolver)
     AIi = Array{ipxint}(nz)
     AIx = Array{Cdouble}(nz)
     g = Array{Cdouble}(n)
-    status = ccall((:ipx_get_kktmatrix, "libipx.so"), ipxint,
-                   (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}, Ptr{Cdouble},
-                    Ptr{Cdouble}),
-                   this.solver, AIp, AIi, AIx, g)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_get_kktmatrix error (%d)", status)
-        error(msg)
+    err = ccall((:ipx_get_kktmatrix, "libipx.so"), ipxint,
+                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}, Ptr{Cdouble},
+                 Ptr{Cdouble}),
+                this.solver, AIp, AIi, AIx, g)
+    if err != 0
+        error("ipx_get_kktmatrix failed")
     end
     AIp[:] += 1
     AIi[:] += 1
@@ -353,12 +386,11 @@ function SymbolicInvert(this::LPSolver)
     m = solverinfo.num_rows_solver
     rowcounts = Array{ipxint}(m)
     colcounts = Array{ipxint}(m)
-    status = ccall((:ipx_symbolic_invert, "libipx.so"), ipxint,
-                   (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
-                   this.solver, rowcounts, colcounts)
-    if status != IPX_STATUS_ok
-        msg = @sprintf("ipx_symbolic_invert error (%d)", status)
-        error(msg)
+    err = ccall((:ipx_symbolic_invert, "libipx.so"), ipxint,
+                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
+                this.solver, rowcounts, colcounts)
+    if err != 0
+        error("ipx_symbolic_invert failed")
     end
     @assert sum(rowcounts) == sum(colcounts)
     return (rowcounts,colcounts)

@@ -37,7 +37,7 @@ public:
     // IPX_STATUS_not_run. If no iterate is available, the method does nothing.
     // Each of the pointer arguments must either be NULL or an array of
     // appropriate dimension. If NULL, the quantity is not returned.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (IPM not run).
+    // Returns -1 if no IPM iterate was available and 0 otherwise.
     Int GetInteriorSolution(double* x, double* xl, double* xu, double* slack,
                             double* y, double* zl, double* zu) const;
 
@@ -47,7 +47,7 @@ public:
     // GetInfo().status_crossover == IPX_STATUS_imprecise. Otherwise the method
     // does nothing. Each of the pointer arguments must either be NULL or an
     // array of appropriate dimension. If NULL, the quantity is not returned.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (no basic solution).
+    // Returns -1 if no basic solution was available and 0 otherwise.
     Int GetBasicSolution(double* x, double* slack, double* y, double* z,
                          Int* cbasis, Int* vbasis) const;
 
@@ -63,10 +63,11 @@ public:
     // The remaining methods are for debugging.
     // -------------------------------------------------------------------------
 
-    // Returns the current IPM iterate without postsolve.
+    // Returns the current IPM iterate without postsolve. The method does
+    // nothing when no iterate is available (i.e. when IPM was not started).
     // @x, @xl, @xu, @zl, @zu: either NULL or size num_cols_solver arrays.
     // @y: either NULL or size num_rows_solver array.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (no iterate).
+    // Returns -1 if no IPM iterate was available and 0 otherwise.
     Int GetIterate(double* x, double* y, double* zl, double* zu, double* xl,
                    double* xu);
 
@@ -79,23 +80,24 @@ public:
     // - If no basis is available, the method does nothing.
     // @cbasis: either NULL or size num_constr array.
     // @vbasis: either NULL or size num_var array.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (no basis).
+    // Returns -1 if no basis was available and 0 otherwise.
     Int GetBasis(Int* cbasis, Int* vbasis);
 
     // Returns the constraint matrix from the solver (including slack columns)
     // and the diagonal from the (1,1) block of the KKT matrix corresponding to
-    // the current IPM iterate.
+    // the current IPM iterate. The method does nothing when no IPM iterate is
+    // available (i.e. when IPM was not started).
     // @AIp: either NULL or size num_cols_solver + 1 array.
     // @AIi, @AIx: either NULL or size num_entries_solver arrays.
     // (If any of the three arguments is NULL, the matrix is not returned.)
     // @g: either NULL or size num_cols_solver array.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (no iterate).
+    // Returns -1 if no IPM iterate was available and 0 otherwise.
     Int GetKKTMatrix(Int* AIp, Int* AIi, double* AIx, double* g);
 
     // (Efficiently) computes the number of nonzeros per row and column of the
     // symbolic inverse of the basis matrix.
     // @rowcounts, @colcounts: either NULL or size num_rows_solver arrays.
-    // Returns IPX_STATUS_ok or IPX_STATUS_invalid_call (no basis).
+    // Returns -1 if no basis was available and 0 otherwise.
     Int SymbolicInvert(Int* rowcounts, Int* colcounts);
 
 private:
