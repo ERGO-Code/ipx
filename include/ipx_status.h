@@ -25,7 +25,6 @@
 #define IPX_ERROR_invalid_dimension         103
 #define IPX_ERROR_invalid_matrix            104
 #define IPX_ERROR_invalid_vector            105
-#define IPX_ERROR_invalid_bound             106
 #define IPX_ERROR_invalid_basis             107
 
 /* error flags CR method */

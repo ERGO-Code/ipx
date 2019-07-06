@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
+\usepackage{multirow}
 
 % page size
 \setlength{\hoffset}{-1in}
@@ -14,12 +15,20 @@
 \newcommand{\NULL}{\ct{NULL}}
 \newcommand{\rvec}[1]{\left(#1\right)}
 \newcommand{\param}[4]{
-  \noindent\textbf{#1}\\
-  \begin{tabular}{@{\hskip 0pt}ll}
-    Type: & \ct{#2} \\
-    Default: & \ct{#3}
-  \end{tabular}\\
-  #4 \vskip 1\baselineskip
+  \noindent\begin{minipage}{\textwidth}
+    \textbf{#1}\\
+    Type: \ct{#2}\\
+    Default: \ct{#3}\\
+    #4
+  \end{minipage}
+  \vskip 1\baselineskip
+}
+\newcommand{\info}[2]{
+  \noindent\begin{minipage}{\textwidth}
+    \textbf{#1}\\
+    #2
+  \end{minipage}
+  \vskip 1\baselineskip
 }
 
 \newcommand{\obj}{\ct{obj}}
@@ -508,5 +517,114 @@ by \ct{ipx\_default\_parameters()}.
 \section{Info}
 \label{sec:info}
 %-------------------------------------------------------------------------------
+
+Class \ct{ipx::Info} (for C++ users) and struct \ct{ipx\_info} (for C users)
+provide information about the input problem, the solver operations and the
+computed solution. Most of their members are almost self-explanatory and can be
+found in \ct{include/ipx\_info.h}.
+
+There are four members holding status and error codes that are documented below.
+Possible values are macro-defined constants that have the prefix
+\ct{IPX\_STATUS\_} and \ct{IPX\_ERROR\_}. They are defined in
+\ct{include/ipx\_status.h}.\\[2em]
+
+\info{status}{
+  Termination status of the solver. Possible values are:\\[1em]
+  \begin{tabular}{lp{8cm}}
+    \ct{IPX\_STATUS\_not\_run} & Solver has not been called.\\
+    \ct{IPX\_STATUS\_solved} & Solver terminated successfully. The solution
+    status (optimal, imprecise, infeasible) is given by \textbf{status\_ipm} and
+    \textbf{status\_crossover}.\\
+    \ct{IPX\_STATUS\_stopped} & Solver stopped without having reached its
+    termination criterion (time/iteration limit, numerical failure).
+    \textbf{status\_ipm} or \textbf{status\_crossover} hold further
+    information.\\
+    \ct{IPX\_STATUS\_invalid\_input} & Solver was not started because the input
+    to \ct{Solve()} was invalid. \textbf{errflag} holds further information.\\
+    \ct{IPX\_STATUS\_out\_of\_memory} & Memory allocation failed.\\
+    \ct{IPX\_STATUS\_internal\_error} & An internal error occured. This is a
+    bug in IPX.\\
+  \end{tabular}
+}
+
+\info{status\_ipm}{
+  Status of the interior solution. Possible values are:\\[1em]
+  \begin{tabular}{lp{8cm}}
+    \ct{IPX\_STATUS\_not\_run} & IPM has not been started.\\
+    \ct{IPX\_STATUS\_optimal} & IPM terminated successfully and the computed
+    solution satifies the feasibility and optimality tolerances.\\
+    \ct{IPX\_STATUS\_imprecise} & IPM reached its termination criterion, but the
+    solution after postprocessing does not satisfy the feasibility or optimality
+    tolerance.\\
+    \ct{IPX\_STATUS\_primal\_infeas} & The LP problem is primal infeasible
+    because equality constraints are inconsistent.\\
+    \ct{IPX\_STATUS\_dual\_infeas} & The LP problem is dual infeasible because
+    columns of the constraint matrix corresponding to free variables are
+    linearly dependent and their objective coefficients cause an unbounded ray
+    in primal space.\\
+    \ct{IPX\_STATUS\_time\_limit} & IPM stopped because of time limit.\\
+    \ct{IPX\_STATUS\_iter\_limit} & IPM stopped because of iteration limit.\\
+    \ct{IPX\_STATUS\_no\_progress} & IPM stopped because no progress was
+    achieved over a number of iterations.\\
+    \ct{IPX\_STATUS\_failed} & Linear system solve or building the
+    preconditioner failed. \textbf{errflag} holds further information.\\
+  \end{tabular}
+}
+
+\info{status\_crossover}{
+  Status of the basic solution obtained by crossover. Possible values
+  are:\\[1em]
+  \begin{tabular}{lp{8cm}}
+    \ct{IPX\_STATUS\_not\_run} & Crossover has not been started.\\
+    \ct{IPX\_STATUS\_optimal} & Crossover terminated successfully and the
+    computed basic solution satifies the feasibility and optimality
+    tolerances.\\
+    \ct{IPX\_STATUS\_imprecise} & Crossover terminated successfully, but the
+    basic solution does not satisfy the feasibility or optimality tolerance.
+    Reoptimization with a simplex solver is needed.\\
+    \ct{IPX\_STATUS\_time\_limit} & Crossover stopped because of time limit.\\
+    \ct{IPX\_STATUS\_failed} & Crossover failed due to linear algebra issues.
+    \textbf{errflag} holds further information.\\
+  \end{tabular}
+}
+
+\info{errflag}{
+  Possible values when \textbf{status} $=$
+  \ct{IPX\_STATUS\_invalid\_input}:\\[1em]
+  \begin{tabular}{lp{8cm}}
+    \ct{IPX\_ERROR\_argument\_null} & A pointer argument was \ct{NULL}.\\
+    \ct{IPX\_ERROR\_invalid\_dimension} & $\ct{num\_constr}<0$ or
+    $\ct{num\_var}\le0$.\\
+    \ct{IPX\_ERROR\_invalid\_matrix} & Constraint matrix was invalid
+    ($\ct{Ap}[0]\neq0$, $\ct{Ap}[j]>\ct{Ap}[j+1]$ for some $j$, non-finite entry
+    in \ct{Ax}, out-of-range or duplicate index in \ct{Ai}).\\
+    \ct{IPX\_ERROR\_invalid\_vector} & One of the vectors \ct{obj}, \ct{lb},
+    \ct{ub}, \ct{rhs} and \ct{constr\_type} contained an invalid entry, or
+    $\ct{lb}[j]>\ct{ub}[j]$ for some $j$.\\
+  \end{tabular}\\[1.5em]
+
+  Possible values when \textbf{status\_ipm} or \textbf{status\_crossover} $=$
+  \ct{IPX\_STATUS\_failed}:\\[1em]
+  \begin{tabular}{lp{8cm}}
+    \ct{IPX\_ERROR\_cr\_iter\_limit} &
+    \multirow{5}{8cm}{The iterative method for solving the linear systems in the
+      IPM did not converge.}\\
+    \ct{IPX\_ERROR\_cr\_matrix\_not\_posdef} &\\
+    \ct{IPX\_ERROR\_cr\_precond\_not\_posdef} &\\
+    \ct{IPX\_ERROR\_cr\_no\_progress} &\\
+    \ct{IPX\_ERROR\_cr\_inf\_or\_nan} &\\[1em]
+    \ct{IPX\_ERROR\_basis\_singular} &
+    \multirow{6}{8cm}{Factorizing or updating the basis matrix failed.}\\
+    \ct{IPX\_ERROR\_basis\_almost\_singular} &\\
+    \ct{IPX\_ERROR\_basis\_update\_singular} &\\
+    \ct{IPX\_ERROR\_basis\_repair\_overflow} &\\
+    \ct{IPX\_ERROR\_basis\_repair\_search} &\\
+    \ct{IPX\_ERROR\_basis\_too\_ill\_conditioned} &\\[1em]
+    \ct{IPX\_ERROR\_lapack\_chol} & Cholesky factorization of dense Schur
+    complement matrix broke down.
+  \end{tabular}\\[1em]
+  In all cases the failure is caused by numerical difficulties. The specific
+  error codes are meant for developers.
+}
 
 \end{document}
