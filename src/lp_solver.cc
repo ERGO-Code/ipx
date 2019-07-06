@@ -46,7 +46,9 @@ Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
         Int method_status = control_.crossover() ?
             info_.status_crossover : info_.status_ipm;
         if (method_status == IPX_STATUS_optimal ||
-            method_status == IPX_STATUS_imprecise)
+            method_status == IPX_STATUS_imprecise ||
+            method_status == IPX_STATUS_primal_infeas ||
+            method_status == IPX_STATUS_dual_infeas)
             info_.status = IPX_STATUS_solved;
         else
             info_.status = IPX_STATUS_stopped;
