@@ -43,15 +43,23 @@ Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
             info_.mean_fill = basis_->mean_fill();
             info_.max_fill = basis_->max_fill();
         }
-        Int method_status = control_.crossover() ?
-            info_.status_crossover : info_.status_ipm;
-        if (method_status == IPX_STATUS_optimal ||
-            method_status == IPX_STATUS_imprecise ||
-            method_status == IPX_STATUS_primal_infeas ||
-            method_status == IPX_STATUS_dual_infeas)
+        if (info_.status_ipm == IPX_STATUS_primal_infeas ||
+            info_.status_ipm == IPX_STATUS_dual_infeas ||
+            info_.status_crossover == IPX_STATUS_primal_infeas ||
+            info_.status_crossover == IPX_STATUS_dual_infeas) {
+            // When IPM or crossover detect the model to be infeasible
+            // (currently only the former is implemented), then the problem is
+            // solved.
             info_.status = IPX_STATUS_solved;
-        else
-            info_.status = IPX_STATUS_stopped;
+        } else {
+            Int method_status = control_.crossover() ?
+                info_.status_crossover : info_.status_ipm;
+            if (method_status == IPX_STATUS_optimal ||
+                method_status == IPX_STATUS_imprecise)
+                info_.status = IPX_STATUS_solved;
+            else
+                info_.status = IPX_STATUS_stopped;
+        }
         PrintSummary();
     }
     catch (std::bad_alloc) {
