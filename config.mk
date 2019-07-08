@@ -45,15 +45,7 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     # required libraries
     #---------------------------------------------------------------------------
 
-    LAPACK ?= -llapack
-    BLAS ?= -lopenblas
-
-    # uncomment if your BLAS library uses 64 bit integers rather than 'int'
-    # CF += -DBLAS64
-
-    LDLIBS =
-    LDLIBS += -lbasiclu
-    LDLIBS += $(LAPACK) $(BLAS)
+    LDLIBS = -lbasiclu
 
     #---------------------------------------------------------------------------
     # include flags and linker options

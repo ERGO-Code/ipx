@@ -42,7 +42,6 @@
 #define IPX_ERROR_basis_repair_search       305
 #define IPX_ERROR_basis_too_ill_conditioned 306
 
-#define IPX_ERROR_lapack_chol               401
 #define IPX_ERROR_interrupt_time            999
 
 #define IPX_basic                            0

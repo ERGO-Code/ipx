@@ -23,7 +23,6 @@ struct ipx_parameters {
 
     /* Linear solver */
     double kkt_tol;
-    ipxint precond_dense_cols;
 
     /* Basis construction in IPM */
     ipxint crash_basis;
@@ -63,7 +62,6 @@ struct ipx_parameters {
         ipm_drop_primal = 1e-9;
         ipm_drop_dual = 1e-9;
         kkt_tol = 0.3;
-        precond_dense_cols = 1;
         crash_basis = 1;
         dependency_tol = 1e-6;
         volume_tol = 2.0;

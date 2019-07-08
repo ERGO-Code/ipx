@@ -29,7 +29,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         "ipm_drop_primal",
         "ipm_drop_dual",
         "kkt_tol",
-        "precond_dense_cols",
         "crash_basis",
         "dependency_tol",
         "volume_tol",
@@ -71,7 +70,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     set_double(plhs[0], "ipm_drop_primal",  defaults.ipm_drop_primal);
     set_double(plhs[0], "ipm_drop_dual",    defaults.ipm_drop_dual);
     set_double(plhs[0], "kkt_tol",          defaults.kkt_tol);
-    set_double(plhs[0], "precond_dense_cols", defaults.precond_dense_cols);
     set_double(plhs[0], "crash_basis",      defaults.crash_basis);
     set_double(plhs[0], "dependency_tol",   defaults.dependency_tol);
     set_double(plhs[0], "volume_tol",       defaults.volume_tol);

@@ -420,12 +420,6 @@ by \ct{ipx\_default\_parameters()}.
   are within the interval $[0.05,0.5]$.
 }
 
-\param{precond\_dense\_cols}{ipxint}{1}{
-  In combination with diagonal preconditioning, controls handling of ``dense''
-  columns (i.\,e.\ columns with a relatively large number of entries). If
-  nonzero, dense columns are treated separately by a low rank update.
-}
-
 \param{crash\_basis}{ipxint}{1}{
   Controls the construction of the starting basis for the preconditioner. \\
   \begin{tabular}{rl}
@@ -619,9 +613,7 @@ Possible values are macro-defined constants that have the prefix
     \ct{IPX\_ERROR\_basis\_update\_singular} &\\
     \ct{IPX\_ERROR\_basis\_repair\_overflow} &\\
     \ct{IPX\_ERROR\_basis\_repair\_search} &\\
-    \ct{IPX\_ERROR\_basis\_too\_ill\_conditioned} &\\[1em]
-    \ct{IPX\_ERROR\_lapack\_chol} & Cholesky factorization of dense Schur
-    complement matrix broke down.
+    \ct{IPX\_ERROR\_basis\_too\_ill\_conditioned}
   \end{tabular}\\[1em]
   In all cases the failure is caused by numerical difficulties. The specific
   error codes are meant for developers.

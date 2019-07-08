@@ -183,8 +183,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 params.scale = parse_int(pp, i);
             else if (strcmp(name, "ipm_maxiter") == 0)
                 params.ipm_maxiter = parse_int(pp, i);
-            else if (strcmp(name, "precond_dense_cols") == 0)
-                params.precond_dense_cols = parse_int(pp, i);
             else if (strcmp(name, "crash_basis") == 0)
                 params.crash_basis = parse_int(pp, i);
             else if (strcmp(name, "rows_per_slice") == 0)

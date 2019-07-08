@@ -34,7 +34,6 @@ const IPX_ERROR_basis_update_singular     = 303
 const IPX_ERROR_basis_repair_overflow     = 304
 const IPX_ERROR_basis_repair_search       = 305
 const IPX_ERROR_basis_too_ill_conditioned = 306
-const IPX_ERROR_lapack_chol               = 401
 const IPX_ERROR_interrupt_time            = 999
 const IPX_basic                           = 0
 const IPX_nonbasic                        = -1
@@ -74,7 +73,6 @@ type Parameters
     ipm_drop_primal::Cdouble
     ipm_drop_dual::Cdouble
     kkt_tol::Cdouble
-    precond_dense_cols::ipxint
     crash_basis::ipxint
     dependency_tol::Cdouble
     volume_tol::Cdouble

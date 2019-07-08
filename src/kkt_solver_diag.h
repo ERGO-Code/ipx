@@ -1,4 +1,4 @@
-// Copyright (c) 2018 ERGO-Code. See license.txt for license.
+// Copyright (c) 2018-2019 ERGO-Code. See license.txt for license.
 
 #ifndef IPX_KKT_SOLVER_DIAG_H_
 #define IPX_KKT_SOLVER_DIAG_H_
@@ -14,8 +14,6 @@ namespace ipx {
 // KKTSolverDiag implements a KKT solver that applies the Conjugate Residuals
 // method with diagonal preconditioning to the normal equations. If the (1,1)
 // block of the KKT matrix is not positive definite, regularization is applied.
-// If parameter precond_dense_cols is nonzero, dense columns are treated
-// separately by the preconditioner.
 //
 // In the call to Factorize() @iterate is allowed to be NULL, in which case the
 // (1,1) block of the KKT matrix is the identity matrix.

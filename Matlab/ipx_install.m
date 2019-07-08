@@ -38,7 +38,7 @@ function ipx_install(basicluroot)
     ipx_include_flag = ['-I' fullfile('..', 'include')];
     ipx_source_files = fullfile('..', 'src', '*.cc');
     ipx_build_dir = fullfile('build', 'ipx');
-    mex('-largeArrayDims', '-DBLAS64', '-c', '-outdir', ipx_build_dir, ...
+    mex('-largeArrayDims', '-c', '-outdir', ipx_build_dir, ...
         ipx_include_flag, basiclu_include_flag, ipx_source_files);
 
     ipx_obj_files = dir(fullfile(ipx_build_dir, '*.o'));
@@ -46,13 +46,12 @@ function ipx_install(basicluroot)
     ipx_obj_files = fullfile('build', 'ipx', ipx_obj_files);
 
     % Compile each C source file from src/ into a Matlab executable and link
-    % with IPX, BASICLU, LAPACK and BLAS.
+    % with IPX and BASICLU.
     fprintf('Compiling MEX interface ...\n');
     mex_source_files = dir(fullfile('src', '*.c'));
     for k = 1:length(mex_source_files)
         mex_source_file = fullfile('src', mex_source_files(k).name);
         mex('-largeArrayDims', ipx_include_flag, ...
-            mex_source_file, ipx_obj_files{:}, basiclu_obj_files{:}, ...
-            '-lmwlapack', '-lmwblas');
+            mex_source_file, ipx_obj_files{:}, basiclu_obj_files{:});
     end
 end

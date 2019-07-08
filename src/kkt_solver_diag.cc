@@ -1,4 +1,4 @@
-// Copyright (c) 2018 ERGO-Code. See license.txt for license.
+// Copyright (c) 2018-2019 ERGO-Code. See license.txt for license.
 
 #include "kkt_solver_diag.h"
 #include <cassert>
@@ -57,7 +57,7 @@ void KKTSolverDiag::_Factorize(Iterate* pt, Info* info) {
 
     // Build normal matrix and preconditioner.
     normal_matrix_.Prepare(&W_[0]);
-    precond_.Factorize(&W_[0], control_.precond_dense_cols(), info);
+    precond_.Factorize(&W_[0], info);
     if (info->errflag)
         return;
 
