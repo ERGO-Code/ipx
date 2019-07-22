@@ -81,6 +81,9 @@ function GurobiBarrier(logfile::AbstractString)
     while l <= length(lines)
         line = lines[l]
         if match(r"^Crossover log...$", line) != nothing break; end
+        # Occasionally the "Crossover log..." is missing. Crossover then starts
+        # with the simplex log.
+        if match(r"^Iteration ", line) != nothing break; end
         s = match(r"^Presolve time\: ([\.0-9]+)s$", line)
         if s != nothing
             log.time_presolve = parse(Float64, s.captures[1])
