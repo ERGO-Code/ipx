@@ -159,8 +159,11 @@ function Results(testset::AbstractString, logdir::AbstractString,
     # --------------------------------------------------------------------------
     for i = 1:length(ids)
         logfile = @sprintf("%04d.log", ids[i])
-        simplexlog = logparser.GurobiSimplex(
-            joinpath(logdir, "gurobi_dsimplex", logfile))
+        simplexlog = logparser.simplexlog()
+        if simplex
+            simplexlog = logparser.GurobiSimplex(
+                joinpath(logdir, "gurobi_dsimplex", logfile))
+        end
         barrierlog = logparser.GurobiBarrier(
             joinpath(logdir, "gurobi_barrier", logfile))
         ipxinfo = ipx.ParseInfo(joinpath(logdir, "ipx", logfile))
