@@ -60,16 +60,23 @@ int main() {
     // parameters.debug = 1;       // sets first debugging level (more output)
     ipx_set_parameters(lps, parameters);
 
+    // Load the LP model into IPX.
+    Int errflag = ipx_load_model(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai,
+                                 Ax, rhs, constr_type);
+    if (errflag) {
+        printf(" invalid model (errflag = %ld)\n", (long) errflag);
+        return 2;
+    }
+
     // Solve the LP.
-    Int status = ipx_solve(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai, Ax,
-                           rhs, constr_type);
+    Int status = ipx_solve(lps);
     if (status != IPX_STATUS_solved) {
         // no solution
-        // (invalid input, time/iter limit, numerical failure, out of memory)
+        // (time/iter limit, numerical failure, out of memory)
         struct ipx_info info = ipx_get_info(lps);
         printf(" status: %ld, errflag: %ld\n", (long) status,
                (long) info.errflag);
-        return 2;
+        return 3;
     }
 
     // Get solver and solution information.

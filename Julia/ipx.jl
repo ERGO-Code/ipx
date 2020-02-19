@@ -5,7 +5,7 @@ const spmatrix = SparseMatrixCSC{Cdouble,ipxint}
 const IPX_STATUS_not_run                  = 0
 const IPX_STATUS_solved                   = 1000
 const IPX_STATUS_stopped                  = 1005
-const IPX_STATUS_invalid_input            = 1002
+const IPX_STATUS_no_model                 = 1006
 const IPX_STATUS_out_of_memory            = 1003
 const IPX_STATUS_internal_error           = 1004
 const IPX_STATUS_optimal                  = 1
@@ -275,12 +275,18 @@ function Solve(this::LPSolver, model::Model, logfile::String="")
     append!(logfile, 0)
     logfile_ptr = GetParameter(this, :logfile_ptr)
     SetParameter(this, :logfile_ptr, pointer(logfile))
-    status = ccall((:ipx_solve, "libipx.so"), ipxint,
-                   (Ptr{Void}, ipxint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
-                    ipxint, Ptr{ipxint}, Ptr{ipxint}, Ptr{Cdouble},
-                    Ptr{Cdouble}, Ptr{Cchar}),
-                   this.solver, n, obj, lb, ub,
-                   m, Ap, Ai, Ax, rhs, constr_type)
+    errflag = ccall((:ipx_load_model, "libipx.so"), ipxint,
+                    (Ptr{Void}, ipxint, Ptr{Cdouble}, Ptr{Cdouble},
+                     Ptr{Cdouble}, ipxint, Ptr{ipxint}, Ptr{ipxint},
+                     Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cchar}),
+                    this.solver, n, obj, lb,
+                    ub, m, Ap, Ai,
+                    Ax, rhs, constr_type)
+    if errflag != 0
+        msg = @sprintf("ipx_load_model() failed: errflag = %d", errflag)
+        error(msg)
+    end
+    status = ccall((:ipx_solve, "libipx.so"), ipxint, (Ptr{Void},), this.solver)
     SetParameter(this, :logfile_ptr, logfile_ptr)
     return status
 end

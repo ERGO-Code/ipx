@@ -169,6 +169,7 @@ complete example program can be found in \ct{example/afiro.cc} and can be
 compiled by calling \ct{make} in the \ct{example/} directory.
 
 \newpage
+\begin{footnotesize}
 \begin{verbatim}
 #include <cmath>
 #include <iostream>
@@ -193,15 +194,22 @@ const char constr_type[] = { '<', '<', '=', '<', '<', '=', '<', '<', '<' };
 int main() {
     ipx::LpSolver lps;
 
+    // Load the LP model into IPX.
+    Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax,
+                                rhs, constr_type);
+    if (errflag) {
+        std::cout << " invalid model (errflag = " << errflag << ")\n";
+        return 1;
+    }
+
     // Solve the LP.
-    Int status = lps.Solve(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax, rhs,
-                           constr_type);
+    Int status = lps.Solve();
     if (status != IPX_STATUS_solved) {
         // no solution
-        // (invalid input, time/iter limit, numerical failure, out of memory)
+        // (time/iter limit, numerical failure, out of memory)
         std::cout << " status: " << status << ','
                   << " errflag: " << lps.GetInfo().errflag << '\n';
-        return 1;
+        return 2;
     }
 
     // Get solver and solution information.
@@ -221,6 +229,7 @@ int main() {
     return 0;
 }
 \end{verbatim}
+\end{footnotesize}
 
 \newpage
 All classes and functions belonging to IPX are declared in namespace \ct{ipx}.
@@ -234,11 +243,13 @@ Sections \ref{sec:parameters} and \ref{sec:info}.
 The \ct{LpSolver} class provides the user interface to the LP solver. Its
 methods are documented through source code comments in \ct{src/lp\_solver.h}.
 The method
+\begin{footnotesize}
 \begin{verbatim}
-    Int Solve(Int num_var, const double* obj, const double* lb,
-              const double* ub, Int num_constr, const Int* Ap, const Int* Ai,
-              const double* Ax, const double* rhs, const char* constr_type);
+    Int LoadModel(Int num_var, const double* obj, const double* lb,
+                  const double* ub, Int num_constr, const Int* Ap, const Int* Ai,
+                  const double* Ax, const double* rhs, const char* constr_type);
 \end{verbatim}
+\end{footnotesize}
 requires the LP problem in the form \eqref{eq:lp} with the constraint matrix $A$
 given in compressed sparse column (CSC) format. That means, \ct{Ap} is an array
 of size $\ct{num\_var}+1$ and \ct{Ai} and \ct{Ax} are arrays of size equal to
@@ -246,8 +257,20 @@ the number of entries in $A$. They must be set such that
 \ct{Ai[Ap[j]..Ap[j+1]-1]} and \ct{Ax[Ap[j]..Ap[j+1]-1]} hold the row indices and
 nonzero values of the entries in column \ct{j} of $A$. The entries within each
 column can be in any order, but there must be no duplicates. The input is
-checked prior to running the solver and an error code is returned if it is
-invalid (see Section~\ref{sec:info}).
+checked and one of the following error codes is returned if it is invalid:
+\\[1.5em]
+\begin{tabular}{lp{8cm}}
+  \ct{IPX\_ERROR\_argument\_null} & A pointer argument was \ct{NULL}.\\
+  \ct{IPX\_ERROR\_invalid\_dimension} & $\ct{num\_constr}<0$ or
+  $\ct{num\_var}\le0$.\\
+  \ct{IPX\_ERROR\_invalid\_matrix} & Constraint matrix was invalid
+  ($\ct{Ap}[0]\neq0$, $\ct{Ap}[j]>\ct{Ap}[j+1]$ for some $j$, non-finite entry
+  in \ct{Ax}, out-of-range or duplicate index in \ct{Ai}).\\
+  \ct{IPX\_ERROR\_invalid\_vector} & One of the vectors \ct{obj}, \ct{lb},
+  \ct{ub}, \ct{rhs} and \ct{constr\_type} contained an invalid entry, or
+  $\ct{lb}[j]>\ct{ub}[j]$ for some $j$.\\
+\end{tabular}\\[1.5em]
+
 
 \subsection{C Interface}
 C wrapper functions for the methods of class \ct{LpSolver} are provided to allow
@@ -258,6 +281,7 @@ The following code snippet illustrates the use of the C interface. The
 complete example program can be found in \ct{example/afiro\_c.c} and can be
 compiled by calling \ct{make} in the \ct{example/} directory.
 
+\begin{footnotesize}
 \begin{verbatim}
 #include <math.h>
 #include <stdio.h>
@@ -286,16 +310,23 @@ int main() {
     ipx_new(&lps);
     if (!lps) return 1;
 
+    // Load the LP model into IPX.
+    Int errflag = ipx_load_model(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai,
+                                 Ax, rhs, constr_type);
+    if (errflag) {
+        printf(" invalid model (errflag = %ld)\n", (long) errflag);
+        return 2;
+    }
+
     // Solve the LP.
-    Int status = ipx_solve(lps, NUM_VAR, obj, lb, ub, NUM_CONSTR, Ap, Ai, Ax,
-                           rhs, constr_type);
+    Int status = ipx_solve(lps);
     if (status != IPX_STATUS_solved) {
         // no solution
-        // (invalid input, time/iter limit, numerical failure, out of memory)
+        // (time/iter limit, numerical failure, out of memory)
         struct ipx_info info = ipx_get_info(lps);
         printf(" status: %ld, errflag: %ld\n", (long) status,
                (long) info.errflag);
-        return 2;
+        return 3;
     }
 
     // Get solver and solution information.
@@ -317,6 +348,7 @@ int main() {
     return 0;
 }
 \end{verbatim}
+\end{footnotesize}
 
 The solver is accessed through a \ct{void} pointer, which must be allocated by
 \ct{ipx\_new} and finally deallocated by \ct{ipx\_free} (see
@@ -532,6 +564,7 @@ Possible values are macro-defined constants that have the prefix
   Termination status of the solver. Possible values are:\\[1em]
   \begin{tabular}{lp{8cm}}
     \ct{IPX\_STATUS\_not\_run} & Solver has not been called.\\
+    \ct{IPX\_STATUS\_no\_model} & Solver was called but no model was loaded.\\
     \ct{IPX\_STATUS\_solved} & Solver terminated successfully. The solution
     status (optimal, imprecise, infeasible) is given by \textbf{status\_ipm} and
     \textbf{status\_crossover}.\\
@@ -539,8 +572,6 @@ Possible values are macro-defined constants that have the prefix
     termination criterion (time/iteration limit, numerical failure).
     \textbf{status\_ipm} or \textbf{status\_crossover} hold further
     information.\\
-    \ct{IPX\_STATUS\_invalid\_input} & Solver was not started because the input
-    to \ct{Solve()} was invalid. \textbf{errflag} holds further information.\\
     \ct{IPX\_STATUS\_out\_of\_memory} & Memory allocation failed.\\
     \ct{IPX\_STATUS\_internal\_error} & An internal error occured. This is a
     bug in IPX.\\
@@ -589,20 +620,6 @@ Possible values are macro-defined constants that have the prefix
 }
 
 \info{errflag}{
-  Possible values when \textbf{status} $=$
-  \ct{IPX\_STATUS\_invalid\_input}:\\[1em]
-  \begin{tabular}{lp{8cm}}
-    \ct{IPX\_ERROR\_argument\_null} & A pointer argument was \ct{NULL}.\\
-    \ct{IPX\_ERROR\_invalid\_dimension} & $\ct{num\_constr}<0$ or
-    $\ct{num\_var}\le0$.\\
-    \ct{IPX\_ERROR\_invalid\_matrix} & Constraint matrix was invalid
-    ($\ct{Ap}[0]\neq0$, $\ct{Ap}[j]>\ct{Ap}[j+1]$ for some $j$, non-finite entry
-    in \ct{Ax}, out-of-range or duplicate index in \ct{Ai}).\\
-    \ct{IPX\_ERROR\_invalid\_vector} & One of the vectors \ct{obj}, \ct{lb},
-    \ct{ub}, \ct{rhs} and \ct{constr\_type} contained an invalid entry, or
-    $\ct{lb}[j]>\ct{ub}[j]$ for some $j$.\\
-  \end{tabular}\\[1.5em]
-
   Possible values when \textbf{status\_ipm} or \textbf{status\_crossover} $=$
   \ct{IPX\_STATUS\_failed}:\\[1em]
   \begin{tabular}{lp{8cm}}

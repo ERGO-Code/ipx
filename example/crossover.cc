@@ -99,12 +99,13 @@ int main() {
     // Form an LP model from the problem data. Because preprocessing can
     // dualize, in general model.rows() and model.cols() are different from
     // num_var and num_constr.
-    model.Load(control, num_constr, num_var, Ap, Ai, Ax, rhs, constr_type, obj,
-               lb, ub, &info);
-    if (info.errflag) {
-        std::cerr << "model error: " << info.errflag << '\n';
+    Int errflag = model.Load(control, num_constr, num_var, Ap, Ai, Ax, rhs,
+                             constr_type, obj, lb, ub);
+    if (errflag) {
+        std::cerr << "model error: " << errflag << '\n';
         return 1;
     }
+    model.GetInfo(&info);
     const Int m = model.rows();
     const Int n = model.cols();
 

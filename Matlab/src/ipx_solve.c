@@ -246,9 +246,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgTxt("Initializing IPX solver instance failed.");
     ipx_set_parameters(solver, params);
 
+    /* Load model into IPX. */
+    ipxint errflag = ipx_load_model(solver, n, mxGetPr(obj), mxGetPr(lb),
+                                    mxGetPr(ub), m, Ap, Ai, Ax, mxGetPr(rhs),
+                                    constr_type);
+    if (errflag)
+        mexErrMsgTxt("Loading the model into the solver instance failed.");
+
     /* Run IPX. */
-    ipxint status = ipx_solve(solver, n, mxGetPr(obj), mxGetPr(lb), mxGetPr(ub),
-                              m, Ap, Ai, Ax, mxGetPr(rhs), constr_type);
+    ipxint status = ipx_solve(solver);
     struct ipx_info info = ipx_get_info(solver);
 
     /* Free temporary memory before allocating solution. */

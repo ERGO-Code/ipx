@@ -14,7 +14,7 @@ namespace ipx {
 
 class LpSolver {
 public:
-    // Solves an LP problem in the form given in the reference documentation.
+    // Loads an LP model in the form given in the reference documentation.
     // @num_var: number of variables, must be > 0.
     // @obj: size num_var array of objective coefficients.
     // @lb: size num_var array of variable lower bounds, can have -INFINITY.
@@ -23,10 +23,20 @@ public:
     // @Ap, @Ai, @Ax: constraint matrix in CSC format; indices can be unsorted.
     // @rhs: size num_constr array of right-hand side entries.
     // @constr_type: size num_constr array of entries '>', '<' and '='.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_dimension
+    //  IPX_ERROR_invalid_matrix
+    //  IPX_ERROR_invalid_vector
+    Int LoadModel(Int num_var, const double* obj, const double* lb,
+                  const double* ub, Int num_constr, const Int* Ap,
+                  const Int* Ai, const double* Ax, const double* rhs,
+                  const char* constr_type);
+
+    // Solves the model that is currently loaded in the object.
     // Returns GetInfo().status.
-    Int Solve(Int num_var, const double* obj, const double* lb,
-              const double* ub, Int num_constr, const Int* Ap, const Int* Ai,
-              const double* Ax, const double* rhs, const char* constr_type);
+    Int Solve();
 
     // Returns the solver info from the last call to Solve(). See the reference
     // documentation for the meaning of Info values.
@@ -101,6 +111,7 @@ public:
     Int SymbolicInvert(Int* rowcounts, Int* colcounts);
 
 private:
+    void ClearSolution();
     void InteriorPointSolve();
     void RunIPM();
     void ComputeStartingPoint(IPM& ipm);
