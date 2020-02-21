@@ -119,6 +119,30 @@ public:
                                Vector& x_solver, Vector& y_solver,
                                Vector& z_solver) const;
 
+    // Performs the inverse operations to PostsolveInteriorSolution().
+    // The user vectors must all be given and must satisfy the sign conditions
+    // given in the reference documentation. Otherwise an error code will be
+    // returned. At the moment PresolveIPMStartingPoint() is not implemented
+    // for the case that the model was dualized in preprocessing.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_vector if a sign condition is violated
+    //  IPX_ERROR_not_implemented if the model was dualized in preprocessing.
+    Int PresolveIPMStartingPoint(const double* x_user,
+                                 const double* xl_user,
+                                 const double* xu_user,
+                                 const double* slack_user,
+                                 const double* y_user,
+                                 const double* zl_user,
+                                 const double* zu_user,
+                                 Vector& x_solver,
+                                 Vector& xl_solver,
+                                 Vector& xu_solver,
+                                 Vector& y_solver,
+                                 Vector& zl_solver,
+                                 Vector& zu_solver) const;
+
     // Given an IPM iterate, recovers the solution to the user model (see the
     // reference documentation). Each of the pointer arguments can be NULL, in
     // which case the quantity is not returned. The sign conditions on the dual
@@ -247,10 +271,10 @@ private:
     // Prints preprocessing operations to control.Log().
     void PrintPreprocessingLog(const Control& control) const;
 
-    // ScaleBasicSolution() applies the operations from ScaleModel() to a
-    // primal-dual point.
-    void ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
-        const;
+    // Applies the operations from ScaleModel() to a primal-dual point.
+    void ScalePoint(Vector& x, Vector& slack, Vector& y, Vector& z) const;
+    void ScalePoint(Vector& x, Vector& xl, Vector& xu, Vector& slack,
+                    Vector& y, Vector& zl, Vector& zu) const;
 
     // ScaleBack*() do the reverse operation of ScaleModel().
     void ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
@@ -263,12 +287,29 @@ private:
     void ScaleBackBasis(std::vector<Int>& cbasis,
                         std::vector<Int>& vbasis) const;
 
-    // DualizeBasicSolution() applies the operations of LoadPrimal() or
-    // LoadDual() to a primal-dual point.
+    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
+    // point.
     void DualizeBasicSolution(const Vector& x_user, const Vector& slack_user,
                               const Vector& y_user, const Vector& z_user,
                               Vector& x_solver, Vector& y_solver,
                               Vector& z_solver) const;
+
+    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
+    // point. Currently only implemented for dualized_ == false. Otherwise an
+    // assertion will fail.
+    void DualizeIPMStartingPoint(const Vector& x_user,
+                                 const Vector& xl_user,
+                                 const Vector& xu_user,
+                                 const Vector& slack_user,
+                                 const Vector& y_user,
+                                 const Vector& zl_user,
+                                 const Vector& zu_user,
+                                 Vector& x_solver,
+                                 Vector& xl_solver,
+                                 Vector& xu_solver,
+                                 Vector& y_solver,
+                                 Vector& zl_solver,
+                                 Vector& zu_solver) const;
 
     // DualizeBack*() do the reverse operations of LoadPrimal() or LoadDual().
     // Given the solution from the solver, they recover the solution to the
