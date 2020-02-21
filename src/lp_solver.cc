@@ -25,6 +25,30 @@ Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
     return errflag;
 }
 
+Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
+                                   const double* xu, const double* slack,
+                                   const double* y, const double* zl,
+                                   const double* zu) {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    x_start_.resize(n+m);
+    xl_start_.resize(n+m);
+    xu_start_.resize(n+m);
+    y_start_.resize(m);
+    zl_start_.resize(n+m);
+    zu_start_.resize(n+m);
+    Int errflag = model_.PresolveIPMStartingPoint(x, xl, xu, slack, y, zl, zu,
+                                                  x_start_, xl_start_,
+                                                  xu_start_, y_start_,
+                                                  zl_start_, zu_start_);
+    if (errflag) {
+        ClearIPMStartingPoint();
+        return errflag;
+    }
+    MakeIPMStartingPointValid();
+    return 0;
+}
+
 Int LpSolver::Solve() {
     if (model_.empty())
         return info_.status = IPX_STATUS_no_model;
@@ -117,6 +141,16 @@ void LpSolver::SetParameters(Parameters new_parameters) {
 void LpSolver::ClearModel() {
     model_.clear();
     ClearSolution();
+    ClearIPMStartingPoint();
+}
+
+void LpSolver::ClearIPMStartingPoint() {
+    x_start_.resize(0);
+    xl_start_.resize(0);
+    xu_start_.resize(0);
+    y_start_.resize(0);
+    zl_start_.resize(0);
+    zu_start_.resize(0);
 }
 
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
@@ -256,16 +290,79 @@ void LpSolver::InteriorPointSolve() {
 void LpSolver::RunIPM() {
     IPM ipm(control_);
 
-    ComputeStartingPoint(ipm);
-    if (info_.status_ipm != IPX_STATUS_not_run)
-        return;
-    RunInitialIPM(ipm);
-    if (info_.status_ipm != IPX_STATUS_not_run)
-        return;
+    if (x_start_.size() != 0) {
+        control_.Log() << " Using starting point provided by user."
+            " Skipping initial iterations.\n";
+        iterate_->Initialize(x_start_, xl_start_, xu_start_,
+                             y_start_, zl_start_, zu_start_);
+    }
+    else {
+        ComputeStartingPoint(ipm);
+        if (info_.status_ipm != IPX_STATUS_not_run)
+            return;
+        RunInitialIPM(ipm);
+        if (info_.status_ipm != IPX_STATUS_not_run)
+            return;
+    }
     BuildStartingBasis();
     if (info_.status_ipm != IPX_STATUS_not_run)
         return;
     RunMainIPM(ipm);
+}
+
+void LpSolver::MakeIPMStartingPointValid() {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& lb = model_.lb();
+    const Vector& ub = model_.ub();
+    Vector& xl = xl_start_;
+    Vector& xu = xu_start_;
+    Vector& zl = zl_start_;
+    Vector& zu = zu_start_;
+
+    Int numComplementarityProducts = 0;
+    double sumComplementarityProducts = 0.0;
+    for (Int j = 0; j < n+m; ++j) {
+        if (xl[j] > 0.0 && zl[j] > 0.0) {
+            sumComplementarityProducts += xl[j] * zl[j];
+            numComplementarityProducts++;
+        }
+        if (xu[j] > 0.0 && zu[j] > 0.0) {
+            sumComplementarityProducts += xu[j] * zu[j];
+            numComplementarityProducts++;
+        }
+    }
+    const double mu = numComplementarityProducts ?
+        sumComplementarityProducts / numComplementarityProducts : 1.0;
+
+    for (Int j = 0; j < n+m; ++j) {
+        if (std::isfinite(lb[j])) {
+            assert(std::isfinite(xl[j]) && xl[j] >= 0.0);
+            assert(std::isfinite(zl[j]) && zl[j] >= 0.0);
+            if (xl[j] == 0.0 && zl[j] == 0.0)
+                xl[j] = zl[j] = std::sqrt(mu);
+            else if (xl[j] == 0.0)
+                xl[j] = mu / zl[j];
+            else if (zl[j] == 0.0)
+                zl[j] = mu / xl[j];
+        } else {
+            assert(xl[j] == INFINITY);
+            assert(zl[j] == 0.0);
+        }
+        if (std::isfinite(ub[j])) {
+            assert(std::isfinite(xu[j]) && xu[j] >= 0.0);
+            assert(std::isfinite(zu[j]) && zu[j] >= 0.0);
+            if (xu[j] == 0.0 && zu[j] == 0.0)
+                xu[j] = zu[j] = std::sqrt(mu);
+            else if (xu[j] == 0.0)
+                xu[j] = mu / zu[j];
+            else if (zu[j] == 0.0)
+                zu[j] = mu / xu[j];
+        } else {
+            assert(xu[j] == INFINITY);
+            assert(zu[j] == 0.0);
+        }
+    }
 }
 
 void LpSolver::ComputeStartingPoint(IPM& ipm) {

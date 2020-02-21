@@ -35,6 +35,7 @@ const IPX_ERROR_basis_repair_overflow     = 304
 const IPX_ERROR_basis_repair_search       = 305
 const IPX_ERROR_basis_too_ill_conditioned = 306
 const IPX_ERROR_lapack_chol               = 401
+const IPX_ERROR_not_implemented           = 901
 const IPX_ERROR_interrupt_time            = 999
 const IPX_basic                           = 0
 const IPX_nonbasic                        = -1
@@ -260,7 +261,8 @@ function ipx_free(this::LPSolver)
     this.solver = p_solver[]
 end
 
-function Solve(this::LPSolver, model::Model, logfile::String="")
+function Solve(this::LPSolver, model::Model, logfile::String="",
+               ipmStartingPoint=InteriorSolution(0,0))
     m,n = size(model.A)
     Ap = model.A.colptr - 1
     Ai = model.A.rowval - 1
@@ -285,6 +287,25 @@ function Solve(this::LPSolver, model::Model, logfile::String="")
     if errflag != 0
         msg = @sprintf("ipx_load_model() failed: errflag = %d", errflag)
         error(msg)
+    end
+    if length(ipmStartingPoint.x) != 0
+        if length(ipmStartingPoint.x)!=n || length(ipmStartingPoint.slack)!=m
+            error("IPM starting point has wrong dimension")
+        end
+        errflag = ccall((:ipx_load_ipm_starting_point, "libipx.so"), ipxint,
+                        (Ptr{Void}, Ptr{Cdouble},
+                         Ptr{Cdouble}, Ptr{Cdouble},
+                         Ptr{Cdouble}, Ptr{Cdouble},
+                         Ptr{Cdouble}, Ptr{Cdouble}),
+                        this.solver, ipmStartingPoint.x,
+                        ipmStartingPoint.xl, ipmStartingPoint.xu,
+                        ipmStartingPoint.slack, ipmStartingPoint.y,
+                        ipmStartingPoint.zl, ipmStartingPoint.zu)
+        if errflag != 0
+            msg = @sprintf("ipx_load_ipm_starting_point() failed: errflag = %d",
+                           errflag)
+            error(msg)
+        end
     end
     status = ccall((:ipx_solve, "libipx.so"), ipxint, (Ptr{Void},), this.solver)
     SetParameter(this, :logfile_ptr, logfile_ptr)

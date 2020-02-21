@@ -125,10 +125,88 @@ void Model::PresolveStartingPoint(const double* x_user,
         std::copy_n(y_user, num_constr_, std::begin(y_temp));
     if (z_user)
         std::copy_n(z_user, num_var_, std::begin(z_temp));
-    ScaleBasicSolution(x_temp, slack_temp, y_temp, z_temp);
+    ScalePoint(x_temp, slack_temp, y_temp, z_temp);
     DualizeBasicSolution(x_temp, slack_temp, y_temp, z_temp,
                          x_solver, y_solver, z_solver);
 }
+
+Int Model::PresolveIPMStartingPoint(const double* x_user,
+                                    const double* xl_user,
+                                    const double* xu_user,
+                                    const double* slack_user,
+                                    const double* y_user,
+                                    const double* zl_user,
+                                    const double* zu_user,
+                                    Vector& x_solver,
+                                    Vector& xl_solver,
+                                    Vector& xu_solver,
+                                    Vector& y_solver,
+                                    Vector& zl_solver,
+                                    Vector& zu_solver) const {
+    if (!x_user || !xl_user || !xu_user || !slack_user ||
+        !y_user || !zl_user || !zu_user)
+        return IPX_ERROR_argument_null;
+    if (dualized_)
+        return IPX_ERROR_not_implemented;
+
+    // Copy user point into workspace and apply model scaling.
+    Vector x_temp(x_user, num_var_);
+    Vector xl_temp(xl_user, num_var_);
+    Vector xu_temp(xu_user, num_var_);
+    Vector slack_temp(slack_user, num_constr_);
+    Vector y_temp(y_user, num_constr_);
+    Vector zl_temp(zl_user, num_var_);
+    Vector zu_temp(zu_user, num_var_);
+    ScalePoint(x_temp, xl_temp, xu_temp, slack_temp,  y_temp, zl_temp, zu_temp);
+
+    // Check that point is compatible with bounds.
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!std::isfinite(x_temp[j]))
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(xl_temp[j] >= 0.0) ||
+            scaled_lbuser_[j] == -INFINITY && xl_temp[j] != INFINITY ||
+            scaled_lbuser_[j] != -INFINITY && xl_temp[j] == INFINITY)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(xu_temp[j] >= 0.0) ||
+            scaled_ubuser_[j] == INFINITY && xu_temp[j] != INFINITY ||
+            scaled_ubuser_[j] != INFINITY && xu_temp[j] == INFINITY)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int i = 0; i < num_constr_; ++i) {
+        if (!std::isfinite(slack_temp[i]) ||
+            constr_type_[i] == '=' && !(slack_temp[i] == 0.0) ||
+            constr_type_[i] == '<' && !(slack_temp[i] >= 0.0) ||
+            constr_type_[i] == '>' && !(slack_temp[i] <= 0.0) )
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int i = 0; i < num_constr_; ++i) {
+        if (!std::isfinite(y_temp[i]) ||
+            constr_type_[i] == '<' && !(y_temp[i] <= 0.0) ||
+            constr_type_[i] == '>' && !(y_temp[i] >= 0.0) )
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(zl_temp[j] >= 0.0 && zl_temp[j] < INFINITY) ||
+            scaled_lbuser_[j] == -INFINITY && zl_temp[j] != 0.0)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(zu_temp[j] >= 0.0 && zu_temp[j] < INFINITY) ||
+            scaled_ubuser_[j] == INFINITY && zu_temp[j] != 0.0)
+            return IPX_ERROR_invalid_vector;
+    }
+
+    DualizeIPMStartingPoint(x_temp, xl_temp, xu_temp, slack_temp,
+                            y_temp, zl_temp, zu_temp,
+                            x_solver, xl_solver, xu_solver,
+                            y_solver, zl_solver, zu_solver);
+    return 0;
+}
+
 
 void Model::PostsolveInteriorSolution(const Vector& x_solver,
                                       const Vector& xl_solver,
@@ -856,8 +934,7 @@ void Model::PrintPreprocessingLog(const Control& control) const {
     }
 }
 
-void Model::ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
-    const {
+void Model::ScalePoint(Vector& x, Vector& slack, Vector& y, Vector& z) const {
     if (colscale_.size() > 0) {
         x /= colscale_;
         z *= colscale_;
@@ -869,6 +946,28 @@ void Model::ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
     for (Int j : flipped_vars_) {
         x[j] *= -1.0;
         z[j] *= -1.0;
+    }
+}
+
+void Model::ScalePoint(Vector& x, Vector& xl, Vector& xu, Vector& slack,
+                       Vector& y, Vector& zl, Vector& zu) const {
+    if (colscale_.size() > 0) {
+        x /= colscale_;
+        xl /= colscale_;
+        xu /= colscale_;
+        zl *= colscale_;
+        zu *= colscale_;
+    }
+    if (rowscale_.size() > 0) {
+        y /= rowscale_;
+        slack *= rowscale_;
+    }
+    for (Int j : flipped_vars_) {
+        x[j] *= -1.0;
+        xl[j] = xu[j];
+        xu[j] = INFINITY;
+        zl[j] = zu[j];
+        zu[j] = 0.0;
     }
 }
 
@@ -988,6 +1087,69 @@ void Model::DualizeBasicSolution(const Vector& x_user,
         std::copy_n(std::begin(z_user), n, std::begin(z_solver));
         for (Int i = 0; i < m; i++)
             z_solver[n+i] = c(n+i)-y_solver[i];
+    }
+}
+
+void Model::DualizeIPMStartingPoint(const Vector& x_user,
+                                    const Vector& xl_user,
+                                    const Vector& xu_user,
+                                    const Vector& slack_user,
+                                    const Vector& y_user,
+                                    const Vector& zl_user,
+                                    const Vector& zu_user,
+                                    Vector& x_solver,
+                                    Vector& xl_solver,
+                                    Vector& xu_solver,
+                                    Vector& y_solver,
+                                    Vector& zl_solver,
+                                    Vector& zu_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        // Not implemented.
+        assert(false);
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+
+        std::copy_n(std::begin(x_user), num_var_, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), num_constr_,
+                    std::begin(x_solver) + n);
+        std::copy_n(std::begin(xl_user), num_var_, std::begin(xl_solver));
+        std::copy_n(std::begin(xu_user), num_var_, std::begin(xu_solver));
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(y_solver));
+        std::copy_n(std::begin(zl_user), num_var_, std::begin(zl_solver));
+        std::copy_n(std::begin(zu_user), num_var_, std::begin(zu_solver));
+
+        for (Int i = 0; i < m; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == 0.0);
+                // For a fixed slack variable xl, xu, zl and zu won't be used
+                // by the IPM. Just put them to zero.
+                xl_solver[n+i] = 0.0;
+                xu_solver[n+i] = 0.0;
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = 0.0;
+                break;
+            case '<':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == INFINITY);
+                xl_solver[n+i] = slack_user[i];
+                xu_solver[n+i] = INFINITY;
+                zl_solver[n+i] = -y_user[i];
+                zu_solver[n+i] = 0.0;
+                break;
+            case '>':
+                assert(lb_[n+i] == -INFINITY && ub_[n+i] == 0.0);
+                xl_solver[n+i] = INFINITY;
+                xu_solver[n+i] = -slack_user[i];
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = y_user[i];
+                break;
+            }
+        }
     }
 }
 
