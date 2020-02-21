@@ -14,21 +14,25 @@
 
 namespace ipx {
 
-Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
-                    const double* ub, Int num_constr, const Int* Ap,
-                    const Int* Ai, const double* Ax, const double* rhs,
-                    const char* constr_type) {
+Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
+                        const double* ub, Int num_constr, const Int* Ap,
+                        const Int* Ai, const double* Ax, const double* rhs,
+                        const char* constr_type) {
     ClearModel();
+    Int errflag = model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs,
+                              constr_type, obj, lb, ub);
+    model_.GetInfo(&info_);
+    return errflag;
+}
+
+Int LpSolver::Solve() {
+    if (model_.empty())
+        return info_.status = IPX_STATUS_no_model;
+    ClearSolution();
     control_.ResetTimer();
     control_.OpenLogfile();
     control_.Log() << "IPX version 1.0\n";
     try {
-        model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs, constr_type,
-                    obj, lb, ub, &info_);
-        if (info_.errflag) {
-            control_.CloseLogfile();
-            return info_.status = IPX_STATUS_invalid_input;
-        }
         InteriorPointSolve();
         if ((info_.status_ipm == IPX_STATUS_optimal ||
              info_.status_ipm == IPX_STATUS_imprecise) && control_.crossover())
@@ -111,15 +115,8 @@ void LpSolver::SetParameters(Parameters new_parameters) {
 }
 
 void LpSolver::ClearModel() {
-    info_ = Info();
     model_.clear();
-    iterate_.reset(nullptr);
-    basis_.reset(nullptr);
-    x_crossover_.resize(0);
-    y_crossover_.resize(0);
-    z_crossover_.resize(0);
-    basic_statuses_.clear();
-    basic_statuses_.shrink_to_fit();
+    ClearSolution();
 }
 
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
@@ -215,6 +212,20 @@ Int LpSolver::SymbolicInvert(Int* rowcounts, Int* colcounts) {
         return -1;
     basis_->SymbolicInvert(rowcounts, colcounts);
     return 0;
+}
+
+void LpSolver::ClearSolution() {
+    iterate_.reset(nullptr);
+    basis_.reset(nullptr);
+    x_crossover_.resize(0);
+    y_crossover_.resize(0);
+    z_crossover_.resize(0);
+    basic_statuses_.clear();
+    basic_statuses_.shrink_to_fit();
+    info_ = Info();
+    // Restore info entries that belong to model.
+    model_.GetInfo(&info_);
+
 }
 
 void LpSolver::InteriorPointSolve() {

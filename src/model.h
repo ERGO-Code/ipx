@@ -50,12 +50,21 @@ public:
     // @obj: array of size num_var
     // @lbuser: array of size num_var, entries can be -INFINITY
     // @ubuser: array of size num_var, entries can be +INFINITY
-    // If the input is invalid, info->errflag is set to nonzero and the Model
-    // object becomes empty.
-    void Load(const Control& control, Int num_constr, Int num_var,
-              const Int* Ap, const Int* Ai, const double* Ax,
-              const double* rhs, const char* constr_type, const double* obj,
-              const double* lbuser, const double* ubuser, Info* info);
+    // If the input is invalid an error code is returned and the Model object
+    // becomes empty.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_dimension
+    //  IPX_ERROR_invalid_matrix
+    //  IPX_ERROR_invalid_vector
+    Int Load(const Control& control, Int num_constr, Int num_var,
+             const Int* Ap, const Int* Ai, const double* Ax,
+             const double* rhs, const char* constr_type, const double* obj,
+             const double* lbuser, const double* ubuser);
+
+    // Writes statistics of input data and preprocessing to @info.
+    void GetInfo(Info* info) const;
 
     // Returns true if the model is empty.
     bool empty() const { return cols() == 0; }
@@ -165,12 +174,18 @@ public:
 
 private:
     // Checks that the input is valid, and if so copies into the members below
-    // (see "User model after scaling"). If the input is invalid, info->errflag
-    // is set and the object remains unchanged.
-    void CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                   const double* Ax, const double* rhs, const char* constr_type,
-                   const double* obj, const double* lbuser,
-                   const double* ubuser, Info* info);
+    // (see "User model after scaling"). If the input is invalid, an error code
+    // is returned and the object remains unchanged.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_dimension
+    //  IPX_ERROR_invalid_matrix
+    //  IPX_ERROR_invalid_vector
+    Int CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
+                  const double* Ax, const double* rhs, const char* constr_type,
+                  const double* obj, const double* lbuser,
+                  const double* ubuser);
 
     // Scales A_, scaled_obj_, scaled_rhs_, scaled_lbuser_ and scaled_ubuser_
     // according to parameter control.scale(). The scaling factors are stored in
@@ -231,9 +246,6 @@ private:
 
     // Prints preprocessing operations to control.Log().
     void PrintPreprocessingLog(const Control& control) const;
-
-    // Writes statistics of input data and preprocessing to @info.
-    void WriteInfo(Info* info) const;
 
     // ScaleBasicSolution() applies the operations from ScaleModel() to a
     // primal-dual point.

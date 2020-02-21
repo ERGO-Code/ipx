@@ -8,15 +8,15 @@
 
 namespace ipx {
 
-void Model::Load(const Control& control, Int num_constr, Int num_var,
-                 const Int* Ap, const Int* Ai, const double* Ax,
-                 const double* rhs, const char* constr_type, const double* obj,
-                 const double* lbuser, const double* ubuser, Info* info) {
+Int Model::Load(const Control& control, Int num_constr, Int num_var,
+                const Int* Ap, const Int* Ai, const double* Ax,
+                const double* rhs, const char* constr_type, const double* obj,
+                const double* lbuser, const double* ubuser) {
     clear();
-    CopyInput(num_constr, num_var, Ap, Ai, Ax, rhs, constr_type, obj, lbuser,
-              ubuser, info);
-    if (info->errflag)
-        return;
+    Int errflag = CopyInput(num_constr, num_var, Ap, Ai, Ax, rhs, constr_type,
+                            obj, lbuser, ubuser);
+    if (errflag)
+        return errflag;
     control.Log()
         << "Input\n"
         << Textline("Number of variables:") << num_var_ << '\n'
@@ -49,7 +49,18 @@ void Model::Load(const Control& control, Int num_constr, Int num_var,
         if (std::isfinite(x))
             norm_bounds_ = std::max(norm_bounds_, std::abs(x));
     PrintPreprocessingLog(control);
-    WriteInfo(info);
+    return 0;
+}
+
+void Model::GetInfo(Info *info) const {
+    info->num_var = num_var_;
+    info->num_constr = num_constr_;
+    info->num_entries = num_entries_;
+    info->num_rows_solver = num_rows_;
+    info->num_cols_solver = num_cols_ + num_rows_; // including slack columns
+    info->num_entries_solver = AI_.entries();
+    info->dualized = dualized_;
+    info->dense_cols = num_dense_cols();
 }
 
 void Model::clear() {
@@ -430,28 +441,23 @@ Int CheckMatrix(Int m, Int n, const Int *Ap, const Int *Ai, const double *Ax) {
     return 0;
 }
 
-void Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                      const double* Ax, const double* rhs,
-                      const char* constr_type, const double* obj,
-                      const double* lbuser, const double* ubuser, Info* info) {
+Int Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
+                     const double* Ax, const double* rhs,
+                     const char* constr_type, const double* obj,
+                     const double* lbuser, const double* ubuser) {
     if (!(Ap && Ai && Ax && rhs && constr_type && obj && lbuser && ubuser)) {
-        info->errflag = IPX_ERROR_argument_null;
-        return;
+        return IPX_ERROR_argument_null;
     }
     if (num_constr < 0 || num_var <= 0) {
-        info->errflag = IPX_ERROR_invalid_dimension;
-        return;
+        return IPX_ERROR_invalid_dimension;
     }
     if (CheckVectors(num_constr, num_var, rhs, constr_type, obj, lbuser, ubuser)
         != 0) {
-        info->errflag = IPX_ERROR_invalid_vector;
-        return;
+        return IPX_ERROR_invalid_vector;
     }
     if (CheckMatrix(num_constr, num_var, Ap, Ai, Ax) != 0) {
-        info->errflag = IPX_ERROR_invalid_matrix;
-        return;
+        return IPX_ERROR_invalid_matrix;
     }
-    info->errflag = 0;
     num_constr_ = num_constr;
     num_eqconstr_ = std::count(constr_type, constr_type+num_constr, '=');
     num_var_ = num_var;
@@ -478,6 +484,7 @@ void Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
     for (double x : scaled_ubuser_)
         if (std::isfinite(x))
             norm_rhs_ = std::max(norm_rhs_, std::abs(x));
+    return 0;
 }
 
 void Model::ScaleModel(const Control& control) {
@@ -847,17 +854,6 @@ void Model::PrintPreprocessingLog(const Control& control) const {
             << Scientific(minscale, 8, 2) << ", "
             << Scientific(maxscale, 8, 2) << "]\n";
     }
-}
-
-void Model::WriteInfo(Info *info) const {
-    info->num_var = num_var_;
-    info->num_constr = num_constr_;
-    info->num_entries = num_entries_;
-    info->num_rows_solver = num_rows_;
-    info->num_cols_solver = num_cols_ + num_rows_; // including slack columns
-    info->num_entries_solver = AI_.entries();
-    info->dualized = dualized_;
-    info->dense_cols = num_dense_cols();
 }
 
 void Model::ScaleBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z)
