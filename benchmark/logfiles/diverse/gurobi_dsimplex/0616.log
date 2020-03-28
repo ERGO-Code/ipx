@@ -1,0 +1,37 @@
+id: 616
+name: stormg2_1000
+group: meszaros/stochlp
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 15:57:29 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 15:57:29 2018
+
+Optimize a model with 528185 rows, 1259121 columns and 3341696 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 7e+01]
+  Objective range  [2e-01, 4e+05]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [2e-01, 4e+03]
+Presolve removed 151149 rows and 225002 columns
+Presolve time: 2.03s
+Presolved: 377036 rows, 1034119 columns, 2862373 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -7.0105825e+06   9.773367e+07   0.000000e+00      2s
+  168147    6.7116487e+06   1.537608e+07   0.000000e+00      5s
+  304266    1.0842438e+07   3.665520e+06   0.000000e+00     10s
+  392764    1.2034559e+07   9.037302e+05   0.000000e+00     15s
+  457615    1.3457385e+07   7.964359e+05   0.000000e+00     20s
+  511517    1.4422356e+07   1.106952e+06   0.000000e+00     25s
+  572144    1.4917202e+07   8.519542e+05   0.000000e+00     30s
+  623828    1.5501567e+07   2.204341e+05   0.000000e+00     35s
+  648266    1.5634314e+07   1.129314e+06   0.000000e+00     40s
+  670627    1.5708284e+07   3.898783e+04   0.000000e+00     45s
+  702245    1.5778935e+07   2.817018e+04   0.000000e+00     50s
+  727039    1.5802591e+07   0.000000e+00   0.000000e+00     55s
+
+Solved in 727039 iterations and 55.11 seconds
+Optimal objective  1.580259112e+07
+status: OPTIMAL

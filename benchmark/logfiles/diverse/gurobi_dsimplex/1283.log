@@ -1,0 +1,30 @@
+id: 1283
+name: ramos3
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 05:23:16 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 05:23:16 2018
+
+Optimize a model with 2187 rows, 2187 columns and 32805 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.01s
+Presolved: 2187 rows, 2187 columns, 32805 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   2.187000e+03   0.000000e+00      0s
+    5651    1.4012291e+02   1.393164e+04   0.000000e+00      5s
+    7516    1.4459799e+02   1.004597e+05   0.000000e+00     10s
+    8993    1.4580005e+02   2.160439e+03   0.000000e+00     15s
+   10622    1.4580008e+02   3.959129e+02   0.000000e+00     20s
+   11631    1.4580000e+02   0.000000e+00   0.000000e+00     23s
+
+Solved in 11631 iterations and 23.24 seconds
+Optimal objective  1.458000000e+02
+status: OPTIMAL

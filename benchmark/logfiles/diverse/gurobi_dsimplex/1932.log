@@ -1,0 +1,27 @@
+id: 1932
+name: pilot87
+group: netlib
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 24 01:29:21 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 24 01:29:21 2018
+
+Optimize a model with 2030 rows, 4883 columns and 73152 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-06, 1e+03]
+  Objective range  [1e-06, 3e+00]
+  Bounds range     [2e-02, 2e+04]
+  RHS range        [1e-02, 6e+03]
+Presolve removed 284 rows and 532 columns
+Presolve time: 0.03s
+Presolved: 1746 rows, 4351 columns, 70196 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -4.1567500e+29   4.536840e+32   4.156750e-01      0s
+   10235    3.0171153e+02   0.000000e+00   0.000000e+00      4s
+
+Solved in 10235 iterations and 3.70 seconds
+Optimal objective  3.017115265e+02
+status: OPTIMAL

@@ -213,7 +213,8 @@ void Basis::SolveForUpdate(Int j) {
     }
 }
 
-void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
+void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row,
+                       bool ignore_fixed) {
     const Int m = model_.rows();
     const Int n = model_.cols();
     assert(IsBasic(jb));
@@ -250,18 +251,17 @@ void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
             Int end = AIt.end(i);
             for (Int p = begin; p < end; p++) {
                 Int j = Ati[p];
-                switch (map2basis_[j]) {
-                case -1:
-                    map2basis_[j] = -3; // mark column j
+                if (map2basis_[j] == -1 || map2basis_[j] == -2 && !ignore_fixed)
+                {
+                    map2basis_[j] -= 2; // mark column
                     row_pattern[nz++] = j;
-                    // fall through
-                case -3:
-                    row[j] += temp * Atx[p];
                 }
+                if (map2basis_[j] < -2) // marked column
+                    row[j] += temp * Atx[p];
             }
         }
-        for (Int k = 0; k < nz; k++) // resets marked
-            map2basis_[row_pattern[k]] = -1;
+        for (Int k = 0; k < nz; k++) // reset marked
+            map2basis_[row_pattern[k]] += 2;
         row.set_nnz(nz);
     } else {
         // dense vector * sparse matrix: accesses A columnwise
@@ -270,7 +270,7 @@ void Basis::TableauRow(Int jb, IndexedVector& btran, IndexedVector& row) {
         const double* Ax = AI.values();
         for (Int j = 0; j < n+m; j++) {
             double result = 0.0;
-            if (map2basis_[j] == -1) {
+            if (map2basis_[j] == -1 || map2basis_[j] == -2 && !ignore_fixed) {
                 Int begin = AI.begin(j);
                 Int end = AI.end(j);
                 for (Int p = begin; p < end; p++)
@@ -320,6 +320,32 @@ Int Basis::ExchangeIfStable(Int jb, Int jn, double tableau_entry, int sys,
     return 0;
 }
 
+void Basis::ComputeBasicSolution(Vector& x, Vector& y, Vector& z) const {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& b = model_.b();
+    const Vector& c = model_.c();
+    const SparseMatrix& AI = model_.AI();
+
+    // Compute x[basic] so that Ax=b. Use y as workspace.
+    y = b;
+    for (Int j = 0; j < n+m; j++)
+        if (IsNonbasic(j))
+            ScatterColumn(AI, j, -x[j], y);
+    SolveDense(y, y, 'N');
+    for (Int p = 0; p < m; p++)
+        x[basis_[p]] = y[p];
+
+    // Compute y and z[nonbasic] so that AI'y+z=c.
+    for (Int p = 0; p < m; p++)
+        y[p] = c[basis_[p]] - z[basis_[p]];
+    SolveDense(y, y, 'T');
+    for (Int j = 0; j < n+m; j++) {
+        if (IsNonbasic(j))
+            z[j] = c[j] - DotColumn(AI, j, y);
+    }
+}
+
 void Basis::ConstructBasisFromWeights(const double* colscale, Info* info) {
     const Int m = model_.rows();
     const Int n = model_.cols();
@@ -354,22 +380,6 @@ void Basis::ConstructBasisFromWeights(const double* colscale, Info* info) {
     PivotFixedVariablesOutOfBasis(colscale, info);
     if (info->errflag)
         return;
-
-    // Assert variable statuses after successful completion of
-    // PivotFreeVariablesIntoBasis() and PivotFixedVariablesOutOfBasis().
-    // Variables with infinite weight must have status BASIC_FREE or (if the
-    // column is linearly dependent on basic columns with infinite weights),
-    // NONBASIC_FIXED. Variables with zero weight must have status
-    // NONBASIC_FIXED or (if it is a slack variable and cannot be replaced in
-    // the basis by a variable with nonzero weight), BASIC_FREE.
-    #ifndef NDEBUG
-    for (Int j = 0; j < n+m; j++) {
-        if (std::isinf(colscale[j]) || colscale[j] == 0.0)
-            assert(StatusOf(j) == NONBASIC_FIXED || StatusOf(j) == BASIC_FREE);
-        else
-            assert(StatusOf(j) == NONBASIC || StatusOf(j) == BASIC);
-    }
-    #endif
 }
 
 double Basis::MinSingularValue() const {
@@ -723,7 +733,28 @@ void Basis::PivotFreeVariablesIntoBasis(const double* colweights, Info* info) {
             stability_pivots++;
         } else {
             if (fmax_nonfree <= dependency_tol) {
-                // jn cannot be pivoted into the basis.
+                // jn cannot be pivoted into the basis. If we do not have an
+                // unbounded primal ray yet, then test if column jn yields one.
+                // Compute the change in the primal objective that is caused by
+                // a unit increase of x[jn] with corresponding adjustment of
+                // free basic variables.
+                if (!info->cols_inconsistent) {
+                    const Vector& c = model_.c();
+                    double delta_obj = c[jn];
+                    auto update_delta_obj = [&](Int p, double f) {
+                        Int j = basis_[p];
+                        if (std::isinf(colweights[j]))
+                            delta_obj -= c[j] * f;
+                    };
+                    for_each_nonzero(ftran, update_delta_obj);
+                    if (std::abs(delta_obj) > dependency_tol) {
+                        control_.Debug()
+                            << Textline(
+                                "Unbounded primal ray with objective change:")
+                            << sci2(delta_obj) << '\n';
+                        info->cols_inconsistent = true;
+                    }
+                }
                 info->dependent_cols++;
                 remaining.pop_back();
             } else {
@@ -745,19 +776,6 @@ void Basis::PivotFreeVariablesIntoBasis(const double* colweights, Info* info) {
     control_.Debug()
         << Textline("Number of free variables swapped for stability:")
         << stability_pivots << '\n';
-
-    // Change status of free variables either to BASIC_FREE or NONBASIC_FIXED.
-    for (Int j = 0; j < n+m; j++) {
-        if (std::isinf(colweights[j])) {
-            if (map2basis_[j] >= 0) {
-                assert(map2basis_[j] < m);
-                map2basis_[j] += m;
-            } else {
-                assert(map2basis_[j] == -1);
-                map2basis_[j] = -2;
-            }
-        }
-    }
 }
 
 void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
@@ -771,7 +789,12 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
 
     // Maintain stack of fixed basic variables.
     std::vector<Int> remaining;
-    for (Int j = 0; j < n+m; j++) {
+    for (Int j = 0; j < n; j++) {
+        // Structural variables with zero weight must not be in the crash basis.
+        if (colweights[j] == 0.0)
+            assert(map2basis_[j] < 0);
+    }
+    for (Int j = n; j < n+m; j++) {
         if (colweights[j] == 0.0 && map2basis_[j] >= 0)
             remaining.push_back(j);
     }
@@ -792,15 +815,18 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
         double rmax = 0.0;
         double rmax_nonfixed = 0.0;
         auto update_max = [&](Int j, double r) {
-            r = std::abs(r);
-            if (r > rmax) {
-                rmax = r;
-                jmax = j;
-            }
-            if (colweights[j] != 0.0) {
-                if (r > rmax_nonfixed) {
-                    rmax_nonfixed = r;
-                    jmax_nonfixed = j;
+            // Ignore structural variables with zero weight.
+            if (j >= n || colweights[j] != 0.0) {
+                r = std::abs(r);
+                if (r > rmax) {
+                    rmax = r;
+                    jmax = j;
+                }
+                if (colweights[j] != 0.0) {
+                    if (r > rmax_nonfixed) {
+                        rmax_nonfixed = r;
+                        jmax_nonfixed = j;
+                    }
                 }
             }
         };
@@ -821,7 +847,21 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
             stability_pivots++;
         } else {
             if (rmax_nonfixed <= dependency_tol) {
-                // jb cannot be pivoted out of the basis.
+                // jb cannot be pivoted out of the basis. If we do not have an
+                // unbounded dual ray yet, then test if row jb-n yields one.
+                // Compute the change in the dual objective that is caused by a
+                // unit increase of y[jb-n] with corresponding adjustment of the
+                // remaining y[i].
+                if (!info->rows_inconsistent) {
+                    double delta_obj = Dot(btran, model_.b());
+                    if (std::abs(delta_obj) > dependency_tol) {
+                        control_.Debug()
+                            << Textline(
+                                "Unbounded dual ray with objective change:")
+                            << sci2(delta_obj) << '\n';
+                        info->rows_inconsistent = true;
+                    }
+                }
                 info->dependent_rows++;
                 remaining.pop_back();
             } else {
@@ -858,19 +898,6 @@ void Basis::PivotFixedVariablesOutOfBasis(const double* colweights, Info* info){
     control_.Debug()
         << Textline("Number of fixed variables swapped for stability:")
         << stability_pivots << '\n';
-
-    // Change status of fixed variables either to NONBASIC_FIXED or BASIC_FREE.
-    for (Int j = 0; j < n+m; j++) {
-        if (colweights[j] == 0.0) {
-            if (map2basis_[j] < 0) {
-                assert(map2basis_[j] == -1);
-                map2basis_[j] = -2;
-            } else {
-                assert(StatusOf(j) == BASIC);
-                map2basis_[j] += m;
-            }
-        }
-    }
 }
 
 Vector CopyBasic(const Vector& x, const Basis& basis) {

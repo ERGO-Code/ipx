@@ -60,28 +60,29 @@ public:
 
     ipxint dualize() const { return parameters_.dualize; }
     ipxint scale() const { return parameters_.scale; }
-    double residual_tol() const { return parameters_.residual_tol; }
-    double optimality_tol() const { return parameters_.optimality_tol; }
-    double drop_primal() const { return parameters_.drop_primal; }
-    double drop_dual() const { return parameters_.drop_dual; }
-    ipxint maxiter() const { return parameters_.maxiter; }
+    ipxint ipm_maxiter() const { return parameters_.ipm_maxiter; }
+    double ipm_feasibility_tol() const {
+        return parameters_.ipm_feasibility_tol; }
+    double ipm_optimality_tol() const { return parameters_.ipm_optimality_tol; }
+    double ipm_drop_primal() const { return parameters_.ipm_drop_primal; }
+    double ipm_drop_dual() const { return parameters_.ipm_drop_dual; }
     double kkt_tol() const { return parameters_.kkt_tol; }
     ipxint precond_dense_cols() const { return parameters_.precond_dense_cols; }
-    ipxint switchiter() const { return parameters_.switchiter; }
-    ipxint stop_at_switch() const { return parameters_.stop_at_switch; }
     ipxint crash_basis() const { return parameters_.crash_basis; }
     double dependency_tol() const { return parameters_.dependency_tol; }
     double volume_tol() const { return parameters_.volume_tol; }
-    ipxint update_heuristic() const { return parameters_.update_heuristic; }
-    ipxint maxpasses() const { return parameters_.maxpasses; }
+    ipxint rows_per_slice() const { return parameters_.rows_per_slice; }
     ipxint maxskip_updates() const { return parameters_.maxskip_updates; }
-    ipxint slices() const { return parameters_.slices; }
     ipxint lu_kernel() const { return parameters_.lu_kernel; }
     double lu_pivottol() const { return parameters_.lu_pivottol; }
     ipxint crossover() const { return parameters_.crossover; }
     double crossover_start() const { return parameters_.crossover_start; }
-    double pfeastol() const { return parameters_.pfeastol; }
-    double dfeastol() const { return parameters_.dfeastol; }
+    double pfeasibility_tol() const { return parameters_.pfeasibility_tol; }
+    double dfeasibility_tol() const { return parameters_.dfeasibility_tol; }
+    ipxint switchiter() const { return parameters_.switchiter; }
+    ipxint stop_at_switch() const { return parameters_.stop_at_switch; }
+    ipxint update_heuristic() const { return parameters_.update_heuristic; }
+    ipxint maxpasses() const { return parameters_.maxpasses; }
 
     const Parameters& parameters() const;
     void parameters(const Parameters& new_parameters);

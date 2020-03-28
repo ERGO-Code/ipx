@@ -48,8 +48,17 @@ public:
                     const Vector& y, const Vector& zl, const Vector& zu);
 
     // Adds sp*[dx;dxl;dxu] to the primal iterate and sd*[dy;dzl;dzu] to the
-    // dual iterate. All pointer arguments can be NULL, in which case its
-    // entries are assumed to be 0.0.
+    // dual iterate (restrictions see below). Each of the pointer arguments can
+    // be NULL, in which case its entries are assumed to be 0.0.
+    // - x[j] is updated only if StateOf(j) != State::fixed.
+    // - xl[j] and zl[j] are updated only if has_barrier_lb(j). The update to
+    //                   each of xl[j] and zl[j] is truncated such that
+    //                   xl[j] >= kBarrierMin and zl[j] >= kBarrierMin.
+    // - xu[j] and zu[j] are updated only if has_barrier_ub(j). The update to
+    //                   each of xu[j] and zu[j] is truncated such that
+    //                   xu[j] >= kBarrierMin and zu[j] >= kBarrierMin.
+    // If a variable is not updated, then the entry in the step direction is not
+    // accessed.
     void Update(double sp, const double* dx, const double* dxl,
                 const double* dxu, double sd, const double* dy,
                 const double* dzl, const double* dzu);
@@ -107,17 +116,23 @@ public:
     void make_fixed(Int j, double value);
 
     // Changes the state of variable j to free.
-    // make_implied_lb(j) lb[j] must be finite. Postprocess() sets x[j]=lb[j],
-    //                    zu[j]=0 and computes zl[j].
-    // make_implied_ub(j) ub[j] must be finite. Postprocess() sets x[j]=ub[j],
-    //                    zl[j]=0 and computes zu[j].
-    // make_implied(eq(j) must have lb[j]==ub[j]. Postprocess sets x[j]=lb[j]
-    //                    and chooses zl[j] or zu[j] to be nonzero depending on
-    //                    the sign of the reduced cost.
-    // (If the relevant bound is not finite an assertion will fail.)
-    // Each method sets xl[j]=xu[j]=inf and leaves zl[j] and zu[j] unaltered.
-    // The cost coefficient of variable j in the remaining LP becomes
-    // c[j]-zl[j]+zu[j].
+    // make_implied_lb(j) lb[j] must be finite.
+    //                    The method leaves zl[j] and zu[j] unchanged. The cost
+    //                    coefficient of variable j in the remaining LP becomes
+    //                    c[j]-zl[j]+zu[j].
+    //                    Postprocess() sets x[j]=lb[j], zu[j]=0 and computes
+    //                    zl[j] to satisfy dual feasibility.
+    // make_implied_ub(j) ub[j] must be finite.
+    //                    The method leaves zl[j] and zu[j] unchanged. The cost
+    //                    coefficient of variable j in the remaining LP becomes
+    //                    c[j]-zl[j]+zu[j].
+    //                    Postprocess() sets x[j]=ub[j], zl[j]=0 and computes
+    //                    zu[j] to satisfy dual feasibility.
+    // make_implied_eq(j) must have lb[j]==ub[j].
+    //                    The method sets zl[j]=0 and zu[j]=0.
+    //                    Postprocess sets x[j]=lb[j] and chooses either zl[j]
+    //                    or zu[j] to be nonzero depending on the sign of the
+    //                    reduced cost.
     void make_implied_lb(Int j);
     void make_implied_ub(Int j);
     void make_implied_eq(Int j);
@@ -151,7 +166,7 @@ public:
     double mu_max() const;
 
     // Returns true if the relative primal and dual residuals are <=
-    // residual_tol().
+    // feasibility_tol().
     bool feasible() const;
 
     // Returns true if the relative objective gap is <= optimality_tol().
@@ -164,11 +179,11 @@ public:
     // complementarity are <= crossover_start().
     bool term_crit_reached() const;
 
-    double residual_tol() const { return residual_tol_; }
+    double feasibility_tol() const { return feasibility_tol_; }
     double optimality_tol() const { return optimality_tol_; }
     double crossover_start() const { return crossover_start_; }
 
-    void residual_tol(double new_tol) { residual_tol_ = new_tol; }
+    void feasibility_tol(double new_tol) { feasibility_tol_ = new_tol; }
     void optimality_tol(double new_tol) { optimality_tol_ = new_tol; }
     void crossover_start(double new_tol) { crossover_start_ = new_tol; }
 
@@ -186,6 +201,10 @@ public:
     void DropToComplementarity(Vector& x, Vector& y, Vector& z) const;
 
 private:
+    // A (primal or dual) variable that is required to be positive in the IPM is
+    // not moved closer to zero than kBarrierMin.
+    static constexpr double kBarrierMin = 1e-30;
+
     void assert_consistency();
     void Evaluate() const;
     void ComputeResiduals() const;
@@ -241,13 +260,11 @@ private:
     //                  Evaluate() subtracts (zl-zu) from the cost coefficient
     //                  when computing the primal objective value.
     //    
-    //     IMPLIED_EQ   xl = inf, xu = inf, zl >= 0, zu >= 0
+    //     IMPLIED_EQ   xl = inf, xu = inf, zl = 0, zu = 0
     //                  The variable has lb == ub but is treated as free by
     //                  the barrier solver. After termination we set x = lb
     //                  and compute either zl or zu from dual feasibility and
     //                  set the other one to zero.
-    //                  Evaluate() subtracts (zl-zu) from the cost coefficient
-    //                  when computing the primal objective value.
     //
     enum class StateDetail { BARRIER_LB, BARRIER_UB, BARRIER_BOXED, FREE, FIXED,
                              IMPLIED_LB, IMPLIED_UB, IMPLIED_EQ };
@@ -272,7 +289,7 @@ private:
     mutable bool evaluated_{false};
     bool postprocessed_{false};
 
-    double residual_tol_{1e-6};
+    double feasibility_tol_{1e-6};
     double optimality_tol_{1e-8};
     double crossover_start_{-1.0};
 };

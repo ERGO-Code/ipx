@@ -7,6 +7,10 @@
 
 namespace ipx {
 
+// Iterate::kBarrierMin is odr-used because std::max() takes references as
+// arguments. Hence we require a namespace scope definition.
+constexpr double Iterate::kBarrierMin;
+
 Iterate::Iterate(const Model& model) : model_(model) {
     const Int m = model_.rows();
     const Int n = model_.cols();
@@ -95,15 +99,22 @@ void Iterate::Update(double sp, const double* dx, const double* dxl,
 
     if (dx) {
         for (Int j = 0; j < n+m; j++)
-            x_[j] += sp*dx[j];
+            if (StateOf(j) != State::fixed)
+                x_[j] += sp*dx[j];
     }
     if (dxl) {
         for (Int j = 0; j < n+m; j++)
-            xl_[j] += sp*dxl[j];
+            if (has_barrier_lb(j)) {
+                xl_[j] += sp*dxl[j];
+                xl_[j] = std::max(xl_[j], kBarrierMin);
+            }
     }
     if (dxu) {
         for (Int j = 0; j < n+m; j++)
-            xu_[j] += sp*dxu[j];
+            if (has_barrier_ub(j)) {
+                xu_[j] += sp*dxu[j];
+                xu_[j] = std::max(xu_[j], kBarrierMin);
+            }
     }
     if (dy) {
         for (Int i = 0; i < m; i++)
@@ -111,11 +122,17 @@ void Iterate::Update(double sp, const double* dx, const double* dxl,
     }
     if (dzl) {
         for (Int j = 0; j < n+m; j++)
-            zl_[j] += sd*dzl[j];
+            if (has_barrier_lb(j)) {
+                zl_[j] += sd*dzl[j];
+                zl_[j] = std::max(zl_[j], kBarrierMin);
+            }
     }
     if (dzu) {
         for (Int j = 0; j < n+m; j++)
-            zu_[j] += sd*dzu[j];
+            if (has_barrier_ub(j)) {
+                zu_[j] += sd*dzu[j];
+                zu_[j] = std::max(zu_[j], kBarrierMin);
+            }
     }
     assert_consistency();
     evaluated_ = false;
@@ -157,6 +174,8 @@ void Iterate::make_implied_ub(Int j) {
 void Iterate::make_implied_eq(Int j) {
     xl_[j] = INFINITY;
     xu_[j] = INFINITY;
+    zl_[j] = 0.0;
+    zu_[j] = 0.0;
     variable_state_[j] = StateDetail::IMPLIED_EQ;
     evaluated_ = false;
 }
@@ -202,8 +221,8 @@ double Iterate::mu_max() const { Evaluate(); return mu_max_; }
 bool Iterate::feasible() const {
     Evaluate();
     return
-        presidual_ <= residual_tol_ * (1.0+model_.norm_bounds()) &&
-        dresidual_ <= residual_tol_ * (1.0+model_.norm_c());
+        presidual_ <= feasibility_tol_ * (1.0+model_.norm_bounds()) &&
+        dresidual_ <= feasibility_tol_ * (1.0+model_.norm_c());
 }
 
 bool Iterate::optimal() const {
@@ -491,8 +510,8 @@ void Iterate::assert_consistency() {
             assert(lb[j] == ub[j]);
             assert(std::isinf(xl_[j]));
             assert(std::isinf(xu_[j]));
-            assert(zl_[j] >= 0.0);
-            assert(zu_[j] >= 0.0);
+            assert(zl_[j] == 0.0);
+            assert(zu_[j] == 0.0);
             break;
         default:
             assert(false);

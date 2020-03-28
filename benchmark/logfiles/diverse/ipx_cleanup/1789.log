@@ -1,0 +1,17 @@
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Sun Sep  2 08:56:55 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Sun Sep  2 08:56:55 2018
+
+Optimize a model with 54289 rows, 285112 columns and 617497 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [3e+01, 1e+05]
+  Bounds range     [8e+00, 7e+04]
+  RHS range        [3e+01, 4e+03]
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -1.5047729e+10   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.04 seconds
+Optimal objective -1.504772910e+10

@@ -1,0 +1,27 @@
+id: 1754
+name: fome21
+group: mittelmann/fome
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Sat Apr 21 12:11:37 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Sat Apr 21 12:11:37 2018
+
+Optimize a model with 67748 rows, 211456 columns and 460400 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [3e+01, 1e+05]
+  Bounds range     [8e+00, 2e+04]
+  RHS range        [3e+01, 9e+04]
+Presolve removed 48802 rows and 54347 columns
+Presolve time: 0.44s
+Presolved: 18946 rows, 157109 columns, 361084 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.2407467e+10   1.580100e+06   0.000000e+00      0s
+   33150    4.7346319e+10   0.000000e+00   0.000000e+00      3s
+
+Solved in 33150 iterations and 3.05 seconds
+Optimal objective  4.734631891e+10
+status: OPTIMAL

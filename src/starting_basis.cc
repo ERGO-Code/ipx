@@ -63,7 +63,7 @@ static void PostprocessDependencies(Iterate* iterate, Basis* p_basis,
     const Vector& zu = iterate->zu();
     Basis& basis = *p_basis;
     std::vector<Int> dependent_rows, dependent_cols;
-    Vector dx(n+m), dy(m), dzl(n+m), dzu(n+m);
+    Vector dx(n+m), dy(m);
 
     // Postprocess linearly dependent columns. If a free variable could not be
     // made basic, then the variable is redundant and can be fixed at an
@@ -77,7 +77,6 @@ static void PostprocessDependencies(Iterate* iterate, Basis* p_basis,
                 assert(basis.StatusOf(j) == Basis::NONBASIC_FIXED);
                 dx[j] = -x[j];
                 ScatterColumn(AI, j, x[j], dxbasic);
-                iterate->make_fixed(j);
                 dependent_cols.push_back(j);
             }
         }
@@ -103,9 +102,6 @@ static void PostprocessDependencies(Iterate* iterate, Basis* p_basis,
                 assert(iterate->has_barrier_lb(j));
                 assert(iterate->has_barrier_ub(j));
                 dy[p] = -y[j-n];
-                dzl[j] = -zl[j];
-                dzu[j] = -zu[j];
-                iterate->make_implied_eq(j);
                 dependent_rows.push_back(j-n);
             }
         }
@@ -115,13 +111,16 @@ static void PostprocessDependencies(Iterate* iterate, Basis* p_basis,
     }
 
     // Now adjust the iterate.
-    iterate->Update(1.0, &dx[0], nullptr, nullptr, 1.0, &dy[0], &dzl[0],
-                    &dzu[0]);
+    iterate->Update(1.0, &dx[0], nullptr, nullptr, 1.0, &dy[0], nullptr,
+                    nullptr);
 
-    for (Int j : dependent_cols)
+    for (Int j : dependent_cols) {
         assert(x[j] == 0.0);
+        iterate->make_fixed(j, 0.0);
+    }
     for (Int i : dependent_rows) {
         assert(y[i] == 0.0);
+        iterate->make_implied_eq(n+i); // sets zl[n+i] = zu[n+i] = 0
         assert(zl[n+i] == 0.0);
         assert(zu[n+i] == 0.0);
     }
@@ -153,6 +152,17 @@ void StartingBasis(Iterate* iterate, Basis* p_basis, Info* info) {
     basis.ConstructBasisFromWeights(&colscale[0], info);
     if (info->errflag)
         return;
+
+    // Change status of free variables either to BASIC_FREE or NONBASIC_FIXED.
+    // Change status of fixed variables either to NONBASIC_FIXED or BASIC_FREE.
+    for (Int j = 0; j < n+m; j++) {
+        if (colscale[j] == 0.0 || std::isinf(colscale[j])) {
+            if (basis.IsBasic(j))
+                basis.FreeBasicVariable(j);
+            else
+                basis.FixNonbasicVariable(j);
+        }
+    }
 
     // Variables with equal lower and upper bounds can be removed from the
     // interior point solve if their basic status is NONBASIC_FIXED. Setting

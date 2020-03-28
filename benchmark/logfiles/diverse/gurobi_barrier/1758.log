@@ -1,0 +1,91 @@
+id: 1758
+name: cont1_l
+group: mittelmann/misc
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 10 16:37:08 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 10 16:37:08 2018
+
+Optimize a model with 1918399 rows, 641598 columns and 5752001 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-03, 4e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [4e+00, 1e+01]
+  RHS range        [3e-05, 4e-03]
+Presolve time: 1.13s
+Presolved: 1918399 rows, 641598 columns, 5752001 nonzeros
+
+Elapsed ordering time = 5s
+Elapsed ordering time = 10s
+Elapsed ordering time = 15s
+Ordering time: 18.67s
+
+Barrier statistics:
+ Dense cols : 1
+ AA' NZ     : 1.212e+07
+ Factor NZ  : 1.053e+08 (roughly 2.0 GBytes of memory)
+ Factor Ops : 5.108e+10 (roughly 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   4.53316380e-01 -2.24239352e+05  6.80e-01 0.00e+00  1.33e-01    23s
+   1   4.55707408e-01 -1.09277419e+04  1.71e-11 2.78e-06  4.37e-03    24s
+   2   4.54230399e-01 -1.09277248e+01  1.11e-10 6.95e-13  4.44e-06    26s
+   3   8.11727079e-03 -1.08923849e-02  1.02e-10 1.82e-13  7.42e-09    27s
+   4   5.48096776e-03 -1.37603449e-03  8.09e-11 3.28e-13  2.68e-09    29s
+   5   4.56914983e-03  1.96719133e-04  6.00e-11 7.16e-13  1.71e-09    31s
+   6   3.68945148e-03  1.81584858e-03  3.31e-11 3.38e-14  7.31e-10    33s
+   7   3.19272826e-03  2.40998041e-03  1.86e-11 3.99e-20  3.05e-10    35s
+   8   2.84628796e-03  2.61629351e-03  5.50e-12 7.83e-14  8.97e-11    37s
+   9   2.77783812e-03  2.73409413e-03  9.53e-13 2.18e-14  1.71e-11    40s
+  10   2.77056466e-03  2.76125907e-03  6.19e-13 6.21e-19  3.63e-12    42s
+  11   2.77046938e-03  2.76569272e-03  6.07e-13 1.53e-19  1.86e-12    44s
+  12   2.77060029e-03  2.76631266e-03  8.01e-12 1.22e-19  1.67e-12    45s
+  13   2.77107921e-03  2.77027247e-03  8.82e-12 5.38e-14  3.15e-13    47s
+  14   2.77038096e-03  2.77037031e-03  6.42e-09 8.80e-14  4.24e-15    49s
+  15   2.77037543e-03  2.77037539e-03  2.38e-09 1.98e-13  3.77e-16    51s
+
+Barrier solved model in 15 iterations and 51.47 seconds
+Optimal objective 2.77037543e-03
+
+Crossover log...
+
+
+Restart crossover...
+
+ 1282450 variables added to crossover basis                       59s
+ 1831920 variables added to crossover basis                       60s
+ 1904440 variables added to crossover basis                       65s
+ 1910490 variables added to crossover basis                       70s
+ 1912670 variables added to crossover basis                       75s
+ 1914470 variables added to crossover basis                       80s
+ 1915240 variables added to crossover basis                       85s
+ 1916040 variables added to crossover basis                       90s
+ 1916580 variables added to crossover basis                       95s
+ 1917060 variables added to crossover basis                      100s
+ 1917430 variables added to crossover basis                      105s
+ 1917750 variables added to crossover basis                      110s
+
+     510 DPushes remaining with DInf 0.0000000e+00               241s
+       0 DPushes remaining with DInf 0.0000000e+00               413s
+
+    2853 PPushes remaining with PInf 1.0092544e-05               414s
+    2852 PPushes remaining with PInf 1.4305837e-05               526s
+    2181 PPushes remaining with PInf 1.4307544e-05               742s
+    1509 PPushes remaining with PInf 1.5540542e-05               957s
+     837 PPushes remaining with PInf 1.4300029e-05              1180s
+     165 PPushes remaining with PInf 1.4292998e-05              1414s
+       0 PPushes remaining with PInf 1.4290978e-05              1571s
+
+  Push phase complete: Pinf 1.4290978e-05, Dinf 5.1053416e-02   1572s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    3351    2.7700932e-03   0.000000e+00   5.105341e-02   1653s
+    3380    2.7703754e-03   0.000000e+00   0.000000e+00   1952s
+
+Solved in 3380 iterations and 1952.41 seconds
+Optimal objective  2.770375408e-03
+status: OPTIMAL

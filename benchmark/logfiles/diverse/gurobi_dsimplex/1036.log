@@ -1,0 +1,36 @@
+id: 1036
+name: core4872-1529
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 16:05:57 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 16:05:57 2018
+
+Optimize a model with 4875 rows, 24656 columns and 218762 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-01, 1e+02]
+  Objective range  [1e-01, 1e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+10]
+Warning: Model contains large rhs
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 268 rows and 558 columns
+Presolve time: 0.06s
+Presolved: 4607 rows, 24098 columns, 184762 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    9.3000000e+01   4.606000e+03   0.000000e+00      0s
+   19814    1.4740664e+03   1.351053e+05   0.000000e+00      5s
+   30431    1.4976488e+03   7.715460e+04   0.000000e+00     10s
+   39412    1.5054204e+03   5.982426e+03   0.000000e+00     15s
+   47452    1.5083937e+03   2.909249e+03   0.000000e+00     20s
+   54720    1.5096185e+03   1.258218e+03   0.000000e+00     25s
+Extra 6 simplex iterations after uncrush
+   57747    1.5097186e+03   0.000000e+00   0.000000e+00     27s
+
+Solved in 57747 iterations and 27.09 seconds
+Optimal objective  1.509718561e+03
+status: OPTIMAL

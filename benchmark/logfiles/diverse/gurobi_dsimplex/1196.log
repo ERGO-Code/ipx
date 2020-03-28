@@ -1,0 +1,29 @@
+id: 1196
+name: neos-984165
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 03:27:53 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 03:27:53 2018
+
+Optimize a model with 6962 rows, 8883 columns and 36742 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 5e+02]
+  Bounds range     [1e+00, 2e+00]
+  RHS range        [1e+00, 8e+00]
+Presolve removed 41 rows and 1568 columns
+Presolve time: 0.01s
+Presolved: 6921 rows, 7315 columns, 36573 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -9.9700000e+03   1.176400e+04   0.000000e+00      0s
+   16229    2.1020006e+03   7.152184e+03   0.000000e+00      5s
+   26543    2.1860006e+03   8.257142e+02   0.000000e+00     10s
+   26866    2.1860000e+03   0.000000e+00   0.000000e+00     10s
+
+Solved in 26866 iterations and 10.17 seconds
+Optimal objective  2.186000000e+03
+status: OPTIMAL

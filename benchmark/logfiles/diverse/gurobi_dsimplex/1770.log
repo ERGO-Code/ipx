@@ -1,0 +1,29 @@
+id: 1770
+name: watson_2
+group: mittelmann/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Apr 23 01:05:01 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Apr 23 01:05:01 2018
+
+Optimize a model with 352013 rows, 671861 columns and 1841028 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-02, 8e+00]
+  Objective range  [4e-04, 4e-04]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+00, 1e+03]
+Presolve removed 247135 rows and 373471 columns
+Presolve time: 0.89s
+Presolved: 104878 rows, 298390 columns, 1168570 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -2.2224714e+30   2.688000e+33   2.222471e+00      1s
+   96981   -3.2683849e+29   2.970130e+33   4.183535e+01      5s
+  164207   -1.4319601e+06   1.117873e+10   0.000000e+00     10s
+  196213   -7.5448113e+03   0.000000e+00   0.000000e+00     13s
+
+Solved in 196213 iterations and 13.31 seconds
+Optimal objective -7.544811336e+03
+status: OPTIMAL

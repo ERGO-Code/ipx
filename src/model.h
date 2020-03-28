@@ -50,12 +50,21 @@ public:
     // @obj: array of size num_var
     // @lbuser: array of size num_var, entries can be -INFINITY
     // @ubuser: array of size num_var, entries can be +INFINITY
-    // If the input is invalid, info->errflag is set to nonzero and the Model
-    // object becomes empty.
-    void Load(const Control& control, Int num_constr, Int num_var,
-              const Int* Ap, const Int* Ai, const double* Ax,
-              const double* rhs, const char* constr_type, const double* obj,
-              const double* lbuser, const double* ubuser, Info* info);
+    // If the input is invalid an error code is returned and the Model object
+    // becomes empty.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_dimension
+    //  IPX_ERROR_invalid_matrix
+    //  IPX_ERROR_invalid_vector
+    Int Load(const Control& control, Int num_constr, Int num_var,
+             const Int* Ap, const Int* Ai, const double* Ax,
+             const double* rhs, const char* constr_type, const double* obj,
+             const double* lbuser, const double* ubuser);
+
+    // Writes statistics of input data and preprocessing to @info.
+    void GetInfo(Info* info) const;
 
     // Returns true if the model is empty.
     bool empty() const { return cols() == 0; }
@@ -102,6 +111,37 @@ public:
 
     // Returns the infinity norm of c.
     double norm_c() const { return norm_c_; }
+
+    // Transforms point from user model to solver model. Each of the pointer
+    // arguments can be NULL, in which case its components are assumed 0.0.
+    void PresolveStartingPoint(const double* x_user, const double* slack_user,
+                               const double* y_user, const double* z_user,
+                               Vector& x_solver, Vector& y_solver,
+                               Vector& z_solver) const;
+
+    // Performs the inverse operations to PostsolveInteriorSolution().
+    // The user vectors must all be given and must satisfy the sign conditions
+    // given in the reference documentation. Otherwise an error code will be
+    // returned. At the moment PresolveIPMStartingPoint() is not implemented
+    // for the case that the model was dualized in preprocessing.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_vector if a sign condition is violated
+    //  IPX_ERROR_not_implemented if the model was dualized in preprocessing.
+    Int PresolveIPMStartingPoint(const double* x_user,
+                                 const double* xl_user,
+                                 const double* xu_user,
+                                 const double* slack_user,
+                                 const double* y_user,
+                                 const double* zl_user,
+                                 const double* zu_user,
+                                 Vector& x_solver,
+                                 Vector& xl_solver,
+                                 Vector& xu_solver,
+                                 Vector& y_solver,
+                                 Vector& zl_solver,
+                                 Vector& zu_solver) const;
 
     // Given an IPM iterate, recovers the solution to the user model (see the
     // reference documentation). Each of the pointer arguments can be NULL, in
@@ -158,12 +198,18 @@ public:
 
 private:
     // Checks that the input is valid, and if so copies into the members below
-    // (see "User model after scaling"). If the input is invalid, info->errflag
-    // is set and the object remains unchanged.
-    void CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                   const double* Ax, const double* rhs, const char* constr_type,
-                   const double* obj, const double* lbuser,
-                   const double* ubuser, Info* info);
+    // (see "User model after scaling"). If the input is invalid, an error code
+    // is returned and the object remains unchanged.
+    // Returns:
+    //  0
+    //  IPX_ERROR_argument_null
+    //  IPX_ERROR_invalid_dimension
+    //  IPX_ERROR_invalid_matrix
+    //  IPX_ERROR_invalid_vector
+    Int CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
+                  const double* Ax, const double* rhs, const char* constr_type,
+                  const double* obj, const double* lbuser,
+                  const double* ubuser);
 
     // Scales A_, scaled_obj_, scaled_rhs_, scaled_lbuser_ and scaled_ubuser_
     // according to parameter control.scale(). The scaling factors are stored in
@@ -225,8 +271,10 @@ private:
     // Prints preprocessing operations to control.Log().
     void PrintPreprocessingLog(const Control& control) const;
 
-    // Writes statistics of input data and preprocessing to @info.
-    void WriteInfo(Info* info) const;
+    // Applies the operations from ScaleModel() to a primal-dual point.
+    void ScalePoint(Vector& x, Vector& slack, Vector& y, Vector& z) const;
+    void ScalePoint(Vector& x, Vector& xl, Vector& xu, Vector& slack,
+                    Vector& y, Vector& zl, Vector& zu) const;
 
     // ScaleBack*() do the reverse operation of ScaleModel().
     void ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
@@ -238,6 +286,30 @@ private:
                                 Vector& z) const;
     void ScaleBackBasis(std::vector<Int>& cbasis,
                         std::vector<Int>& vbasis) const;
+
+    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
+    // point.
+    void DualizeBasicSolution(const Vector& x_user, const Vector& slack_user,
+                              const Vector& y_user, const Vector& z_user,
+                              Vector& x_solver, Vector& y_solver,
+                              Vector& z_solver) const;
+
+    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
+    // point. Currently only implemented for dualized_ == false. Otherwise an
+    // assertion will fail.
+    void DualizeIPMStartingPoint(const Vector& x_user,
+                                 const Vector& xl_user,
+                                 const Vector& xu_user,
+                                 const Vector& slack_user,
+                                 const Vector& y_user,
+                                 const Vector& zl_user,
+                                 const Vector& zu_user,
+                                 Vector& x_solver,
+                                 Vector& xl_solver,
+                                 Vector& xu_solver,
+                                 Vector& y_solver,
+                                 Vector& zl_solver,
+                                 Vector& zu_solver) const;
 
     // DualizeBack*() do the reverse operations of LoadPrimal() or LoadDual().
     // Given the solution from the solver, they recover the solution to the
@@ -315,6 +387,22 @@ private:
     Vector colscale_;
     Vector rowscale_;
 };
+
+// Returns the maximum violation of lb <= x <= ub.
+double PrimalInfeasibility(const Model& model, const Vector& x);
+
+// Returns the maximum violation of the dual feasibility condition
+//   z[j] <= 0 if x[j] > lb[j],
+//   z[j] >= 0 if x[j] < ub[j].
+// Note that dual feasibility implies complementarity, i.e.
+//   x[j] == lb[j] || x[j] == ub[j] || z[j] == 0.
+double DualInfeasibility(const Model& model, const Vector& x, const Vector& z);
+
+// Returns the maximum violation of Ax=b.
+double PrimalResidual(const Model& model, const Vector& x);
+
+// Returns the maximum violation of A'y+z=c.
+double DualResidual(const Model& model, const Vector& y, const Vector& z);
 
 }  // namespace ipx
 

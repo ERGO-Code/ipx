@@ -1,0 +1,89 @@
+
+gmscale: Geometric-Mean scaling of matrix
+-------
+                 Max col ratio
+  After  0                1.00
+  After  1                1.00
+  After  2                1.00
+
+  Min scale               Max scale
+  Row      1   1.0e+00    Row      1   1.0e+00
+  Col      1   1.0e+00    Col      1   1.0e+00
+
+  Final b and c scales:   1.0000e+00      1.0000e+00 
+ 
+ 
+ 
+ 
+ 
+==============================================================
+
+   --------------------------------------------------------
+   pdco.m                      Version pdco5 of 15 Jun 2018
+   Primal-dual barrier method to minimize a convex function
+   subject to linear constraints Ax + r = b,  bl <= x <= bu
+                                                           
+   Michael Saunders       SOL and ICME, Stanford University
+   Contributors:     Byunggyoo Kim (SOL), Chris Maes (ICME)
+                     Santiago Akle (ICME), Matt Zahr (ICME)
+                     Aekaansh Verma (ICME)                 
+   --------------------------------------------------------
+
+The objective is linear
+The matrix A is an explicit sparse matrix
+
+m        =     2187     n        =     4374      nnz(A)  =    34992
+max |b | =        1     max |x0| =  0.0e+00      xsize   =  1.0e+00
+max |y0| =        0     max |z0| =  0.0e+00      zsize   =  1.0e+00
+
+x0min    =        1     featol   =  1.0e-06      d1max   =  1.0e-03
+z0min    =        1     opttol   =  1.0e-06      d2max   =  1.0e-03
+mu0      =  1.0e+00     steptol  =     0.99     bigcenter=     1000
+
+LSMR/MINRES:
+atol1    =  1.0e-10     atol2    =  1.0e-15      btol    =  0.0e+00
+conlim   =  1.0e+12     itnlim   =    21870      show    =        0
+
+Method   =        4     (1 or 11=chol  2 or 12=QR  3 or 13=LSMR  4 or 14=MINRES 21=SQD(LU)  22=SQD(MA57))
+Eliminating dy before dx  
+ 
+
+Bounds:
+  [0,inf]  [-inf,0]  Finite bl  Finite bu  Two bnds   Fixed    Free
+     2187         0       4374       2187      2187       0       0
+  [0, bu]  [bl,  0]  excluding fixed variables
+     4374         0
+
+Itn   mu stepx stepz  Pinf  Dinf  Cinf   Objective    nf  center  atol MINRES Inexact
+  0                    1.1   0.0   0.0  2.1870022e+03        1.0
+    MINRES stopped early:  istop =  -1
+  1  0.0 1.000 1.000 -14.3 -15.7  -0.0  4.3355027e+02  1    18.4 -10.0      1  0.000
+    MINRES stopped early:  istop =  -1
+  2 -1.0 1.000 1.000 -14.6 -15.7  -1.0  4.4646223e+02  1     1.2 -10.0      1  0.000
+  3 -3.0 1.000 0.854 -10.1  -6.5  -1.7  1.5197274e+02  1    17.9 -10.0      1  0.000
+    MINRES stopped early:  istop =  -1
+  4 -3.0 1.000 1.000 -15.0 -16.8  -2.8  1.4629664e+02  1     7.6 -10.0      1  0.000
+  5 -4.1 1.000 1.000 -14.8 -15.8  -4.1  1.4595120e+02  1     1.1 -10.0      1  0.000
+  6 -6.1 0.999 1.000 -13.5 -12.3  -6.1  1.4580151e+02  1     1.2 -10.0      1  0.000
+   Converged
+
+max |x| =     0.067    max |y| =     0.067    max |z| =     0.067   scaled
+max |x| =     0.067    max |y| =     0.067    max |z| =     0.067 unscaled
+
+Distribution of vector     x         z
+[   0.01,    0.1 )      2187      2187
+[  0.001,   0.01 )         0         0
+[ 0.0001,  0.001 )         0         0
+[  1e-05, 0.0001 )      2187      2187
+[  1e-06,  1e-05 )         0         0
+[  1e-07,  1e-06 )         0         0
+[  1e-08,  1e-07 )         0         0
+[  1e-09,  1e-08 )         0         0
+[  1e-10,  1e-09 )         0         0
+[      0,  1e-10 )         0         0 
+
+ Unscaled linear objective = 1.4580150e+02
+inform = 0
+PDitns = 6
+CGitns = 6
+time = 0.02

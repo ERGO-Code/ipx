@@ -1,0 +1,27 @@
+id: 1315
+name: sct1
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 15:41:58 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 15:41:58 2018
+
+Optimize a model with 12154 rows, 22886 columns and 105571 nonzeros
+Coefficient statistics:
+  Matrix range     [2e-06, 6e+04]
+  Objective range  [5e-03, 1e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e-01, 5e+04]
+Presolve removed 3080 rows and 8470 columns
+Presolve time: 0.03s
+Presolved: 9074 rows, 14416 columns, 86228 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -2.4503160e+02   8.518991e+02   0.000000e+00      0s
+   15299   -2.1813900e+02   0.000000e+00   0.000000e+00      2s
+
+Solved in 15299 iterations and 1.88 seconds
+Optimal objective -2.181390031e+02
+status: OPTIMAL

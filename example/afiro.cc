@@ -57,14 +57,22 @@ int main() {
     // parameters.debug = 1;       // sets first debugging level (more output)
     lps.SetParameters(parameters);
 
+    // Load the LP model into IPX.
+    Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax,
+                                rhs, constr_type);
+    if (errflag) {
+        std::cout << " invalid model (errflag = " << errflag << ")\n";
+        return 1;
+    }
+
     // Solve the LP.
-    Int status = lps.Solve(num_var, obj, lb, ub, num_constr, Ap, Ai, Ax, rhs,
-                           constr_type);
-    if (status != IPX_STATUS_ok) {
-        // fatal error (invalid input, out of memory, etc.)
+    Int status = lps.Solve();
+    if (status != IPX_STATUS_solved) {
+        // no solution
+        // (time/iter limit, numerical failure, out of memory)
         std::cout << " status: " << status << ','
                   << " errflag: " << lps.GetInfo().errflag << '\n';
-        return 1;
+        return 2;
     }
 
     // Get solver and solution information.

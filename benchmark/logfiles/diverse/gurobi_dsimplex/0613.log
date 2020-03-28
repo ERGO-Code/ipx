@@ -1,0 +1,27 @@
+id: 613
+name: stormg2-125
+group: meszaros/stochlp
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 15:57:27 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 15:57:27 2018
+
+Optimize a model with 66185 rows, 157496 columns and 418321 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 7e+01]
+  Objective range  [1e+00, 4e+05]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [2e-01, 4e+03]
+Presolve removed 19024 rows and 28127 columns
+Presolve time: 0.20s
+Presolved: 47161 rows, 129369 columns, 358123 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -7.0106388e+06   1.217598e+07   0.000000e+00      0s
+   63901    1.5512092e+07   0.000000e+00   0.000000e+00      1s
+
+Solved in 63901 iterations and 1.38 seconds
+Optimal objective  1.551209208e+07
+status: OPTIMAL

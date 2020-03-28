@@ -1,0 +1,55 @@
+id: 1283
+name: ramos3
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:20:28 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:20:28 2018
+
+Optimize a model with 2187 rows, 2187 columns and 32805 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.01s
+Presolved: 2187 rows, 2187 columns, 32805 nonzeros
+
+Ordering time: 0.11s
+
+Barrier statistics:
+ AA' NZ     : 1.072e+05
+ Factor NZ  : 1.959e+06 (roughly 18 MBytes of memory)
+ Factor Ops : 2.286e+09 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   3.72849780e+02 -6.45502203e+01  0.00e+00 1.11e-16  4.74e-02     0s
+   1   1.54516814e+02  1.38902223e+02  0.00e+00 4.44e-16  2.38e-03     0s
+   2   1.45809277e+02  1.45791355e+02  0.00e+00 5.55e-16  2.73e-06     0s
+   3   1.45800009e+02  1.45799991e+02  0.00e+00 6.66e-16  2.73e-09     0s
+   4   1.45800000e+02  1.45800000e+02  0.00e+00 5.55e-16  2.73e-12     0s
+
+Barrier solved model in 4 iterations and 0.34 seconds
+Optimal objective 1.45800000e+02
+
+Crossover log...
+
+     672 DPushes remaining with DInf 0.0000000e+00                 2s
+       0 DPushes remaining with DInf 1.2889752e-11                 3s
+
+     672 PPushes remaining with PInf 0.0000000e+00                 3s
+       0 PPushes remaining with PInf 0.0000000e+00                 4s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 2.2470077e-11      4s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    1347    1.4580000e+02   0.000000e+00   0.000000e+00      4s
+    1347    1.4580000e+02   0.000000e+00   0.000000e+00      4s
+
+Solved in 1347 iterations and 4.45 seconds
+Optimal objective  1.458000000e+02
+status: OPTIMAL

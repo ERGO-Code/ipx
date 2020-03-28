@@ -1,0 +1,27 @@
+id: 187
+name: osa-60
+group: kennington
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:56:23 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:56:23 2018
+
+Optimize a model with 10280 rows, 232966 columns and 1397793 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-01, 1e+01]
+  Objective range  [2e+02, 7e+03]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+00, 9e+04]
+Presolve removed 71 rows and 8841 columns
+Presolve time: 0.24s
+Presolved: 10209 rows, 224125 columns, 584253 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   5.649159e+03   0.000000e+00      0s
+    4807    4.0440725e+06   0.000000e+00   0.000000e+00      1s
+
+Solved in 4807 iterations and 0.78 seconds
+Optimal objective  4.044072503e+06
+status: OPTIMAL

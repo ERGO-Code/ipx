@@ -1,0 +1,68 @@
+id: 1314
+name: satellites3-40
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:22:09 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:22:09 2018
+
+Optimize a model with 44804 rows, 81681 columns and 698176 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-01, 2e+05]
+  Objective range  [1e+00, 1e+02]
+  Bounds range     [1e+00, 2e+05]
+  RHS range        [1e+00, 2e+05]
+Presolve removed 7635 rows and 12070 columns
+Presolve time: 0.21s
+Presolved: 37169 rows, 69611 columns, 605003 nonzeros
+
+Ordering time: 4.05s
+
+Barrier statistics:
+ AA' NZ     : 1.716e+06
+ Factor NZ  : 7.000e+07 (roughly 600 MBytes of memory)
+ Factor Ops : 3.242e+11 (roughly 3 seconds per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   5.40400382e+09 -2.42152546e+06  1.67e+08 1.00e+00  7.38e+05     8s
+   1   3.74125684e+09 -2.47604210e+06  1.16e+08 4.71e-01  5.07e+05    11s
+   2   5.77951554e+08 -2.04527519e+06  1.80e+07 3.96e-02  8.12e+04    14s
+   3   6.46657214e+07 -3.05995676e+05  2.03e+06 5.46e-14  9.34e+03    17s
+   4   8.71275156e+06 -2.11104258e+05  2.73e+05 5.53e-14  1.27e+03    20s
+   5   6.43705176e+05 -1.82462243e+05  1.99e+04 4.26e-14  9.65e+01    24s
+   6   2.81516899e+04 -1.68230176e+05  8.58e+02 6.24e-14  5.18e+00    27s
+   7   7.70106118e+03 -1.06067743e+05  2.43e+02 3.91e-14  1.67e+00    30s
+   8   1.09197776e+03 -2.59502502e+04  3.36e+01 6.48e-14  2.69e-01    34s
+   9   2.27469515e+02 -4.87829789e+03  7.80e+00 8.42e-14  5.08e-02    37s
+  10   1.62827249e+00 -2.15512123e+03  1.10e+00 1.60e-13  1.74e-02    40s
+  11  -3.38121946e+01 -4.18210206e+02  5.92e-02 1.79e-13  2.70e-03    44s
+  12  -3.81957276e+01 -4.88457421e+01  1.30e-04 3.10e-13  7.34e-05    48s
+  13  -3.89962280e+01 -3.90627571e+01  4.63e-07 2.86e-13  4.46e-07    51s
+  14  -3.89999998e+01 -3.90000628e+01  3.18e-11 3.83e-13  4.07e-10    54s
+  15  -3.90000000e+01 -3.90000001e+01  2.90e-11 3.05e-13  4.06e-13    57s
+
+Barrier solved model in 15 iterations and 56.81 seconds
+Optimal objective -3.90000000e+01
+
+Crossover log...
+
+    5761 DPushes remaining with DInf 0.0000000e+00                57s
+       0 DPushes remaining with DInf 0.0000000e+00                57s
+
+   19847 PPushes remaining with PInf 0.0000000e+00                57s
+    2627 PPushes remaining with PInf 0.0000000e+00                60s
+       0 PPushes remaining with PInf 0.0000000e+00                61s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 3.1656006e-10     61s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   25611   -3.9000000e+01   0.000000e+00   0.000000e+00     61s
+   25611   -3.9000000e+01   0.000000e+00   0.000000e+00     61s
+
+Solved in 25611 iterations and 61.37 seconds
+Optimal objective -3.900000000e+01
+status: OPTIMAL

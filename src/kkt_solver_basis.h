@@ -14,7 +14,7 @@ namespace ipx {
 // KKTSolverBasis implements a KKT solver using the CR method with basis
 // preconditioning. Maintaining a basis matrix allows to remove degenerate
 // variables from the optimization process. This technique is applied in
-// Factorize() if parameter drop_primal or drop_dual is positive.
+// Factorize() if parameter ipm_drop_primal or ipm_drop_dual is positive.
 //
 // In the call to Factorize() @iterate must not be NULL.
 

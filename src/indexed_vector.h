@@ -108,6 +108,8 @@ void for_each_nonzero(const IndexedVector& v, C& c) {
     }
 }
 
+double Dot(const IndexedVector& x, const Vector& y);
+
 }  // namespace ipx
 
 #endif  // IPX_INDEXED_VECTOR_H_
