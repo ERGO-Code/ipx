@@ -1,0 +1,31 @@
+id: 1325
+name: siena1
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 15:44:12 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 15:44:12 2018
+
+Optimize a model with 2220 rows, 13741 columns and 258915 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+08]
+  Objective range  [2e+00, 1e+08]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+10]
+Warning: Model contains large rhs
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 9 rows and 259 columns
+Presolve time: 0.06s
+Presolved: 2211 rows, 13482 columns, 254310 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   2.110000e+03   0.000000e+00      0s
+   14060    1.0089786e+07   1.403908e+04   0.000000e+00      5s
+   20326    1.0163179e+07   0.000000e+00   0.000000e+00      8s
+
+Solved in 20326 iterations and 8.04 seconds
+Optimal objective  1.016317923e+07
+status: OPTIMAL

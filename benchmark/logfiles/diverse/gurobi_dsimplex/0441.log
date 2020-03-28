@@ -1,0 +1,29 @@
+id: 441
+name: rat7a
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 16:02:32 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 16:02:32 2018
+
+Optimize a model with 3136 rows, 9408 columns and 268908 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-04, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+00, 3e+04]
+Presolve removed 984 rows and 2636 columns
+Presolve time: 0.04s
+Presolved: 2152 rows, 6772 columns, 156249 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    8.0359900e+05   9.393681e+06   0.000000e+00      0s
+Warning: Markowitz tolerance tightened to 0.03125
+Warning: Markowitz tolerance tightened to 0.125
+    2822    2.0743714e+06   0.000000e+00   0.000000e+00      3s
+
+Solved in 2822 iterations and 2.66 seconds
+Optimal objective  2.074371416e+06
+status: OPTIMAL

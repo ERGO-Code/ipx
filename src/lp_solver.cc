@@ -5,6 +5,7 @@
 #include <cassert>
 #include <vector>
 #include <utility>
+#include "crossover.h"
 #include "info.h"
 #include "kkt_solver_basis.h"
 #include "kkt_solver_diag.h"
@@ -13,21 +14,49 @@
 
 namespace ipx {
 
-Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
-                    const double* ub, Int num_constr, const Int* Ap,
-                    const Int* Ai, const double* Ax, const double* rhs,
-                    const char* constr_type) {
+Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
+                        const double* ub, Int num_constr, const Int* Ap,
+                        const Int* Ai, const double* Ax, const double* rhs,
+                        const char* constr_type) {
     ClearModel();
+    Int errflag = model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs,
+                              constr_type, obj, lb, ub);
+    model_.GetInfo(&info_);
+    return errflag;
+}
+
+Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
+                                   const double* xu, const double* slack,
+                                   const double* y, const double* zl,
+                                   const double* zu) {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    x_start_.resize(n+m);
+    xl_start_.resize(n+m);
+    xu_start_.resize(n+m);
+    y_start_.resize(m);
+    zl_start_.resize(n+m);
+    zu_start_.resize(n+m);
+    Int errflag = model_.PresolveIPMStartingPoint(x, xl, xu, slack, y, zl, zu,
+                                                  x_start_, xl_start_,
+                                                  xu_start_, y_start_,
+                                                  zl_start_, zu_start_);
+    if (errflag) {
+        ClearIPMStartingPoint();
+        return errflag;
+    }
+    MakeIPMStartingPointValid();
+    return 0;
+}
+
+Int LpSolver::Solve() {
+    if (model_.empty())
+        return info_.status = IPX_STATUS_no_model;
+    ClearSolution();
     control_.ResetTimer();
     control_.OpenLogfile();
     control_.Log() << "IPX version 1.0\n";
     try {
-        model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs, constr_type,
-                    obj, lb, ub, &info_);
-        if (info_.errflag) {
-            control_.CloseLogfile();
-            return info_.status = IPX_STATUS_invalid_input;
-        }
         InteriorPointSolve();
         if ((info_.status_ipm == IPX_STATUS_optimal ||
              info_.status_ipm == IPX_STATUS_imprecise) && control_.crossover())
@@ -42,7 +71,23 @@ Int LpSolver::Solve(Int num_var, const double* obj, const double* lb,
             info_.mean_fill = basis_->mean_fill();
             info_.max_fill = basis_->max_fill();
         }
-        info_.status = IPX_STATUS_ok;
+        if (info_.status_ipm == IPX_STATUS_primal_infeas ||
+            info_.status_ipm == IPX_STATUS_dual_infeas ||
+            info_.status_crossover == IPX_STATUS_primal_infeas ||
+            info_.status_crossover == IPX_STATUS_dual_infeas) {
+            // When IPM or crossover detect the model to be infeasible
+            // (currently only the former is implemented), then the problem is
+            // solved.
+            info_.status = IPX_STATUS_solved;
+        } else {
+            Int method_status = control_.crossover() ?
+                info_.status_crossover : info_.status_ipm;
+            if (method_status == IPX_STATUS_optimal ||
+                method_status == IPX_STATUS_imprecise)
+                info_.status = IPX_STATUS_solved;
+            else
+                info_.status = IPX_STATUS_stopped;
+        }
         PrintSummary();
     }
     catch (std::bad_alloc) {
@@ -67,23 +112,22 @@ Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* slack, double* y, double* zl,
                                   double* zu) const {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     model_.PostsolveInteriorSolution(
         iterate_->x(), iterate_->xl(), iterate_->xu(),
         iterate_->y(), iterate_->zl(), iterate_->zu(),
         x, xl, xu, slack, y, zl, zu);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
-    if (!basic_solution_)
-        return IPX_STATUS_invalid_call;
-    model_.PostsolveBasicSolution(
-        basic_solution_->x(), basic_solution_->y(), basic_solution_->z(),
-        basic_solution_->basic_statuses(), x, slack, y, z);
-    model_.PostsolveBasis(basic_solution_->basic_statuses(), cbasis, vbasis);
-    return IPX_STATUS_ok;
+    if (basic_statuses_.empty())
+        return -1;
+    model_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                  basic_statuses_, x, slack, y, z);
+    model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
+    return 0;
 }
 
 Parameters LpSolver::GetParameters() const {
@@ -95,17 +139,24 @@ void LpSolver::SetParameters(Parameters new_parameters) {
 }
 
 void LpSolver::ClearModel() {
-    info_ = Info();
     model_.clear();
-    iterate_.reset(nullptr);
-    basis_.reset(nullptr);
-    basic_solution_.reset(nullptr);
+    ClearSolution();
+    ClearIPMStartingPoint();
+}
+
+void LpSolver::ClearIPMStartingPoint() {
+    x_start_.resize(0);
+    xl_start_.resize(0);
+    xu_start_.resize(0);
+    y_start_.resize(0);
+    zl_start_.resize(0);
+    zu_start_.resize(0);
 }
 
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
                          double* xl, double* xu) {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     if (x)
         std::copy(std::begin(iterate_->x()), std::end(iterate_->x()), x);
     if (y)
@@ -118,7 +169,7 @@ Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
         std::copy(std::begin(iterate_->xl()), std::end(iterate_->xl()), xl);
     if (xu)
         std::copy(std::begin(iterate_->xu()), std::end(iterate_->xu()), xu);
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 // Returns a vector of basic statuses that is consistent with the basis and
@@ -146,20 +197,19 @@ static std::vector<Int> BuildBasicStatuses(const Basis& basis) {
 
 Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
     if (!basis_)
-        return IPX_STATUS_invalid_call;
-    if (basic_solution_) {
+        return -1;
+    if (!basic_statuses_.empty()) {
         // crossover provides basic statuses
-        model_.PostsolveBasis(basic_solution_->basic_statuses(), cbasis,
-                              vbasis);
+        model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     } else {
         model_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::GetKKTMatrix(Int* AIp, Int* AIi, double* AIx, double* g) {
     if (!iterate_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     if (AIp && AIi && AIx) {
         const SparseMatrix& AI = model_.AI();
         std::copy_n(AI.colptr(), AI.cols()+1, AIp);
@@ -188,14 +238,28 @@ Int LpSolver::GetKKTMatrix(Int* AIp, Int* AIi, double* AIx, double* g) {
             }
         }
     }
-    return IPX_STATUS_ok;
+    return 0;
 }
 
 Int LpSolver::SymbolicInvert(Int* rowcounts, Int* colcounts) {
     if (!basis_)
-        return IPX_STATUS_invalid_call;
+        return -1;
     basis_->SymbolicInvert(rowcounts, colcounts);
-    return IPX_STATUS_ok;
+    return 0;
+}
+
+void LpSolver::ClearSolution() {
+    iterate_.reset(nullptr);
+    basis_.reset(nullptr);
+    x_crossover_.resize(0);
+    y_crossover_.resize(0);
+    z_crossover_.resize(0);
+    basic_statuses_.clear();
+    basic_statuses_.shrink_to_fit();
+    info_ = Info();
+    // Restore info entries that belong to model.
+    model_.GetInfo(&info_);
+
 }
 
 void LpSolver::InteriorPointSolve() {
@@ -226,16 +290,79 @@ void LpSolver::InteriorPointSolve() {
 void LpSolver::RunIPM() {
     IPM ipm(control_);
 
-    ComputeStartingPoint(ipm);
-    if (info_.status_ipm != IPX_STATUS_not_run)
-        return;
-    RunInitialIPM(ipm);
-    if (info_.status_ipm != IPX_STATUS_not_run)
-        return;
+    if (x_start_.size() != 0) {
+        control_.Log() << " Using starting point provided by user."
+            " Skipping initial iterations.\n";
+        iterate_->Initialize(x_start_, xl_start_, xu_start_,
+                             y_start_, zl_start_, zu_start_);
+    }
+    else {
+        ComputeStartingPoint(ipm);
+        if (info_.status_ipm != IPX_STATUS_not_run)
+            return;
+        RunInitialIPM(ipm);
+        if (info_.status_ipm != IPX_STATUS_not_run)
+            return;
+    }
     BuildStartingBasis();
     if (info_.status_ipm != IPX_STATUS_not_run)
         return;
     RunMainIPM(ipm);
+}
+
+void LpSolver::MakeIPMStartingPointValid() {
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& lb = model_.lb();
+    const Vector& ub = model_.ub();
+    Vector& xl = xl_start_;
+    Vector& xu = xu_start_;
+    Vector& zl = zl_start_;
+    Vector& zu = zu_start_;
+
+    Int numComplementarityProducts = 0;
+    double sumComplementarityProducts = 0.0;
+    for (Int j = 0; j < n+m; ++j) {
+        if (xl[j] > 0.0 && zl[j] > 0.0) {
+            sumComplementarityProducts += xl[j] * zl[j];
+            numComplementarityProducts++;
+        }
+        if (xu[j] > 0.0 && zu[j] > 0.0) {
+            sumComplementarityProducts += xu[j] * zu[j];
+            numComplementarityProducts++;
+        }
+    }
+    const double mu = numComplementarityProducts ?
+        sumComplementarityProducts / numComplementarityProducts : 1.0;
+
+    for (Int j = 0; j < n+m; ++j) {
+        if (std::isfinite(lb[j])) {
+            assert(std::isfinite(xl[j]) && xl[j] >= 0.0);
+            assert(std::isfinite(zl[j]) && zl[j] >= 0.0);
+            if (xl[j] == 0.0 && zl[j] == 0.0)
+                xl[j] = zl[j] = std::sqrt(mu);
+            else if (xl[j] == 0.0)
+                xl[j] = mu / zl[j];
+            else if (zl[j] == 0.0)
+                zl[j] = mu / xl[j];
+        } else {
+            assert(xl[j] == INFINITY);
+            assert(zl[j] == 0.0);
+        }
+        if (std::isfinite(ub[j])) {
+            assert(std::isfinite(xu[j]) && xu[j] >= 0.0);
+            assert(std::isfinite(zu[j]) && zu[j] >= 0.0);
+            if (xu[j] == 0.0 && zu[j] == 0.0)
+                xu[j] = zu[j] = std::sqrt(mu);
+            else if (xu[j] == 0.0)
+                xu[j] = mu / zu[j];
+            else if (zu[j] == 0.0)
+                zu[j] = mu / xu[j];
+        } else {
+            assert(xu[j] == INFINITY);
+            assert(zu[j] == 0.0);
+        }
+    }
 }
 
 void LpSolver::ComputeStartingPoint(IPM& ipm) {
@@ -331,30 +458,73 @@ void LpSolver::RunMainIPM(IPM& ipm) {
 
 void LpSolver::RunCrossover() {
     control_.Log() << "Crossover\n";
-    basic_solution_.reset(nullptr);
     assert(basis_);
+    const Int m = model_.rows();
+    const Int n = model_.cols();
+    const Vector& lb = model_.lb();
+    const Vector& ub = model_.ub();
+    basic_statuses_.clear();
 
-    // Call crossover. If it failed, discard the basic solution.
-    basic_solution_.reset(new BasicSolution(model_));
-    iterate_->DropToComplementarity(basic_solution_->x(), basic_solution_->y(),
-                                    basic_solution_->z());
-    Int m = model_.rows();
-    Int n = model_.cols();
-    Vector weights(n+m);
-    for (Int j = 0; j < n+m; j++)
-        weights[j] = iterate_->ScalingFactor(j);
-    Crossover crossover(control_);
-    crossover.Run(&weights[0], basic_solution_.get(), basis_.get(), &info_);
-    info_.time_crossover = crossover.time();
-    info_.updates_crossover = crossover.pivots();
-    if (info_.status_crossover != IPX_STATUS_optimal) {
-        basic_solution_.reset(nullptr);
-        return;
+    // Construct a complementary primal-dual point from the final IPM iterate.
+    // This usually increases the residuals to Ax=b and A'y+z=c.
+    x_crossover_.resize(n+m);
+    y_crossover_.resize(m);
+    z_crossover_.resize(n+m);
+    iterate_->DropToComplementarity(x_crossover_, y_crossover_, z_crossover_);
+
+    // Run crossover. Perform dual pushes in increasing order and primal pushes
+    // in decreasing order of the scaling factors from the final IPM iterate.
+    {
+        Vector weights(n+m);
+        for (Int j = 0; j < n+m; j++)
+            weights[j] = iterate_->ScalingFactor(j);
+        Crossover crossover(control_);
+        crossover.PushAll(basis_.get(), x_crossover_, y_crossover_,
+                          z_crossover_, &weights[0], &info_);
+        info_.time_crossover =
+            crossover.time_primal() + crossover.time_dual();
+        info_.updates_crossover =
+            crossover.primal_pivots() + crossover.dual_pivots();
+        if (info_.status_crossover != IPX_STATUS_optimal) {
+            // Crossover failed. Discard solution.
+            x_crossover_.resize(0);
+            y_crossover_.resize(0);
+            z_crossover_.resize(0);
+            return;
+        }
     }
 
-    // Declare status_crossover "imprecise" if the vertex solution defined by
+    // Recompute vertex solution and set basic statuses.
+    basis_->ComputeBasicSolution(x_crossover_, y_crossover_, z_crossover_);
+    basic_statuses_.resize(n+m);
+    for (Int j = 0; j < basic_statuses_.size(); j++) {
+        if (basis_->IsBasic(j)) {
+            basic_statuses_[j] = IPX_basic;
+        } else {
+            if (lb[j] == ub[j])
+                basic_statuses_[j] = z_crossover_[j] >= 0.0 ?
+                    IPX_nonbasic_lb : IPX_nonbasic_ub;
+            else if (x_crossover_[j] == lb[j])
+                basic_statuses_[j] = IPX_nonbasic_lb;
+            else if (x_crossover_[j] == ub[j])
+                basic_statuses_[j] = IPX_nonbasic_ub;
+            else
+                basic_statuses_[j] = IPX_superbasic;
+        }
+    }
+    control_.Debug()
+        << Textline("Bound violation of basic solution:")
+        << sci2(PrimalInfeasibility(model_, x_crossover_)) << '\n'
+        << Textline("Dual sign violation of basic solution:")
+        << sci2(DualInfeasibility(model_, x_crossover_, z_crossover_)) << '\n';
+    control_.Debug()
+        << Textline("Minimum singular value of basis matrix:")
+        << sci2(basis_->MinSingularValue()) << '\n';
+
+    // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
-    basic_solution_->EvaluatePostsolved(&info_);
+    model_.EvaluateBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                 basic_statuses_, &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;

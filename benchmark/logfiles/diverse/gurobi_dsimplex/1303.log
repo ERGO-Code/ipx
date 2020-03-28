@@ -1,0 +1,27 @@
+id: 1303
+name: rocII-9-11
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 15:41:44 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 15:41:44 2018
+
+Optimize a model with 47533 rows, 20679 columns and 544031 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-01, 1e+01]
+  Objective range  [3e-02, 1e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [7e-02, 1e+01]
+Presolve removed 5121 rows and 210 columns
+Presolve time: 0.12s
+Presolved: 42412 rows, 20557 columns, 503343 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -2.8697758e+02   4.230551e+02   0.000000e+00      0s
+     886   -1.1972072e+01   0.000000e+00   0.000000e+00      0s
+
+Solved in 886 iterations and 0.25 seconds
+Optimal objective -1.197207204e+01
+status: OPTIMAL

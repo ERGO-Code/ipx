@@ -1,0 +1,32 @@
+id: 1257
+name: opm2-z11-s8
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 04:48:48 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 04:48:48 2018
+
+Optimize a model with 223082 rows, 8019 columns and 510283 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 4e+03]
+  Objective range  [1e+00, 5e+02]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [3e+06, 3e+06]
+Presolve removed 348 rows and 17400 columns
+Presolve time: 0.35s
+Presolved: 7671 rows, 213701 columns, 481066 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -5.0692500e+05   0.000000e+00   2.252661e+08      1s
+   12254   -1.6511589e+05   0.000000e+00   3.369264e+08      5s
+   23562   -1.1431617e+05   0.000000e+00   3.308519e+08     10s
+   34275   -8.9738686e+04   0.000000e+00   1.176409e+09     15s
+   44390   -7.5787817e+04   0.000000e+00   2.288611e+08     20s
+   53817   -6.6876099e+04   0.000000e+00   2.725258e+08     25s
+   61255   -6.2971930e+04   0.000000e+00   0.000000e+00     30s
+
+Solved in 61255 iterations and 29.57 seconds
+Optimal objective -6.297193039e+04
+status: OPTIMAL

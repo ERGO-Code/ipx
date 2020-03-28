@@ -1,0 +1,26 @@
+id: 1289
+name: reblock420
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Fri Apr 20 05:23:43 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Fri Apr 20 05:23:43 2018
+
+Optimize a model with 62800 rows, 4200 columns and 138670 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 9e+03]
+  Objective range  [5e+02, 1e+07]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+05, 2e+05]
+Presolve time: 0.06s
+Presolved: 4200 rows, 67000 columns, 142870 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -7.9304071e+09   0.000000e+00   1.851296e+08      0s
+   18864   -8.8653590e+08   0.000000e+00   0.000000e+00      2s
+
+Solved in 18864 iterations and 2.29 seconds
+Optimal objective -8.865358975e+08
+status: OPTIMAL

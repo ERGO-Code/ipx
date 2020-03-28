@@ -1,0 +1,27 @@
+id: 316
+name: jendrec1
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:57:19 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:57:19 2018
+
+Optimize a model with 2109 rows, 4228 columns and 89608 nonzeros
+Coefficient statistics:
+  Matrix range     [2e-04, 1e+02]
+  Objective range  [6e-05, 4e+02]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [4e-01, 5e+02]
+Presolve removed 0 rows and 693 columns
+Presolve time: 0.04s
+Presolved: 2109 rows, 3535 columns, 88915 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -2.4901256e+33   1.492890e+33   2.490126e+03      0s
+    3496    7.0284605e+03   0.000000e+00   0.000000e+00      0s
+
+Solved in 3496 iterations and 0.46 seconds
+Optimal objective  7.028460511e+03
+status: OPTIMAL

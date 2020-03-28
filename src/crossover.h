@@ -3,157 +3,155 @@
 #ifndef IPX_CROSSOVER_H_
 #define IPX_CROSSOVER_H_
 
+// Crossover method
+//
+// Given a basis and (x,y,z) that satisfies
+//
+//   lb[j] <= x[j] <= ub[j],                    (1)
+//    z[j] <= 0    if x[j] > lb[j],             (2a)
+//    z[j] >= 0    if x[j] < ub[j]              (2b)
+//
+// for all j, the crossover method updates the basis and (x,y,z) such that
+// z[j]=0 for all basic variables and x[j]=lb[j] or x[j]=ub[j] for all nonbasic
+// variables (or x[j]=0 if the variable is free). Hereby (1) and (2) are
+// maintained. The textbook method also keeps Ax and A'y+z unchanged.
+//
+// Nonbasic variables for which lb[j]<x[j]<ub[j] are called "primal superbasic"
+// and basic variables for which z[j]!=0 are called "dual superbasic". The
+// crossover algorithm removes superbasic variables in two push phases.
+//
+// Each iteration of the primal push phase chooses a primal superbasic variable
+// jn, moves x[jn] toward a bound (we choose the nearer one if jn has two finite
+// bounds and zero if it has none) and updates x[basic] to keep Ax unchanged. If
+// jn reaches its bound, then the push is complete. Otherwise a basic variable
+// jb reached its bound and blocked the step. In this case a basis update
+// exchanges jb by jn.
+//
+// Each iteration of the dual push phase chooses a dual superbasic variable jb,
+// moves z[jb] toward zero and updates z[nonbasic] to keep A'y+z unchanged. If
+// jb reaches zero, then the push is complete. Otherwise a nonbasic variable jn
+// became zero and blocked the step. In this case a basis update exchanges jb by
+// jn.
+
 #include <vector>
 #include "basis.h"
 #include "control.h"
+#include "indexed_vector.h"
 
 namespace ipx {
 
-class BasicSolution {
-public:
-    // Constructor initializes the object to the all-zero solution with slack
-    // variables being basic and structural variables being superbasic. This is
-    // a valid state which can be passed to Model::Postsolve*().
-    BasicSolution(const Model& model);
-
-    const Model& model() const { return model_; }
-    Vector& x() { return x_; }
-    Vector& y() { return y_; }
-    Vector& z() { return z_; }
-    std::vector<Int>& basic_statuses() { return basic_statuses_; }
-
-    // Returns the maximum violation of AI*x=b.
-    double presidual() const;
-
-    // Returns the maximum violation of AI'y+z=c.
-    double dresidual() const;
-
-    // Returns the maximum violation of lb<=x<=ub.
-    double pinfeas() const;
-
-    // Returns the maximum sign violation of z. z is allowed to be
-    // - positive only if x[j]==lb[j],
-    // - negative only if x[j]==ub[j].
-    // By this definition dual feasibility implies complementarity.
-    double dinfeas() const;
-
-    // Returns true if z[j]==0 || x[j]==lb[j] || x[j]==ub[j] for all j.
-    bool complementary() const;
-
-    // Calls Model::EvaluateBasicSolution().
-    void EvaluatePostsolved(Info* info) const;
-
-private:
-    const Model& model_;
-    Vector x_, y_, z_;
-    std::vector<Int> basic_statuses_;
-};
-
 class Crossover {
 public:
-    explicit Crossover(const Control& control);
+    // Constructor stores a reference to the Control object, which must be valid
+    // as long as the Crossover object is used.
+    Crossover(const Control& control);
 
-    // A crossover run consists of
-    // (1) PushPhase(),
-    // (2) computing the vertex solution defined by the basis, and
-    // (3) setting the basic statuses.
+    // First runs the dual push phase; if this was succesful, then runs the
+    // primal push phase.
     //
-    // On return info->status_crossover is one of
-    // IPX_STATUS_optimal           if (1) terminated successfully,
-    // IPX_STATUS_time_limit        if (1) was interrupted,
-    // IPX_STATUS_failed            if (1) failed.
-    // In the latter case info->errflag is set. If (1) did not terminate
-    // successfully, then (2), (3) are not executed and the basic statuses are
-    // unchanged.
-    void Run(const double* weights, BasicSolution* solution, Basis* basis,
-             Info* info);
-
-    // On entry solution->x, solution->y and solution->z must be initialized
-    // such that solution->pinfeas() == 0.0 && solution->dinfeas() == 0.0.
-    // (Otherwise an assertion will fail). On return solution->x, solution->y
-    // and solution->z have been modified under the contition that
-    // solution->pinfeas() == 0.0 && solution->dinfeas() == 0.0 still holds.
-    // In the textbook method, solution->presidual() and solution->dresidual()
-    // would have been unchanged.
+    // weights: Must either be NULL or an array of size n+m.
+    //          If given, then primal pushes are executed in decreasing order of
+    //          weights and dual pushes in increasing order.
+    //          If NULL, then both phases push variables in increasing order of
+    //          index.
     //
-    // On successful return
-    // - z[j]==0.0 for all basic variables j,
-    // - x[j]==lb[j] || x[j]==ub[j] for all nonbasic variables j that have a
-    //   finite bound.
+    // On return info->status_crossover and info->errflag have been set by
+    // PushPrimal() or PushDual().
     //
-    // @weights if not NULL, then it must be an array of size # variables.
-    //          Primal pushes are performed in decreasing order, and dual pushes
-    //          in increasing order of the weights.
-    // @solution x, y, z are set on input/output as specified above.
-    //           basic_statuses is not accessed.
-    // @basis must be a Basis object corresponding to the same Model object as
-    //        solution. basis is updated on return.
-    // @info errflag is set on return.
-    void PushPhase(const double* weights, BasicSolution* solution, Basis* basis,
-                   Info* info);
+    void PushAll(Basis* basis, Vector& x, Vector& y, Vector& z,
+                 const double* weights, Info* info);
 
-    // # primal pushes in last call to PushPhase().
-    Int ppushes() const { return ppushes_; }
+    // Pushes a set of primal variables to one of their bounds.
+    //
+    // basis:           the basis to be updated; also provides the LP model.
+    // x:               size n+m vector, satisfying (1) on entry and return.
+    //                  x is updated while A*x (ideally) remains unchanged.
+    // variables:       indices of nonbasic variables (without duplicates) to be
+    //                  pushed to a bound.
+    // fixed_at_bound:  NULL or size n+m array. If fixed_at_bound[j] = true,
+    //                  then x[j] must be at a bound on entry and remains at
+    //                  this bound. If NULL, then no variable is fixed.
+    // info:            on return info->status_crossover is one of
+    //                  * IPX_STATUS_optimal      if terminated successfully,
+    //                  * IPX_STATUS_time_limit   if interrupted,
+    //                  * IPX_STATUS_failed       if failed.
+    //                  In the latter case info->errflag is set.
+    //
+    // If a variable to be pushed has two finite bounds, then the nearer one is
+    // chosen. If it has no finite bound, then it is pushed to zero.
+    //
+    void PushPrimal(Basis* basis, Vector& x, const std::vector<Int>& variables,
+                    const bool* fixed_at_bound, Info* info);
 
-    // # dual pushes in last call to PushPhase().
-    Int dpushes() const { return dpushes_; }
+    // As above, but with fixed_at_bound defined through z.
+    // Variable j is fixed at its bound if z[j]!=0.
+    void PushPrimal(Basis* basis, Vector& x, const std::vector<Int>& variables,
+                    const Vector& z, Info* info);
 
-    // # pivots in last call to PushPhase().
-    Int pivots() const { return pivots_; }
+    // Pushes a set of dual variables to zero.
+    //
+    // basis:           the basis to be updated; also provides the LP model.
+    // y, z:            size m and n+m vectors that are updated while A'y+z
+    //                  (ideally) remains unchanged.
+    // variables:       indices of basic variables (without duplicates) to be
+    //                  pushed to zero.
+    // sign_restrict:   size n+m array. z[j] is restricted to be
+    //                  * non-negative iff (sign_restrict[j] & 1) != 0,
+    //                  * non-positive iff (sign_restrict[j] & 2) != 0.
+    //                  The sign restriction must be satisfied on entry and is
+    //                  satisfied on return.
+    // info:            on return info->status_crossover is one of
+    //                  * IPX_STATUS_optimal      if terminated successfully,
+    //                  * IPX_STATUS_time_limit   if interrupted,
+    //                  * IPX_STATUS_failed       if failed.
+    //                  In the latter case info->errflag is set.
+    //
+    void PushDual(Basis* basis, Vector& y, Vector& z,
+                  const std::vector<Int>& variables,
+                  const int sign_restrict[], Info* info);
 
-    // Runtime in last call to Run() or PushPhase().
-    double time() const { return time_; }
+    // As above, but with the sign restriction on z defined through x.
+    // z[j] is restricted to be
+    // * non-negative iff x[j] < ub[j],
+    // * non-positive iff x[j] > lb[j].
+    void PushDual(Basis* basis, Vector& y, Vector& z,
+                  const std::vector<Int>& variables,
+                  const Vector& x, Info* info);
+
+    // Number of pushes in last call to PushPrimal() and PushDual().
+    Int primal_pushes() const { return primal_pushes_; }
+    Int dual_pushes() const { return dual_pushes_; }
+
+    // Number of basis updates in last call to PushPrimal() and PushDual().
+    Int primal_pivots() const { return primal_pivots_; }
+    Int dual_pivots() const { return dual_pivots_; }
+
+    // Runtime of last call to PushPrimal() and PushDual().
+    double time_primal() const { return time_primal_; }
+    double time_dual() const { return time_dual_; }
 
 private:
+    // An entry of the tableau row/column is eligible as pivot only if it is
+    // larger than kPivotZeroTol in absolute value.
     static constexpr double kPivotZeroTol = 1e-5;
 
-    // Bound is used by DualPushPhase() to indicates the status of x[j]:
-    // NONE    if lb[j] < x[j] < ub[j]
-    // LOWER   if x[j] = lb[j] < ub[j]
-    // UPPER   if x[j] = ub[j] > lb[j]
-    // EQ      if x[j] = lb[j] = ub[j]
-    enum class Bound { NONE, LOWER, UPPER, EQ };
-
-    // The following two methods are called from PushPhase() in that order.
-    // We must execute the dual push phase first because it guarantees to
-    // maintain complementarity (see the "wrong" pivots issue in the code).
-    // After the dual push phase z[basic] = 0, so that an update to x[basic] in
-    // the primal push phase cannot violate complementarity.
-    void DualPushPhase(Info* info);
-    void PrimalPushPhase(Info* info);
-
-    // Computes the vertex solution defined by the basis and sets basic
-    // statuses.
-    void BuildBasicSolution();
-
-    // Ratios tests called from DualPushPhase() and PrimalPushPhase().
-    // They implement the two-pass ratio test that allows infeasibilities up to
-    // feastol in order to choose a larger pivot.
-    Int DualRatioTest(const Vector& z, const IndexedVector& row,
-                      const std::vector<Bound>& atbound, double step,
-                      double feastol);
+    // Two-pass ratio tests that allow infeasibilities up to feastol in order
+    // to choose a larger pivot.
     Int PrimalRatioTest(const Vector& xbasic, const IndexedVector& ftran,
                         const Vector& lbbasic, const Vector& ubbasic,
                         double step, double feastol, bool* block_at_lb);
-
-    // Returns dual and primal superbasic variables in reverse order in which
-    // they should be processed; i.e. the next variable to be pushed is at the
-    // end of the vector.
-    std::vector<Int> DualSuperbasics() const;
-    std::vector<Int> PrimalSuperbasics() const;
-
-    // Returns the # dual and primal superbasic variables.
-    Int dpush_remain() const;
-    Int ppush_remain() const;
+    Int DualRatioTest(const Vector& z, const IndexedVector& row,
+                      const int sign_restrict[], double step,
+                      double feastol);
 
     const Control& control_;
-    BasicSolution* solution_{nullptr};
-    Basis* basis_{nullptr};
-    const double* weights_{nullptr};
-    Int ppushes_{0};            // count # primal pushes
-    Int dpushes_{0};            // count # dual pushes
-    Int pivots_{0};             // count # pivots
-    double time_{0.0};
+
+    Int primal_pushes_{0};
+    Int dual_pushes_{0};
+    Int primal_pivots_{0};
+    Int dual_pivots_{0};
+    double time_primal_{0.0};
+    double time_dual_{0.0};
 };
 
 }  // namespace ipx

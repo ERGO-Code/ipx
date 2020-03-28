@@ -3,9 +3,9 @@
 
 /* for status */
 #define IPX_STATUS_not_run                  0
-#define IPX_STATUS_ok                       1000
-#define IPX_STATUS_invalid_call             1001
-#define IPX_STATUS_invalid_input            1002
+#define IPX_STATUS_solved                   1000
+#define IPX_STATUS_stopped                  1005
+#define IPX_STATUS_no_model                 1006
 #define IPX_STATUS_out_of_memory            1003
 #define IPX_STATUS_internal_error           1004
 
@@ -25,7 +25,6 @@
 #define IPX_ERROR_invalid_dimension         103
 #define IPX_ERROR_invalid_matrix            104
 #define IPX_ERROR_invalid_vector            105
-#define IPX_ERROR_invalid_bound             106
 #define IPX_ERROR_invalid_basis             107
 
 /* error flags CR method */
@@ -44,6 +43,7 @@
 #define IPX_ERROR_basis_too_ill_conditioned 306
 
 #define IPX_ERROR_lapack_chol               401
+#define IPX_ERROR_not_implemented           901
 #define IPX_ERROR_interrupt_time            999
 
 #define IPX_basic                            0

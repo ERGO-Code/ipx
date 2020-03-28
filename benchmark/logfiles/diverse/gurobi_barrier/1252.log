@@ -1,0 +1,79 @@
+id: 1252
+name: nsr8k
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:17:44 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:17:44 2018
+
+Optimize a model with 6284 rows, 38356 columns and 371608 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+08]
+  Objective range  [2e+03, 1e+08]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+10]
+Warning: Model contains large rhs
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 1 rows and 92 columns
+Presolve time: 0.09s
+Presolved: 6283 rows, 38264 columns, 370206 nonzeros
+
+Ordering time: 0.32s
+
+Barrier statistics:
+ AA' NZ     : 3.335e+05
+ Factor NZ  : 5.800e+06 (roughly 60 MBytes of memory)
+ Factor Ops : 7.908e+09 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   3.60826071e+10 -1.72618436e+09  4.07e+04 0.00e+00  9.05e+05     1s
+   1   1.77316190e+10 -1.64619697e+09  2.01e+04 3.08e+04  4.50e+05     1s
+   2   1.23426610e+09 -1.25632556e+09  1.25e+03 4.06e+03  4.59e+04     1s
+   3   1.16359034e+08 -3.31313282e+08  9.63e+01 5.02e+02  6.87e+03     1s
+   4   2.49628603e+07 -5.37705390e+07  2.98e+00 5.46e+01  1.13e+03     1s
+   5   2.09752895e+07 -1.09003609e+06  1.23e-14 2.08e+01  3.14e+02     1s
+   6   1.95053492e+07  8.88668283e+06  9.55e-15 4.91e+00  1.51e+02     1s
+   7   1.84899567e+07  1.38535776e+07  7.44e-15 1.06e+00  6.59e+01     2s
+   8   1.80419471e+07  1.61028784e+07  1.02e-14 2.57e-01  2.76e+01     2s
+   9   1.77421392e+07  1.69474966e+07  6.22e-15 1.53e-02  1.13e+01     2s
+  10   1.76381778e+07  1.71611297e+07  1.48e-14 1.49e-08  6.78e+00     2s
+  11   1.75847922e+07  1.73017877e+07  1.13e-14 1.49e-08  4.02e+00     2s
+  12   1.75482903e+07  1.73771695e+07  2.00e-14 1.49e-08  2.43e+00     2s
+  13   1.75181113e+07  1.74414436e+07  2.88e-14 1.49e-08  1.09e+00     2s
+  14   1.75060620e+07  1.74839543e+07  3.34e-14 1.49e-08  3.14e-01     3s
+  15   1.75020363e+07  1.74972522e+07  4.69e-14 1.49e-08  6.80e-02     3s
+  16   1.75010331e+07  1.75000544e+07  1.32e-13 2.98e-08  1.39e-02     3s
+  17   1.75008710e+07  1.75006482e+07  3.54e-13 1.49e-08  3.17e-03     3s
+  18   1.75008304e+07  1.75007686e+07  9.31e-13 2.98e-08  8.79e-04     3s
+  19   1.75008160e+07  1.75007974e+07  8.30e-13 1.49e-08  2.65e-04     3s
+  20   1.75008122e+07  1.75008036e+07  5.14e-12 2.98e-08  1.23e-04     3s
+  21   1.75008104e+07  1.75008065e+07  1.35e-11 1.49e-08  5.43e-05     3s
+  22   1.75008099e+07  1.75008086e+07  7.07e-11 2.98e-08  1.87e-05     4s
+  23   1.75008096e+07  1.75008094e+07  4.87e-11 2.98e-08  1.62e-06     4s
+  24   1.75008095e+07  1.75008095e+07  1.12e-09 2.98e-08  8.43e-08     4s
+  25   1.75008095e+07  1.75008095e+07  2.98e-10 1.49e-08  4.77e-10     4s
+
+Barrier solved model in 25 iterations and 4.02 seconds
+Optimal objective 1.75008095e+07
+
+Crossover log...
+
+       0 DPushes remaining with DInf 1.3245565e-07                 5s
+
+     197 PPushes remaining with PInf 0.0000000e+00                 5s
+       0 PPushes remaining with PInf 0.0000000e+00                 5s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 1.1585503e-07      5s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    2583    1.7500810e+07   0.000000e+00   0.000000e+00      5s
+    2583    1.7500810e+07   0.000000e+00   0.000000e+00      5s
+
+Solved in 2583 iterations and 4.75 seconds
+Optimal objective  1.750080951e+07
+status: OPTIMAL

@@ -1,0 +1,31 @@
+id: 50
+name: Linf_bts4
+group: castro/Linf
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:13:37 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:13:37 2018
+
+Optimize a model with 72880 rows, 73142 columns and 383534 nonzeros
+Coefficient statistics:
+  Matrix range     [6e-08, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 2e+07]
+  RHS range        [0e+00, 0e+00]
+Presolve removed 11467 rows and 3085 columns
+Presolve time: 0.33s
+Presolved: 61413 rows, 70057 columns, 287838 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0      handle free variables                          0s
+   27245    3.3931820e-01   6.008577e+05   0.000000e+00      5s
+   37970    3.5637604e-01   5.295271e+04   0.000000e+00     10s
+   49438    3.6616134e-01   6.131865e+05   0.000000e+00     15s
+   61029    4.3277684e-01   5.316079e+03   0.000000e+00     20s
+   67473    2.2143985e-01   0.000000e+00   0.000000e+00     23s
+
+Solved in 67473 iterations and 22.97 seconds
+Optimal objective  2.214398520e-01
+status: OPTIMAL

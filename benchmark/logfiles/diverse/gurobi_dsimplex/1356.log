@@ -1,0 +1,27 @@
+id: 1356
+name: van
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Sat Apr 21 02:09:03 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Sat Apr 21 02:09:03 2018
+
+Optimize a model with 27331 rows, 12481 columns and 487296 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 2e+02]
+  Objective range  [2e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+02]
+Presolve removed 5315 rows and 5121 columns
+Presolve time: 0.10s
+Presolved: 22016 rows, 7360 columns, 481408 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   1.920000e+02   0.000000e+00      0s
+   10053    1.7235201e+00   0.000000e+00   0.000000e+00      2s
+
+Solved in 10053 iterations and 1.97 seconds
+Optimal objective  1.723520132e+00
+status: OPTIMAL

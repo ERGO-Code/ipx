@@ -1,0 +1,30 @@
+id: 480
+name: ulevimin
+group: meszaros/misc
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 18:29:06 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 18:29:06 2018
+
+Optimize a model with 6590 rows, 44605 columns and 162206 nonzeros
+Coefficient statistics:
+  Matrix range     [4e-05, 2e+07]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 9e+09]
+Warning: Model contains large rhs
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 2062 rows and 3446 columns
+Presolve time: 0.09s
+Presolved: 4528 rows, 41159 columns, 135281 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -1.6777216e+37   1.000000e+30   1.677722e+07      0s
+   28855   -5.1911019e+09   0.000000e+00   0.000000e+00      4s
+
+Solved in 28855 iterations and 4.79 seconds
+Optimal objective -5.191101861e+09
+status: OPTIMAL

@@ -1,0 +1,422 @@
+id: 1783
+name: nug30
+group: mittelmann/nug
+IPX version 1.0
+Input
+    Number of variables:                                379350
+    Number of free variables:                           0
+    Number of constraints:                              52260
+    Number of equality constraints:                     52260
+    Number of matrix entries:                           1567800
+    Matrix range:                                       [1e+00, 1e+00]
+    RHS range:                                          [1e+00, 1e+00]
+    Objective range:                                    [2e+00, 2e+02]
+    Bounds range:                                       [1e+00, 1e+00]
+Preprocessing
+    Dualized model:                                     no
+    Number of dense columns:                            900
+    Range of scaling factors:                           [1.00e+00, 1.00e+00]
+Interior Point Solve
+ Iter     P.res    D.res            P.obj           D.obj        mu     Time  stepsizes   pivots kktiter  P.fixed D.fixed
+   0   1.56e+00 3.73e+02   7.86704100e+03 -3.26097080e+05  5.81e+02       0s  0.00 0.00        0       6        0       0
+   1   1.38e+00 3.73e-04   1.80396044e+04 -4.97734524e+05  7.55e+02       0s  0.11 1.00        0       4        0       0
+   2   1.36e-01 3.73e-10   9.00261385e+03 -3.27722945e+05  7.50e+01       0s  0.90 1.00        0       4        0       0
+   3   5.30e-03 7.84e-12   8.51027651e+03 -2.68900956e+05  3.76e+00       1s  0.96 1.00        0       7        0       0
+   4   1.16e-04 7.94e-12   8.05139618e+03 -1.68859215e+05  4.17e-01       1s  0.98 1.00        0       5        0       0
+   5   2.88e-05 5.55e-12   7.95309527e+03 -2.08530724e+04  6.49e-02       1s  0.75 0.85        0       8        0       0
+   6   1.06e-05 7.68e-13   7.40498392e+03 -2.66365636e+03  2.42e-02       1s  0.63 0.95        0      27        0       0
+   7   1.98e-06 6.96e-13   6.30224113e+03  3.05327624e+03  7.47e-03       1s  0.81 0.81        0      32        0       0
+   8   7.33e-07 8.78e-13   5.65635174e+03  4.16090547e+03  3.43e-03       2s  0.63 0.63        0      64        0       0
+   9   3.22e-07 1.02e-12   5.28248662e+03  4.47655818e+03  1.84e-03       3s  0.56 0.50        0     137        0       0
+  10   1.59e-07 9.38e-13   5.11165205e+03  4.61003577e+03  1.15e-03       4s  0.51 0.49        0     259        0       0
+  11   7.54e-08 1.27e-12   4.99004920e+03  4.69658723e+03  6.73e-04       7s  0.53 0.51        0     435        0       0
+  12   3.37e-08 1.59e-12   4.91661679e+03  4.74850719e+03  3.87e-04      10s  0.55 0.56        0     712        0       0
+ Constructing starting basis...
+    Number of free variables in starting basis:         0
+    Number of singletons in starting basis:             0
+    Number of other columns matched:                    48728
+    Number of other columns failed:                     35322
+    Number of columns dropped from guessed basis:       4168
+    Minimum singular value of crash basis:              8.93e-10
+    Minimum singular value of repaired crash basis:     8.66e-08
+    Number of free variables nonbasic:                  0
+    Number of free variables swapped for stability:     0
+    Number of fixed variables basic:                    7703
+ 7043 fixed variables remaining
+ 6417 fixed variables remaining
+ 5921 fixed variables remaining
+ 5481 fixed variables remaining
+ 5114 fixed variables remaining
+ 4787 fixed variables remaining
+ 4767 fixed variables remaining
+ 4222 fixed variables remaining
+ 3783 fixed variables remaining
+ 3410 fixed variables remaining
+ 3071 fixed variables remaining
+ 2741 fixed variables remaining
+ 2487 fixed variables remaining
+ 2070 fixed variables remaining
+ 1672 fixed variables remaining
+ 1314 fixed variables remaining
+ 1013 fixed variables remaining
+ 735 fixed variables remaining
+ 465 fixed variables remaining
+ 188 fixed variables remaining
+    Number of fixed variables swapped for stability:    106
+  13   1.44e-08 1.93e-06   4.87855358e+03  4.77272174e+03  2.78e-04     531s  0.57 0.56     1088    3811        0       0
+  14   6.76e-09 8.98e-07   4.85444654e+03  4.78610519e+03  1.80e-04     707s  0.53 0.53      541    2735        0       0
+  15   4.54e-09 5.06e-07   4.84370075e+03  4.79260675e+03  1.34e-04     895s  0.33 0.44      725    2719        0       0
+  16   2.32e-09 2.27e-07   4.82867571e+03  4.79838803e+03  7.97e-05    1076s  0.49 0.55      602    2450        0       0
+  17   9.06e-10 7.97e-08   4.81879356e+03  4.80154059e+03  4.54e-05    1269s  0.61 0.65     1091    1875        0       0
+  18   4.09e-10 3.72e-08   4.81290723e+03  4.80296606e+03  2.61e-05    1433s  0.55 0.53      803    1596        0       0
+  19   2.14e-10 1.66e-08   4.81034712e+03  4.80373058e+03  1.74e-05    1580s  0.48 0.55      651    1549        0       0
+  20   1.23e-10 9.07e-09   4.80847301e+03  4.80415006e+03  1.14e-05    1714s  0.42 0.45      386    1465        0       0
+  21   5.59e-11 3.96e-09   4.80686437e+03  4.80447670e+03  6.28e-06    1842s  0.55 0.56      318    1433        0       0
+  22   2.38e-11 1.37e-09   4.80606309e+03  4.80465223e+03  3.71e-06    1971s  0.57 0.65      352    1309        0       0
+  23   1.27e-11 5.02e-10   4.80563887e+03  4.80474857e+03  2.34e-06    2092s  0.46 0.63      259    1160        0       0
+  24   5.37e-12 2.52e-10   4.80527181e+03  4.80478943e+03  1.27e-06    2206s  0.58 0.50      216    1113        0       0
+  25   1.61e-12 1.04e-10   4.80506646e+03  4.80481668e+03  6.57e-07    2323s  0.70 0.59      183    1107        0       0
+  26   7.70e-13 3.12e-11   4.80498137e+03  4.80483950e+03  3.73e-07    2436s  0.52 0.70      155    1089        0       0
+  27   2.82e-13 1.05e-11   4.80493269e+03  4.80484590e+03  2.28e-07    2755s  0.63 0.66      121    1063        0       0
+ LU pivot tolerance tightened to 0.3
+  28   9.17e-14 4.86e-12   4.80488847e+03  4.80485127e+03  9.78e-08    2976s  0.67 0.54       79    1021        0       0
+  29   3.42e-14 4.50e-12   4.80487291e+03  4.80485433e+03  4.89e-08    3108s  0.63 0.58       73     988        0       0
+  30   9.10e-15 4.67e-12   4.80486498e+03  4.80485568e+03  2.45e-08    3240s  0.74 0.55       46     960        0       0
+  31   4.22e-15 3.61e-12   4.80486191e+03  4.80485663e+03  1.39e-08    3373s  0.56 0.59       46    1061        0       0
+  32   1.95e-15 4.46e-12   4.80485999e+03  4.80485702e+03  7.81e-09    3505s  0.58 0.49       27    1057        0       0
+  33   2.35e-15 4.87e-12   4.80485862e+03  4.80485731e+03  3.42e-09    3637s  0.91 0.69       15    1053        0       0
+  34   3.99e-15 7.41e-12   4.80485800e+03  4.80485749e+03  1.32e-09    3774s  0.71 0.67       29    1032        0      25
+  35   2.73e-15 6.25e-12   4.80485789e+03  4.80485756e+03  8.70e-10    3910s  0.32 0.60       62    1011        0     869
+  36   6.42e-15 6.07e-12   4.80485770e+03  4.80485758e+03  3.15e-10    4044s  1.00 0.56       74    1000        0    1488
+  37   3.36e-15 4.93e-12   4.80485766e+03  4.80485760e+03  1.58e-10    4214s  0.48 0.77      250    1110        0    5137
+  38*  8.29e-15 8.35e-12   4.80485762e+03  4.80485760e+03  4.40e-11    4447s  0.74 0.75       87    1052        0    6627
+  39*  4.38e-15 6.42e-12   4.80485761e+03  4.80485761e+03  5.56e-12    4604s  1.00 0.55       93    1149        0    8739
+  40*  3.35e-15 4.71e-12   4.80485761e+03  4.80485761e+03  1.32e-12    4751s  0.76 0.81      103     968        0    9974
+  41*  2.21e-15 4.58e-12   4.80485761e+03  4.80485761e+03  6.68e-13    4940s  0.73 0.46      154    1158     1931   10088
+  42*  2.81e-15 5.28e-12   4.80485761e+03  4.80485761e+03  6.03e-14    5125s  0.99 0.83       43     688     4603   10129
+Crossover
+    Primal residual before push phase:                  4.27e-09
+    Dual residual before push phase:                    2.29e-07
+    Number of primal pushes required:                   17321
+    Number of dual pushes required:                     10141
+     9821 dual pushes remaining (     79 pivots)
+     9529 dual pushes remaining (    199 pivots)
+     9235 dual pushes remaining (    302 pivots)
+     9038 dual pushes remaining (    411 pivots)
+     8818 dual pushes remaining (    513 pivots)
+     8547 dual pushes remaining (    618 pivots)
+     8298 dual pushes remaining (    717 pivots)
+     8058 dual pushes remaining (    825 pivots)
+     7786 dual pushes remaining (    941 pivots)
+     7642 dual pushes remaining (   1035 pivots)
+     7477 dual pushes remaining (   1135 pivots)
+     7310 dual pushes remaining (   1242 pivots)
+     7159 dual pushes remaining (   1332 pivots)
+     6973 dual pushes remaining (   1446 pivots)
+     6809 dual pushes remaining (   1535 pivots)
+     6625 dual pushes remaining (   1636 pivots)
+     6495 dual pushes remaining (   1708 pivots)
+     6313 dual pushes remaining (   1808 pivots)
+     6100 dual pushes remaining (   1911 pivots)
+     5902 dual pushes remaining (   2010 pivots)
+     5723 dual pushes remaining (   2097 pivots)
+     5588 dual pushes remaining (   2178 pivots)
+     5454 dual pushes remaining (   2248 pivots)
+     5309 dual pushes remaining (   2321 pivots)
+     5160 dual pushes remaining (   2395 pivots)
+     5028 dual pushes remaining (   2479 pivots)
+     4905 dual pushes remaining (   2550 pivots)
+     4778 dual pushes remaining (   2629 pivots)
+     4648 dual pushes remaining (   2722 pivots)
+     4526 dual pushes remaining (   2778 pivots)
+     4404 dual pushes remaining (   2853 pivots)
+     4277 dual pushes remaining (   2915 pivots)
+     4109 dual pushes remaining (   2993 pivots)
+     3971 dual pushes remaining (   3063 pivots)
+     3838 dual pushes remaining (   3127 pivots)
+     3726 dual pushes remaining (   3181 pivots)
+     3611 dual pushes remaining (   3245 pivots)
+     3505 dual pushes remaining (   3301 pivots)
+     3394 dual pushes remaining (   3371 pivots)
+     3297 dual pushes remaining (   3422 pivots)
+     3203 dual pushes remaining (   3482 pivots)
+     3110 dual pushes remaining (   3530 pivots)
+     3003 dual pushes remaining (   3592 pivots)
+     2885 dual pushes remaining (   3647 pivots)
+     2804 dual pushes remaining (   3685 pivots)
+     2708 dual pushes remaining (   3734 pivots)
+     2608 dual pushes remaining (   3780 pivots)
+     2567 dual pushes remaining (   3803 pivots)
+     2228 dual pushes remaining (   3964 pivots)
+     1913 dual pushes remaining (   4138 pivots)
+     1592 dual pushes remaining (   4351 pivots)
+     1260 dual pushes remaining (   4516 pivots)
+      886 dual pushes remaining (   4668 pivots)
+      599 dual pushes remaining (   4833 pivots)
+      302 dual pushes remaining (   5007 pivots)
+       71 dual pushes remaining (   5140 pivots)
+    Number of wrong pivots in dual push phase:          1
+    17221 primal pushes remaining (   5264 pivots)
+    17128 primal pushes remaining (   5356 pivots)
+    17038 primal pushes remaining (   5446 pivots)
+    16949 primal pushes remaining (   5532 pivots)
+    16883 primal pushes remaining (   5596 pivots)
+    16763 primal pushes remaining (   5714 pivots)
+    16644 primal pushes remaining (   5828 pivots)
+    16613 primal pushes remaining (   5858 pivots)
+    16493 primal pushes remaining (   5976 pivots)
+    16376 primal pushes remaining (   6092 pivots)
+    16262 primal pushes remaining (   6204 pivots)
+    16170 primal pushes remaining (   6295 pivots)
+    16049 primal pushes remaining (   6414 pivots)
+    15931 primal pushes remaining (   6530 pivots)
+    15814 primal pushes remaining (   6645 pivots)
+    15807 primal pushes remaining (   6652 pivots)
+    15693 primal pushes remaining (   6766 pivots)
+    15581 primal pushes remaining (   6877 pivots)
+    15471 primal pushes remaining (   6985 pivots)
+    15403 primal pushes remaining (   7051 pivots)
+    15284 primal pushes remaining (   7167 pivots)
+    15170 primal pushes remaining (   7281 pivots)
+    15055 primal pushes remaining (   7395 pivots)
+    14941 primal pushes remaining (   7506 pivots)
+    14826 primal pushes remaining (   7620 pivots)
+    14715 primal pushes remaining (   7730 pivots)
+    14714 primal pushes remaining (   7731 pivots)
+    14602 primal pushes remaining (   7843 pivots)
+    14490 primal pushes remaining (   7954 pivots)
+    14381 primal pushes remaining (   8060 pivots)
+    14350 primal pushes remaining (   8091 pivots)
+    14238 primal pushes remaining (   8202 pivots)
+    14125 primal pushes remaining (   8313 pivots)
+    14018 primal pushes remaining (   8418 pivots)
+    13941 primal pushes remaining (   8495 pivots)
+    13827 primal pushes remaining (   8607 pivots)
+    13714 primal pushes remaining (   8718 pivots)
+    13601 primal pushes remaining (   8828 pivots)
+    13539 primal pushes remaining (   8888 pivots)
+    13424 primal pushes remaining (   9001 pivots)
+    13311 primal pushes remaining (   9112 pivots)
+    13199 primal pushes remaining (   9221 pivots)
+    13166 primal pushes remaining (   9253 pivots)
+    13051 primal pushes remaining (   9368 pivots)
+    12933 primal pushes remaining (   9484 pivots)
+    12821 primal pushes remaining (   9594 pivots)
+    12800 primal pushes remaining (   9615 pivots)
+    12682 primal pushes remaining (   9729 pivots)
+    12572 primal pushes remaining (   9839 pivots)
+    12457 primal pushes remaining (   9950 pivots)
+    12373 primal pushes remaining (  10031 pivots)
+    12265 primal pushes remaining (  10138 pivots)
+    12154 primal pushes remaining (  10249 pivots)
+    12043 primal pushes remaining (  10360 pivots)
+    12011 primal pushes remaining (  10392 pivots)
+    11897 primal pushes remaining (  10505 pivots)
+    11785 primal pushes remaining (  10616 pivots)
+    11675 primal pushes remaining (  10726 pivots)
+    11665 primal pushes remaining (  10735 pivots)
+    11544 primal pushes remaining (  10850 pivots)
+    11424 primal pushes remaining (  10968 pivots)
+    11353 primal pushes remaining (  11039 pivots)
+    11239 primal pushes remaining (  11149 pivots)
+    11122 primal pushes remaining (  11263 pivots)
+    11013 primal pushes remaining (  11371 pivots)
+    10903 primal pushes remaining (  11477 pivots)
+    10790 primal pushes remaining (  11590 pivots)
+    10678 primal pushes remaining (  11701 pivots)
+    10662 primal pushes remaining (  11717 pivots)
+    10552 primal pushes remaining (  11826 pivots)
+    10442 primal pushes remaining (  11936 pivots)
+    10332 primal pushes remaining (  12045 pivots)
+    10287 primal pushes remaining (  12090 pivots)
+    10175 primal pushes remaining (  12201 pivots)
+    10060 primal pushes remaining (  12316 pivots)
+    10017 primal pushes remaining (  12359 pivots)
+     9906 primal pushes remaining (  12469 pivots)
+     9792 primal pushes remaining (  12582 pivots)
+     9709 primal pushes remaining (  12665 pivots)
+     9590 primal pushes remaining (  12784 pivots)
+     9471 primal pushes remaining (  12903 pivots)
+     9400 primal pushes remaining (  12973 pivots)
+     9292 primal pushes remaining (  13081 pivots)
+     9181 primal pushes remaining (  13192 pivots)
+     9067 primal pushes remaining (  13305 pivots)
+     9036 primal pushes remaining (  13334 pivots)
+     8920 primal pushes remaining (  13448 pivots)
+     8802 primal pushes remaining (  13563 pivots)
+     8703 primal pushes remaining (  13660 pivots)
+     8595 primal pushes remaining (  13767 pivots)
+     8484 primal pushes remaining (  13877 pivots)
+     8434 primal pushes remaining (  13926 pivots)
+     8318 primal pushes remaining (  14042 pivots)
+     8198 primal pushes remaining (  14162 pivots)
+     8135 primal pushes remaining (  14225 pivots)
+     8020 primal pushes remaining (  14336 pivots)
+     7908 primal pushes remaining (  14448 pivots)
+     7861 primal pushes remaining (  14495 pivots)
+     7754 primal pushes remaining (  14601 pivots)
+     7649 primal pushes remaining (  14706 pivots)
+     7541 primal pushes remaining (  14813 pivots)
+     7427 primal pushes remaining (  14924 pivots)
+     7351 primal pushes remaining (  14998 pivots)
+     7242 primal pushes remaining (  15107 pivots)
+     7128 primal pushes remaining (  15218 pivots)
+     7101 primal pushes remaining (  15245 pivots)
+     6986 primal pushes remaining (  15358 pivots)
+     6882 primal pushes remaining (  15461 pivots)
+     6769 primal pushes remaining (  15573 pivots)
+     6648 primal pushes remaining (  15690 pivots)
+     6568 primal pushes remaining (  15769 pivots)
+     6449 primal pushes remaining (  15885 pivots)
+     6327 primal pushes remaining (  16007 pivots)
+     6305 primal pushes remaining (  16029 pivots)
+     6189 primal pushes remaining (  16144 pivots)
+     6067 primal pushes remaining (  16262 pivots)
+     6028 primal pushes remaining (  16300 pivots)
+     5911 primal pushes remaining (  16416 pivots)
+     5791 primal pushes remaining (  16535 pivots)
+     5675 primal pushes remaining (  16649 pivots)
+     5555 primal pushes remaining (  16766 pivots)
+     5542 primal pushes remaining (  16778 pivots)
+     5422 primal pushes remaining (  16893 pivots)
+     5299 primal pushes remaining (  17016 pivots)
+     5230 primal pushes remaining (  17082 pivots)
+     5108 primal pushes remaining (  17198 pivots)
+     4977 primal pushes remaining (  17317 pivots)
+     4892 primal pushes remaining (  17390 pivots)
+     4763 primal pushes remaining (  17508 pivots)
+     4609 primal pushes remaining (  17558 pivots)
+     4495 primal pushes remaining (  17666 pivots)
+     4391 primal pushes remaining (  17770 pivots)
+     4288 primal pushes remaining (  17871 pivots)
+     4259 primal pushes remaining (  17900 pivots)
+     4151 primal pushes remaining (  18007 pivots)
+     4047 primal pushes remaining (  18106 pivots)
+     3950 primal pushes remaining (  18203 pivots)
+     3887 primal pushes remaining (  18265 pivots)
+     3779 primal pushes remaining (  18370 pivots)
+     3678 primal pushes remaining (  18469 pivots)
+     3575 primal pushes remaining (  18572 pivots)
+     3547 primal pushes remaining (  18600 pivots)
+     3441 primal pushes remaining (  18705 pivots)
+     3334 primal pushes remaining (  18811 pivots)
+     3228 primal pushes remaining (  18916 pivots)
+     3220 primal pushes remaining (  18924 pivots)
+     3114 primal pushes remaining (  19029 pivots)
+     3006 primal pushes remaining (  19133 pivots)
+     2901 primal pushes remaining (  19236 pivots)
+     2817 primal pushes remaining (  19318 pivots)
+     2713 primal pushes remaining (  19421 pivots)
+     2608 primal pushes remaining (  19526 pivots)
+     2509 primal pushes remaining (  19625 pivots)
+     2464 primal pushes remaining (  19670 pivots)
+     2354 primal pushes remaining (  19776 pivots)
+     2245 primal pushes remaining (  19881 pivots)
+     2228 primal pushes remaining (  19898 pivots)
+     2124 primal pushes remaining (  20001 pivots)
+     2023 primal pushes remaining (  20101 pivots)
+     1953 primal pushes remaining (  20168 pivots)
+     1847 primal pushes remaining (  20274 pivots)
+     1742 primal pushes remaining (  20377 pivots)
+     1645 primal pushes remaining (  20471 pivots)
+     1536 primal pushes remaining (  20576 pivots)
+     1432 primal pushes remaining (  20676 pivots)
+     1327 primal pushes remaining (  20780 pivots)
+     1254 primal pushes remaining (  20851 pivots)
+     1145 primal pushes remaining (  20958 pivots)
+     1041 primal pushes remaining (  21062 pivots)
+     1019 primal pushes remaining (  21084 pivots)
+      912 primal pushes remaining (  21191 pivots)
+      802 primal pushes remaining (  21297 pivots)
+      698 primal pushes remaining (  21399 pivots)
+      633 primal pushes remaining (  21462 pivots)
+      527 primal pushes remaining (  21568 pivots)
+      425 primal pushes remaining (  21669 pivots)
+      320 primal pushes remaining (  21774 pivots)
+      294 primal pushes remaining (  21800 pivots)
+      189 primal pushes remaining (  21902 pivots)
+       84 primal pushes remaining (  22005 pivots)
+    Primal residual after push phase:                   9.97e-08
+    Dual residual after push phase:                     2.30e-07
+    Bound violation of basic solution:                  8.52e-11
+    Dual sign violation of basic solution:              5.25e-05
+    Minimum singular value of basis matrix:             1.34e-09
+Summary
+    Runtime:                                            11462.16s
+    Status interior point solve:                        optimal
+    Status crossover:                                   imprecise
+    objective value:                                    4.80485761e+03
+    interior solution primal residual (abs/rel):        2.21e-11 / 1.10e-11
+    interior solution dual residual (abs/rel):          2.41e-10 / 1.33e-12
+    interior solution objective gap (abs/rel):          -3.33e-09 / -6.93e-13
+    basic solution primal infeasibility:                6.61e-11
+    basic solution dual infeasibility:                  5.25e-05
+    info.status                                         1000
+    info.status_ipm                                     1
+    info.status_crossover                               2
+    info.errflag                                        0
+    info.num_var                                        379350
+    info.num_constr                                     52260
+    info.num_entries                                    1567800
+    info.num_rows_solver                                52260
+    info.num_cols_solver                                431610
+    info.num_entries_solver                             1620060
+    info.dualized                                       0
+    info.dense_cols                                     900
+    info.dependent_rows                                 2612
+    info.dependent_cols                                 0
+    info.primal_dropped                                 10129
+    info.dual_dropped                                   4603
+    info.abs_presidual                                  2.21e-11
+    info.abs_dresidual                                  2.41e-10
+    info.rel_presidual                                  1.10e-11
+    info.rel_dresidual                                  1.33e-12
+    info.pobjval                                        4.80485761e+03
+    info.dobjval                                        4.80485761e+03
+    info.rel_objgap                                     -6.93e-13
+    info.complementarity                                2.20e-08
+    info.normx                                          1.89e-01
+    info.normy                                          1.81e+03
+    info.normz                                          1.26e+02
+    info.objval                                         4.80485761e+03
+    info.primal_infeas                                  6.61e-11
+    info.dual_infeas                                    5.25e-05
+    info.iter                                           42
+    info.kktiter1                                       2200
+    info.kktiter2                                       41782
+    info.basis_repairs                                  3
+    info.updates_start                                  5197
+    info.updates_ipm                                    8672
+    info.updates_crossover                              22087
+    info.time_total                                     11462.16
+    info.time_ipm1                                      13.16
+    info.time_ipm2                                      4861.06
+    info.time_starting_basis                            250.86
+    info.time_crossover                                 6336.99
+    info.time_kkt_factorize                             3459.41
+    info.time_kkt_solve                                 1412.66
+    info.time_maxvol                                    902.78
+    info.time_cr1                                       12.13
+    info.time_cr1_AAt                                   8.75
+    info.time_cr1_pre                                   2.61
+    info.time_cr2                                       1394.08
+    info.time_cr2_NNt                                   151.49
+    info.time_cr2_B                                     547.85
+    info.time_cr2_Bt                                    677.64
+    info.ftran_sparse                                   0.01
+    info.btran_sparse                                   0.27
+    info.time_ftran                                     988.66
+    info.time_btran                                     639.22
+    info.time_lu_invert                                 8086.74
+    info.time_lu_update                                 140.89
+    info.mean_fill                                      52.79
+    info.max_fill                                       67.24
+    info.time_symb_invert                               0.00
+    info.maxvol_updates                                 0
+    info.maxvol_skipped                                 0
+    info.maxvol_passes                                  0
+    info.tbl_nnz                                        0
+    info.tbl_max                                        0.00e+00
+    info.frobnorm_squared                               0.00e+00
+    info.lambdamax                                      0.00e+00
+    info.volume_increase                                0.00e+00

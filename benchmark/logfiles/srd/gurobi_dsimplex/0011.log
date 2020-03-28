@@ -1,0 +1,32 @@
+id: 11
+name: srd060
+group: castro/irp
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Sun Apr 29 04:03:16 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Sun Apr 29 04:03:16 2018
+
+Optimize a model with 220187 rows, 410591 columns and 3409679 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-03, 4e+02]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+00, 2e+06]
+Presolve removed 126987 rows and 232801 columns
+Presolve time: 1.04s
+Presolved: 93200 rows, 178510 columns, 2796210 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -1.0973043e+06   1.535771e+05   0.000000e+00      1s
+   90330   -5.5783906e+05   9.265740e+06   0.000000e+00      5s
+  111910    8.1333019e+05   1.110358e+07   0.000000e+00     11s
+  130599    1.9552610e+06   7.789467e+06   0.000000e+00     15s
+  147589    2.8777106e+06   3.088888e+06   0.000000e+00     21s
+  169676    3.8254048e+06   5.167592e+04   0.000000e+00     25s
+  198614    4.2320128e+06   0.000000e+00   0.000000e+00     29s
+
+Solved in 198614 iterations and 28.69 seconds
+Optimal objective  4.232012764e+06
+status: OPTIMAL

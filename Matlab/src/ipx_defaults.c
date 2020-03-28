@@ -43,7 +43,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         "dfeasibility_tol",
         "debug",
         "switchiter",
-        "stop_at_switch"
+        "stop_at_switch",
         "update_heuristic",
         "maxpasses",
     };

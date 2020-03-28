@@ -4,8 +4,10 @@ include ../config.mk
 # program sources and generated binaries
 #-------------------------------------------------------------------------------
 
-SRC_FILES = $(wildcard *.cc)
-BIN_FILES = $(patsubst %.cc, %, $(SRC_FILES))
+SRC_FILES = $(wildcard *.cc) $(wildcard *.c)
+BIN_FILES = $(SRC_FILES)
+BIN_FILES := $(patsubst %.cc, %, $(BIN_FILES))
+BIN_FILES := $(patsubst %.c, %, $(BIN_FILES))
 
 #-------------------------------------------------------------------------------
 # compile all examples
@@ -29,6 +31,9 @@ default: $(BIN_FILES)
 
 %: %.cc
 	$(CXX) $(CF) -I../include -I../src $< -o $@ -lipx -L../lib -Wl,-rpath,../lib
+
+%: %.c
+	$(CC) $(CF) -I../include $< -o $@ -lipx -L../lib -Wl,-rpath,../lib
 
 #-------------------------------------------------------------------------------
 # clean and purge

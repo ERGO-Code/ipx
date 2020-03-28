@@ -1,0 +1,28 @@
+id: 168
+name: dcp2
+group: hall
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Tue Apr 17 15:56:17 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Tue Apr 17 15:56:17 2018
+
+Optimize a model with 32388 rows, 51673 columns and 589976 nonzeros
+Coefficient statistics:
+  Matrix range     [1e-05, 4e+04]
+  Objective range  [1e+01, 1e+04]
+  Bounds range     [1e-06, 1e+09]
+  RHS range        [1e-01, 7e+03]
+Presolve removed 18552 rows and 26402 columns
+Presolve time: 0.13s
+Presolved: 13836 rows, 25271 columns, 280985 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    4.7102836e+06   6.921663e+02   0.000000e+00      0s
+Extra 7 simplex iterations after uncrush
+   19177    6.7992347e+06   0.000000e+00   0.000000e+00      2s
+
+Solved in 19177 iterations and 1.67 seconds
+Optimal objective  6.799234714e+06
+status: OPTIMAL

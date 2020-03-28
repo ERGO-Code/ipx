@@ -277,7 +277,7 @@ Int Maxvolume::Driver(Basis& basis, Slice& slice) {
 
         // Update basis.
         const Int jb = basis[pmax];
-        basis.TableauRow(jb, lhs, row);
+        basis.TableauRow(jb, lhs, row, true);
         const double pivot = row[jn];
         if (std::abs(pivot) < 1e-3) {
             control_.Debug(3)

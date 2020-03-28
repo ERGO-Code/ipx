@@ -1,0 +1,27 @@
+id: 518
+name: pltexpa4_6
+group: meszaros/stochlp
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 15:57:15 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 15:57:15 2018
+
+Optimize a model with 26894 rows, 70364 columns and 143059 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+03]
+  Objective range  [2e-07, 2e+02]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [2e+01, 1e+03]
+Presolve removed 14274 rows and 47216 columns
+Presolve time: 0.04s
+Presolved: 12620 rows, 23148 columns, 75238 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -8.5478602e+02   3.944475e+06   0.000000e+00      0s
+   16443   -1.9581688e+01   0.000000e+00   0.000000e+00      0s
+
+Solved in 16443 iterations and 0.27 seconds
+Optimal objective -1.958168802e+01
+status: OPTIMAL

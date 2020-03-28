@@ -1,0 +1,29 @@
+id: 1026
+name: bley_xl1
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 16:00:47 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 16:00:47 2018
+
+Optimize a model with 175620 rows, 5831 columns and 869391 nonzeros
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+08]
+  Objective range  [1e+01, 1e+03]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 107 rows and 380 columns
+Presolve time: 0.27s
+Presolved: 5724 rows, 181071 columns, 874051 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   7.005080e+05      0s
+   19396    1.8103925e+02   0.000000e+00   9.927139e+05      5s
+   29209    1.5643212e+02   6.430704e+01   0.000000e+00     10s
+   31401    1.5439020e+02   0.000000e+00   0.000000e+00     14s
+
+Solved in 31401 iterations and 14.37 seconds
+Optimal objective  1.543902000e+02
+status: OPTIMAL

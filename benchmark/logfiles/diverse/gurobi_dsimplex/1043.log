@@ -1,0 +1,27 @@
+id: 1043
+name: dano3mip
+group: miplib2010
+method: 1
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Thu Apr 19 16:06:25 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Thu Apr 19 16:06:25 2018
+
+Optimize a model with 3202 rows, 13873 columns and 79655 nonzeros
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+03]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 2e+03]
+  RHS range        [2e+00, 2e+03]
+Presolve removed 52 rows and 36 columns
+Presolve time: 0.03s
+Presolved: 3150 rows, 13837 columns, 79530 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    2.8821050e+02   4.152628e+04   0.000000e+00      0s
+   17748    5.7623162e+02   0.000000e+00   0.000000e+00      5s
+
+Solved in 17748 iterations and 4.85 seconds
+Optimal objective  5.762316204e+02
+status: OPTIMAL

@@ -1,0 +1,61 @@
+id: 1195
+name: neos-957389
+group: miplib2010
+method: 2
+
+Gurobi 7.0.2 (linux64, Matlab) logging started Mon Mar 26 10:15:49 2018
+
+
+Gurobi 7.0.2 (linux64) logging started Mon Mar 26 10:15:49 2018
+
+Optimize a model with 5115 rows, 6036 columns and 355372 nonzeros
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+01]
+  Objective range  [5e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 1 rows and 2 columns
+Presolve time: 0.05s
+Presolved: 5114 rows, 6034 columns, 355369 nonzeros
+
+Ordering time: 0.08s
+
+Barrier statistics:
+ Dense cols : 269
+ AA' NZ     : 6.483e+05
+ Factor NZ  : 1.216e+06 (roughly 15 MBytes of memory)
+ Factor Ops : 3.514e+08 (less than 1 second per iteration)
+ Threads    : 4
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   4.53879352e+00 -1.24382426e+01  9.45e+01 3.45e-02  1.21e-01     0s
+   1   3.10148152e+00 -2.52651251e+01  3.37e+01 2.58e-02  3.31e-02     0s
+   2   2.55953115e+00 -1.57007968e+01  6.44e+00 8.62e-04  5.74e-03     0s
+   3   2.43772098e+00 -8.26084857e+00  4.90e-01 1.11e-16  8.88e-04     0s
+   4   1.58522062e+00 -2.97474278e+00  2.22e-15 5.55e-17  2.67e-04     0s
+   5   2.00131470e+00  1.89155371e-01  4.29e-14 1.11e-16  1.06e-04     0s
+   6   1.54355218e+00  1.14299963e+00  1.16e-14 1.44e-15  2.34e-05     0s
+   7   1.50308034e+00  1.49781073e+00  2.09e-14 2.78e-16  3.08e-07     1s
+   8   1.50000307e+00  1.49999780e+00  7.77e-15 4.44e-16  3.08e-10     1s
+   9   1.50000000e+00  1.50000000e+00  1.87e-14 4.01e-17  3.08e-16     1s
+
+Barrier solved model in 9 iterations and 0.56 seconds
+Optimal objective 1.50000000e+00
+
+Crossover log...
+
+       0 DPushes remaining with DInf 0.0000000e+00                 1s
+
+    5943 PPushes remaining with PInf 0.0000000e+00                 1s
+       0 PPushes remaining with PInf 0.0000000e+00                 1s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 0.0000000e+00      1s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+    5959    1.5000000e+00   0.000000e+00   0.000000e+00      1s
+    5959    1.5000000e+00   0.000000e+00   0.000000e+00      1s
+
+Solved in 5959 iterations and 0.63 seconds
+Optimal objective  1.500000000e+00
+status: OPTIMAL

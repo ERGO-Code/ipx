@@ -8,15 +8,15 @@
 
 namespace ipx {
 
-void Model::Load(const Control& control, Int num_constr, Int num_var,
-                 const Int* Ap, const Int* Ai, const double* Ax,
-                 const double* rhs, const char* constr_type, const double* obj,
-                 const double* lbuser, const double* ubuser, Info* info) {
+Int Model::Load(const Control& control, Int num_constr, Int num_var,
+                const Int* Ap, const Int* Ai, const double* Ax,
+                const double* rhs, const char* constr_type, const double* obj,
+                const double* lbuser, const double* ubuser) {
     clear();
-    CopyInput(num_constr, num_var, Ap, Ai, Ax, rhs, constr_type, obj, lbuser,
-              ubuser, info);
-    if (info->errflag)
-        return;
+    Int errflag = CopyInput(num_constr, num_var, Ap, Ai, Ax, rhs, constr_type,
+                            obj, lbuser, ubuser);
+    if (errflag)
+        return errflag;
     control.Log()
         << "Input\n"
         << Textline("Number of variables:") << num_var_ << '\n'
@@ -49,7 +49,18 @@ void Model::Load(const Control& control, Int num_constr, Int num_var,
         if (std::isfinite(x))
             norm_bounds_ = std::max(norm_bounds_, std::abs(x));
     PrintPreprocessingLog(control);
-    WriteInfo(info);
+    return 0;
+}
+
+void Model::GetInfo(Info *info) const {
+    info->num_var = num_var_;
+    info->num_constr = num_constr_;
+    info->num_entries = num_entries_;
+    info->num_rows_solver = num_rows_;
+    info->num_cols_solver = num_cols_ + num_rows_; // including slack columns
+    info->num_entries_solver = AI_.entries();
+    info->dualized = dualized_;
+    info->dense_cols = num_dense_cols();
 }
 
 void Model::clear() {
@@ -88,6 +99,114 @@ void Model::clear() {
     colscale_.resize(0);
     rowscale_.resize(0);
 }
+
+void Model::PresolveStartingPoint(const double* x_user,
+                                  const double* slack_user,
+                                  const double* y_user,
+                                  const double* z_user,
+                                  Vector& x_solver,
+                                  Vector& y_solver,
+                                  Vector& z_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+    assert(x_solver.size() == n+m);
+    assert(y_solver.size() == m);
+    assert(z_solver.size() == n+m);
+
+    Vector x_temp(num_var_);
+    Vector slack_temp(num_constr_);
+    Vector y_temp(num_constr_);
+    Vector z_temp(num_var_);
+    if (x_user)
+        std::copy_n(x_user, num_var_, std::begin(x_temp));
+    if (slack_user)
+        std::copy_n(slack_user, num_constr_, std::begin(slack_temp));
+    if (y_user)
+        std::copy_n(y_user, num_constr_, std::begin(y_temp));
+    if (z_user)
+        std::copy_n(z_user, num_var_, std::begin(z_temp));
+    ScalePoint(x_temp, slack_temp, y_temp, z_temp);
+    DualizeBasicSolution(x_temp, slack_temp, y_temp, z_temp,
+                         x_solver, y_solver, z_solver);
+}
+
+Int Model::PresolveIPMStartingPoint(const double* x_user,
+                                    const double* xl_user,
+                                    const double* xu_user,
+                                    const double* slack_user,
+                                    const double* y_user,
+                                    const double* zl_user,
+                                    const double* zu_user,
+                                    Vector& x_solver,
+                                    Vector& xl_solver,
+                                    Vector& xu_solver,
+                                    Vector& y_solver,
+                                    Vector& zl_solver,
+                                    Vector& zu_solver) const {
+    if (!x_user || !xl_user || !xu_user || !slack_user ||
+        !y_user || !zl_user || !zu_user)
+        return IPX_ERROR_argument_null;
+    if (dualized_)
+        return IPX_ERROR_not_implemented;
+
+    // Copy user point into workspace and apply model scaling.
+    Vector x_temp(x_user, num_var_);
+    Vector xl_temp(xl_user, num_var_);
+    Vector xu_temp(xu_user, num_var_);
+    Vector slack_temp(slack_user, num_constr_);
+    Vector y_temp(y_user, num_constr_);
+    Vector zl_temp(zl_user, num_var_);
+    Vector zu_temp(zu_user, num_var_);
+    ScalePoint(x_temp, xl_temp, xu_temp, slack_temp,  y_temp, zl_temp, zu_temp);
+
+    // Check that point is compatible with bounds.
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!std::isfinite(x_temp[j]))
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(xl_temp[j] >= 0.0) ||
+            scaled_lbuser_[j] == -INFINITY && xl_temp[j] != INFINITY ||
+            scaled_lbuser_[j] != -INFINITY && xl_temp[j] == INFINITY)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(xu_temp[j] >= 0.0) ||
+            scaled_ubuser_[j] == INFINITY && xu_temp[j] != INFINITY ||
+            scaled_ubuser_[j] != INFINITY && xu_temp[j] == INFINITY)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int i = 0; i < num_constr_; ++i) {
+        if (!std::isfinite(slack_temp[i]) ||
+            constr_type_[i] == '=' && !(slack_temp[i] == 0.0) ||
+            constr_type_[i] == '<' && !(slack_temp[i] >= 0.0) ||
+            constr_type_[i] == '>' && !(slack_temp[i] <= 0.0) )
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int i = 0; i < num_constr_; ++i) {
+        if (!std::isfinite(y_temp[i]) ||
+            constr_type_[i] == '<' && !(y_temp[i] <= 0.0) ||
+            constr_type_[i] == '>' && !(y_temp[i] >= 0.0) )
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(zl_temp[j] >= 0.0 && zl_temp[j] < INFINITY) ||
+            scaled_lbuser_[j] == -INFINITY && zl_temp[j] != 0.0)
+            return IPX_ERROR_invalid_vector;
+    }
+    for (Int j = 0; j < num_var_; ++j) {
+        if (!(zu_temp[j] >= 0.0 && zu_temp[j] < INFINITY) ||
+            scaled_ubuser_[j] == INFINITY && zu_temp[j] != 0.0)
+            return IPX_ERROR_invalid_vector;
+    }
+
+    DualizeIPMStartingPoint(x_temp, xl_temp, xu_temp, slack_temp,
+                            y_temp, zl_temp, zu_temp,
+                            x_solver, xl_solver, xu_solver,
+                            y_solver, zl_solver, zu_solver);
+    return 0;
+}
+
 
 void Model::PostsolveInteriorSolution(const Vector& x_solver,
                                       const Vector& xl_solver,
@@ -400,28 +519,23 @@ Int CheckMatrix(Int m, Int n, const Int *Ap, const Int *Ai, const double *Ax) {
     return 0;
 }
 
-void Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                      const double* Ax, const double* rhs,
-                      const char* constr_type, const double* obj,
-                      const double* lbuser, const double* ubuser, Info* info) {
+Int Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
+                     const double* Ax, const double* rhs,
+                     const char* constr_type, const double* obj,
+                     const double* lbuser, const double* ubuser) {
     if (!(Ap && Ai && Ax && rhs && constr_type && obj && lbuser && ubuser)) {
-        info->errflag = IPX_ERROR_argument_null;
-        return;
+        return IPX_ERROR_argument_null;
     }
     if (num_constr < 0 || num_var <= 0) {
-        info->errflag = IPX_ERROR_invalid_dimension;
-        return;
+        return IPX_ERROR_invalid_dimension;
     }
     if (CheckVectors(num_constr, num_var, rhs, constr_type, obj, lbuser, ubuser)
         != 0) {
-        info->errflag = IPX_ERROR_invalid_vector;
-        return;
+        return IPX_ERROR_invalid_vector;
     }
     if (CheckMatrix(num_constr, num_var, Ap, Ai, Ax) != 0) {
-        info->errflag = IPX_ERROR_invalid_matrix;
-        return;
+        return IPX_ERROR_invalid_matrix;
     }
-    info->errflag = 0;
     num_constr_ = num_constr;
     num_eqconstr_ = std::count(constr_type, constr_type+num_constr, '=');
     num_var_ = num_var;
@@ -448,6 +562,7 @@ void Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
     for (double x : scaled_ubuser_)
         if (std::isfinite(x))
             norm_rhs_ = std::max(norm_rhs_, std::abs(x));
+    return 0;
 }
 
 void Model::ScaleModel(const Control& control) {
@@ -819,15 +934,41 @@ void Model::PrintPreprocessingLog(const Control& control) const {
     }
 }
 
-void Model::WriteInfo(Info *info) const {
-    info->num_var = num_var_;
-    info->num_constr = num_constr_;
-    info->num_entries = num_entries_;
-    info->num_rows_solver = num_rows_;
-    info->num_cols_solver = num_cols_ + num_rows_; // including slack columns
-    info->num_entries_solver = AI_.entries();
-    info->dualized = dualized_;
-    info->dense_cols = num_dense_cols();
+void Model::ScalePoint(Vector& x, Vector& slack, Vector& y, Vector& z) const {
+    if (colscale_.size() > 0) {
+        x /= colscale_;
+        z *= colscale_;
+    }
+    if (rowscale_.size() > 0) {
+        y /= rowscale_;
+        slack *= rowscale_;
+    }
+    for (Int j : flipped_vars_) {
+        x[j] *= -1.0;
+        z[j] *= -1.0;
+    }
+}
+
+void Model::ScalePoint(Vector& x, Vector& xl, Vector& xu, Vector& slack,
+                       Vector& y, Vector& zl, Vector& zu) const {
+    if (colscale_.size() > 0) {
+        x /= colscale_;
+        xl /= colscale_;
+        xu /= colscale_;
+        zl *= colscale_;
+        zu *= colscale_;
+    }
+    if (rowscale_.size() > 0) {
+        y /= rowscale_;
+        slack *= rowscale_;
+    }
+    for (Int j : flipped_vars_) {
+        x[j] *= -1.0;
+        xl[j] = xu[j];
+        xu[j] = INFINITY;
+        zl[j] = zu[j];
+        zu[j] = 0.0;
+    }
 }
 
 void Model::ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
@@ -895,6 +1036,120 @@ void Model::ScaleBackBasis(std::vector<Int>& cbasis,
         assert(vbasis[j] != IPX_nonbasic_ub);
         if (vbasis[j] == IPX_nonbasic_lb)
             vbasis[j] = IPX_nonbasic_ub;
+    }
+}
+
+void Model::DualizeBasicSolution(const Vector& x_user,
+                                 const Vector& slack_user,
+                                 const Vector& y_user,
+                                 const Vector& z_user,
+                                 Vector& x_solver,
+                                 Vector& y_solver,
+                                 Vector& z_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+
+        // Build dual solver variables from primal user variables.
+        y_solver = -x_user;
+        for (Int i = 0; i < num_constr_; i++)
+            z_solver[i] = -slack_user[i];
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            z_solver[num_constr_+k] = c(num_constr_+k) + y_solver[j];
+        }
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
+
+        // Build primal solver variables from dual user variables.
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(x_solver));
+        std::copy_n(std::begin(z_user), num_var_, std::begin(x_solver) + n);
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            if (x_solver[n+j] < 0.0) {
+                // j is a boxed variable and z_user[j] < 0
+                x_solver[num_constr_+k] = -x_solver[n+j];
+                x_solver[n+j] = 0.0;
+            } else {
+                x_solver[num_constr_+k] = 0.0;
+            }
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        std::copy_n(std::begin(x_user), n, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), m, std::begin(x_solver) + n);
+        std::copy_n(std::begin(y_user), m, std::begin(y_solver));
+        std::copy_n(std::begin(z_user), n, std::begin(z_solver));
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
+    }
+}
+
+void Model::DualizeIPMStartingPoint(const Vector& x_user,
+                                    const Vector& xl_user,
+                                    const Vector& xu_user,
+                                    const Vector& slack_user,
+                                    const Vector& y_user,
+                                    const Vector& zl_user,
+                                    const Vector& zu_user,
+                                    Vector& x_solver,
+                                    Vector& xl_solver,
+                                    Vector& xu_solver,
+                                    Vector& y_solver,
+                                    Vector& zl_solver,
+                                    Vector& zu_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        // Not implemented.
+        assert(false);
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+
+        std::copy_n(std::begin(x_user), num_var_, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), num_constr_,
+                    std::begin(x_solver) + n);
+        std::copy_n(std::begin(xl_user), num_var_, std::begin(xl_solver));
+        std::copy_n(std::begin(xu_user), num_var_, std::begin(xu_solver));
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(y_solver));
+        std::copy_n(std::begin(zl_user), num_var_, std::begin(zl_solver));
+        std::copy_n(std::begin(zu_user), num_var_, std::begin(zu_solver));
+
+        for (Int i = 0; i < m; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == 0.0);
+                // For a fixed slack variable xl, xu, zl and zu won't be used
+                // by the IPM. Just put them to zero.
+                xl_solver[n+i] = 0.0;
+                xu_solver[n+i] = 0.0;
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = 0.0;
+                break;
+            case '<':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == INFINITY);
+                xl_solver[n+i] = slack_user[i];
+                xu_solver[n+i] = INFINITY;
+                zl_solver[n+i] = -y_user[i];
+                zu_solver[n+i] = 0.0;
+                break;
+            case '>':
+                assert(lb_[n+i] == -INFINITY && ub_[n+i] == 0.0);
+                xl_solver[n+i] = INFINITY;
+                xu_solver[n+i] = -slack_user[i];
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = y_user[i];
+                break;
+            }
+        }
     }
 }
 
@@ -1166,6 +1421,63 @@ void Model::MultiplyWithScaledMatrix(const Vector& rhs, double alpha,
             for (Int j = 0; j < num_var_; j++)
                 ScatterColumn(AI_, j, alpha*rhs[j], lhs);
     }
+}
+
+double PrimalInfeasibility(const Model& model, const Vector& x) {
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+    assert(x.size() == lb.size());
+
+    double infeas = 0.0;
+    for (Int j = 0; j < x.size(); j++) {
+        infeas = std::max(infeas, lb[j]-x[j]);
+        infeas = std::max(infeas, x[j]-ub[j]);
+    }
+    return infeas;
+}
+
+double DualInfeasibility(const Model& model, const Vector& x,
+                                const Vector& z) {
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+    assert(x.size() == lb.size());
+    assert(z.size() == lb.size());
+
+    double infeas = 0.0;
+    for (Int j = 0; j < x.size(); j++) {
+        if (x[j] > lb[j])
+            infeas = std::max(infeas, z[j]);
+        if (x[j] < ub[j])
+            infeas = std::max(infeas, -z[j]);
+    }
+    return infeas;
+}
+
+double PrimalResidual(const Model& model, const Vector& x) {
+    const SparseMatrix& AIt = model.AIt();
+    const Vector& b = model.b();
+    assert(x.size() == AIt.rows());
+
+    double res = 0.0;
+    for (Int i = 0; i < b.size(); i++) {
+        double r = b[i] - DotColumn(AIt, i, x);
+        res = std::max(res, std::abs(r));
+    }
+    return res;
+}
+
+double DualResidual(const Model& model, const Vector& y, const Vector& z) {
+    const SparseMatrix& AI = model.AI();
+    const Vector& c = model.c();
+    assert(y.size() == AI.rows());
+    assert(z.size() == AI.cols());
+
+    double res = 0.0;
+    for (Int j = 0; j < c.size(); j++) {
+        double r = c[j] - z[j] - DotColumn(AI, j, y);
+        res = std::max(res, std::abs(r));
+    }
+    return res;
 }
 
 }  // namespace ipx
