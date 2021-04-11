@@ -1,5 +1,8 @@
 module ipx
 
+using Printf
+using SparseArrays
+
 const ipxint = Int64
 const spmatrix = SparseMatrixCSC{Cdouble,ipxint}
 const IPX_STATUS_not_run                  = 0
@@ -53,7 +56,7 @@ const IPX_superbasic                      = -3
 # lb,ub  are -/+Inf when a variable has no lower/upper bound
 # =============================================================================
 
-type Model
+mutable struct Model
     obj::Vector{Cdouble}
     A::spmatrix
     rhs::Vector{Cdouble}
@@ -62,7 +65,7 @@ type Model
     ub::Vector{Cdouble}
 end
 
-type Parameters
+mutable struct Parameters
     display::ipxint
     logfile_ptr::Ptr{Cchar}
     print_interval::Cdouble
@@ -97,7 +100,7 @@ type Parameters
     end
 end
 
-type Info
+mutable struct Info
     status::ipxint
     status_ipm::ipxint
     status_crossover::ipxint
@@ -201,7 +204,7 @@ function ParseInfo(filename::String)
     return ParseInfo(lines)
 end
 
-type InteriorSolution
+mutable struct InteriorSolution
     x::Vector{Cdouble}
     xl::Vector{Cdouble}
     xu::Vector{Cdouble}
@@ -222,7 +225,7 @@ type InteriorSolution
     end
 end
 
-type BasicSolution
+mutable struct BasicSolution
     x::Vector{Cdouble}
     slack::Vector{Cdouble}
     y::Vector{Cdouble}
@@ -241,44 +244,43 @@ type BasicSolution
     end
 end
 
-type LPSolver
-    solver::Ptr{Void}
+mutable struct LPSolver
+    solver::Ptr{Cvoid}
     function LPSolver()
-        p_solver = Ref{Ptr{Void}}(C_NULL)
-        ccall((:ipx_new, "libipx.so"), Void, (Ptr{Ptr{Void}},), p_solver)
+        p_solver = Ref{Ptr{Cvoid}}(C_NULL)
+        ccall((:ipx_new, "libipx.so"), Cvoid, (Ptr{Ptr{Cvoid}},), p_solver)
         if p_solver[] == C_NULL
             error("ipx_new failed")
         end
         this = new(p_solver[])
-        finalizer(this, ipx_free)
+        finalizer(ipx_free, this)
         return this
     end
 end
 
 function ipx_free(this::LPSolver)
-    p_solver = Ref{Ptr{Void}}(this.solver)
-    ccall((:ipx_free, "libipx.so"), Void, (Ptr{Ptr{Void}},), p_solver)
+    p_solver = Ref{Ptr{Cvoid}}(this.solver)
+    ccall((:ipx_free, "libipx.so"), Cvoid, (Ptr{Ptr{Cvoid}},), p_solver)
     this.solver = p_solver[]
 end
 
 function Solve(this::LPSolver, model::Model, logfile::String="",
                ipmStartingPoint=InteriorSolution(0,0))
     m,n = size(model.A)
-    Ap = model.A.colptr - 1
-    Ai = model.A.rowval - 1
+    Ap = model.A.colptr .- 1
+    Ai = model.A.rowval .- 1
     Ax = model.A.nzval
     rhs = model.rhs
     constr_type = convert(Array{Cchar,1}, model.constr_type)
     obj = model.obj
     lb = model.lb
     ub = model.ub
-    logfile = convert(Vector{UInt8}, logfile)
-    logfile = convert(Vector{Int8}, logfile)
+    logfile = convert(Vector{Cchar}, collect(logfile))
     append!(logfile, 0)
     logfile_ptr = GetParameter(this, :logfile_ptr)
     SetParameter(this, :logfile_ptr, pointer(logfile))
     errflag = ccall((:ipx_load_model, "libipx.so"), ipxint,
-                    (Ptr{Void}, ipxint, Ptr{Cdouble}, Ptr{Cdouble},
+                    (Ptr{Cvoid}, ipxint, Ptr{Cdouble}, Ptr{Cdouble},
                      Ptr{Cdouble}, ipxint, Ptr{ipxint}, Ptr{ipxint},
                      Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cchar}),
                     this.solver, n, obj, lb,
@@ -293,7 +295,7 @@ function Solve(this::LPSolver, model::Model, logfile::String="",
             error("IPM starting point has wrong dimension")
         end
         errflag = ccall((:ipx_load_ipm_starting_point, "libipx.so"), ipxint,
-                        (Ptr{Void}, Ptr{Cdouble},
+                        (Ptr{Cvoid}, Ptr{Cdouble},
                          Ptr{Cdouble}, Ptr{Cdouble},
                          Ptr{Cdouble}, Ptr{Cdouble},
                          Ptr{Cdouble}, Ptr{Cdouble}),
@@ -307,14 +309,14 @@ function Solve(this::LPSolver, model::Model, logfile::String="",
             error(msg)
         end
     end
-    status = ccall((:ipx_solve, "libipx.so"), ipxint, (Ptr{Void},), this.solver)
+    status = ccall((:ipx_solve, "libipx.so"), ipxint, (Ptr{Cvoid},), this.solver)
     SetParameter(this, :logfile_ptr, logfile_ptr)
     return status
 end
 
 function Clear(this::LPSolver)
-    ccall((:ipx_clear_model, "libipx.so"), Void,
-          (Ptr{Void},), this.solver)
+    ccall((:ipx_clear_model, "libipx.so"), Cvoid,
+          (Ptr{Cvoid},), this.solver)
     nothing
 end
 
@@ -324,7 +326,7 @@ function GetInteriorSolution(this::LPSolver)
     n = solverinfo.num_var
     solution = InteriorSolution(m,n)
     err = ccall((:ipx_get_interior_solution, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble},
+                (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble},
                  Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
                  Ptr{Cdouble}, Ptr{Cdouble}),
                 this.solver, solution.x, solution.xl, solution.xu,
@@ -341,7 +343,7 @@ function GetBasicSolution(this::LPSolver)
     n = solverinfo.num_var
     solution = BasicSolution(m,n)
     err = ccall((:ipx_get_basic_solution, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
+                (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
                  Ptr{Cdouble}, Ptr{ipxint}, Ptr{ipxint}),
                 this.solver, solution.x, solution.slack, solution.y,
                 solution.z, solution.cbasis, solution.vbasis)
@@ -355,10 +357,10 @@ function GetBasis(this::LPSolver)
     solverinfo = GetInfo(this)
     m = solverinfo.num_constr
     n = solverinfo.num_var
-    cbasis = Array{ipxint}(m)
-    vbasis = Array{ipxint}(n)
+    cbasis = Array{ipxint}(undef, m)
+    vbasis = Array{ipxint}(undef, n)
     err = ccall((:ipx_get_basis, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
+                (Ptr{Cvoid}, Ptr{ipxint}, Ptr{ipxint}),
                 this.solver, cbasis, vbasis)
     if err != 0
         error("ipx_get_basis failed")
@@ -370,14 +372,14 @@ function GetIterate(this::LPSolver)
     solverinfo = GetInfo(this)
     m = solverinfo.num_rows_solver
     n = solverinfo.num_cols_solver
-    x = Array{Cdouble}(n)
-    y = Array{Cdouble}(m)
-    zl = Array{Cdouble}(n)
-    zu = Array{Cdouble}(n)
-    xl = Array{Cdouble}(n)
-    xu = Array{Cdouble}(n)
+    x = Array{Cdouble}(undef, n)
+    y = Array{Cdouble}(undef, m)
+    zl = Array{Cdouble}(undef, n)
+    zu = Array{Cdouble}(undef, n)
+    xl = Array{Cdouble}(undef, n)
+    xu = Array{Cdouble}(undef, n)
     err = ccall((:ipx_get_iterate, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
+                (Ptr{Cvoid}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble},
                  Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}),
                 this.solver, x, y, zl, zu, xl, xu)
     if err != 0
@@ -391,19 +393,19 @@ function GetKKTMatrix(this::LPSolver)
     m = solverinfo.num_rows_solver
     n = solverinfo.num_cols_solver
     nz = solverinfo.num_entries_solver
-    AIp = Array{ipxint}(n+1)
-    AIi = Array{ipxint}(nz)
-    AIx = Array{Cdouble}(nz)
-    g = Array{Cdouble}(n)
+    AIp = Array{ipxint}(undef, n+1)
+    AIi = Array{ipxint}(undef, nz)
+    AIx = Array{Cdouble}(undef, nz)
+    g = Array{Cdouble}(undef, n)
     err = ccall((:ipx_get_kktmatrix, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}, Ptr{Cdouble},
+                (Ptr{Cvoid}, Ptr{ipxint}, Ptr{ipxint}, Ptr{Cdouble},
                  Ptr{Cdouble}),
                 this.solver, AIp, AIi, AIx, g)
     if err != 0
         error("ipx_get_kktmatrix failed")
     end
-    AIp[:] += 1
-    AIi[:] += 1
+    AIp[:] .+= 1
+    AIi[:] .+= 1
     AI = spmatrix(m, n, AIp, AIi, AIx)
     return (AI, g)
 end
@@ -411,10 +413,10 @@ end
 function SymbolicInvert(this::LPSolver)
     solverinfo = GetInfo(this)
     m = solverinfo.num_rows_solver
-    rowcounts = Array{ipxint}(m)
-    colcounts = Array{ipxint}(m)
+    rowcounts = Array{ipxint}(undef, m)
+    colcounts = Array{ipxint}(undef, m)
     err = ccall((:ipx_symbolic_invert, "libipx.so"), ipxint,
-                (Ptr{Void}, Ptr{ipxint}, Ptr{ipxint}),
+                (Ptr{Cvoid}, Ptr{ipxint}, Ptr{ipxint}),
                 this.solver, rowcounts, colcounts)
     if err != 0
         error("ipx_symbolic_invert failed")
@@ -425,12 +427,12 @@ end
 
 function GetParameters(this::LPSolver)
     return ccall((:ipx_get_parameters, "libipx.so"),
-                 Parameters, (Ptr{Void},), this.solver)
+                 Parameters, (Ptr{Cvoid},), this.solver)
 end
 
 function SetParameters(this::LPSolver, params::Parameters)
-    ccall((:ipx_set_parameters, "libipx.so"), Void,
-          (Ptr{Void}, Parameters), this.solver, params)
+    ccall((:ipx_set_parameters, "libipx.so"), Cvoid,
+          (Ptr{Cvoid}, Parameters), this.solver, params)
     nothing
 end
 
@@ -449,7 +451,7 @@ end
 
 function GetInfo(this::LPSolver)
     return ccall((:ipx_get_info, "libipx.so"),
-                 Info, (Ptr{Void},), this.solver)
+                 Info, (Ptr{Cvoid},), this.solver)
 end
 
 include("ipx_utils.jl")

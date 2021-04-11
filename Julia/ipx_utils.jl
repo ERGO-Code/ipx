@@ -1,4 +1,5 @@
 using MAT
+using LinearAlgebra
 
 # pres, dres, compl = CheckInteriorSolution(model, solution)
 function CheckInteriorSolution(model::Model, solution::InteriorSolution)
