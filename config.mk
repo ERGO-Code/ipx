@@ -32,14 +32,15 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     # The CF macro is used as a combination of
-    # CFLAGS, CPPFLAGS, TARGET_ARCH, and system-dependent settings.
-    CF = $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fPIC
+    # CXXFLAGS, CPPFLAGS, TARGET_ARCH, and system-dependent settings.
+    CF = $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fPIC
 
     #---------------------------------------------------------------------------
     # compiler, must support C++11
     #---------------------------------------------------------------------------
 
-    CXX = g++ -std=c++11
+    CXX = g++
+    CXXFLAGS = -std=c++11
 
     #---------------------------------------------------------------------------
     # required libraries
@@ -112,11 +113,12 @@ SO_VERSION = 1
 SO_OPTS = $(LFLAGS) $(PFLAGS)
 
 ifeq ($(UNAME),Windows)
-    # Cygwin Make on Windows (untested)
+    # Cygwin / Mingw Make on Windows
     AR_TARGET = $(LIBRARY).lib
     SO_PLAIN  = $(LIBRARY).dll
     SO_MAIN   = $(LIBRARY).$(SO_VERSION).dll
     SO_TARGET = $(LIBRARY).$(VERSION).dll
+    SO_OPTS   += -shared
     SO_INSTALL_NAME = echo
 else
     # Mac or Linux/Unix
