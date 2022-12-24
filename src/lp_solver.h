@@ -100,6 +100,10 @@ public:
     Parameters GetParameters() const;
     void SetParameters(Parameters new_parameters);
 
+    // Reads/writes parameters to file. Returns 0 on success, -1 on failure.
+    Int ReadParameters(const char* filename);
+    Int WriteParameters(const char* filename);
+
     // Discards the model and solution (if any) but keeps the parameters.
     void ClearModel();
 

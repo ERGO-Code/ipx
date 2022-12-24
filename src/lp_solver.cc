@@ -138,6 +138,14 @@ void LpSolver::SetParameters(Parameters new_parameters) {
     control_.parameters(new_parameters);
 }
 
+Int LpSolver::ReadParameters(const char* filename) {
+    return control_.ReadParameters(filename);
+}
+
+Int LpSolver::WriteParameters(const char* filename) {
+    return control_.WriteParameters(filename);
+}
+
 void LpSolver::ClearModel() {
     model_.clear();
     ClearSolution();

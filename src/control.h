@@ -87,6 +87,10 @@ public:
     const Parameters& parameters() const;
     void parameters(const Parameters& new_parameters);
 
+    // Reads/writes parameters to file. Returns 0 on success, -1 on failure.
+    Int ReadParameters(const char* filename);
+    Int WriteParameters(const char* filename);
+
     // Opens the log file defined in parameters.logfile, if any.
     // Ignores if an error occurs; in this case no file log is written.
     void OpenLogfile();

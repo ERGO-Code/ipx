@@ -449,6 +449,24 @@ function SetParameter(this::LPSolver, name::Symbol, value)
     SetParameters(this, params)
 end
 
+function ReadParameters(this::LPSolver, filename::String)
+    err = ccall((:ipx_read_parameters, "libipx.so"), ipxint,
+                (Ptr{Cvoid}, Ptr{Cchar}), this.solver, filename)
+    if err != 0
+        error("ipx_read_parameters failed")
+    end
+    nothing
+end
+
+function WriteParameters(this::LPSolver, filename::String)
+    err = ccall((:ipx_write_parameters, "libipx.so"), ipxint,
+                (Ptr{Cvoid}, Ptr{Cchar}), this.solver, filename)
+    if err != 0
+        error("ipx_write_parameters failed")
+    end
+    nothing
+end
+
 function GetInfo(this::LPSolver)
     return ccall((:ipx_get_info, "libipx.so"),
                  Info, (Ptr{Cvoid},), this.solver)

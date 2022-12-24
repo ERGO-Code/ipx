@@ -43,6 +43,8 @@ extern "C"{
                                   ipxint* cbasis, ipxint* vbasis);
     struct ipx_parameters ipx_get_parameters(void* self);
     void ipx_set_parameters(void* self, struct ipx_parameters);
+    ipxint ipx_read_parameters(void* self, const char* filename);
+    ipxint ipx_write_parameters(void* self, const char* filename);
     void ipx_clear_model(void* self);
 
     /* for debugging */

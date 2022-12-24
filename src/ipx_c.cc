@@ -78,6 +78,16 @@ void ipx_set_parameters(void* self, struct ipx_parameters new_parameters) {
     solver->SetParameters(new_parameters);
 }
 
+ipxint ipx_read_parameters(void* self, const char* filename) {
+    LpSolver* solver = static_cast<LpSolver*>(self);
+    return solver->ReadParameters(filename);
+}
+
+ipxint ipx_write_parameters(void* self, const char* filename) {
+    LpSolver* solver = static_cast<LpSolver*>(self);
+    return solver->WriteParameters(filename);
+}
+
 void ipx_clear_model(void* self) {
     LpSolver* solver = static_cast<LpSolver*>(self);
     solver->ClearModel();
