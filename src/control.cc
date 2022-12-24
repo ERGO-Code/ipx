@@ -8,6 +8,7 @@ namespace ipx {
 Control::Control() {
     // When failbit is set, the stream evaluates to false.
     dummy_.setstate(std::ios::failbit);
+    MakeStream();
 }
 
 Int Control::InterruptCheck() const {
