@@ -163,7 +163,7 @@ public:
     // Evaluates the solution to the user model obtained from postsolving the
     // IPM iterate. The following info members are set:
     // abs_presidual, abs_dresidual, rel_presidual, rel_dresidual,
-    // pobjval, dobjval, rel_objgap, complementarity, normx, normy, normx.
+    // pobjval, dobjval, rel_objgap, complementarity, normx, normy, normz.
     void EvaluateInteriorSolution(const Vector& x_solver,
                                   const Vector& xl_solver,
                                   const Vector& xu_solver,
