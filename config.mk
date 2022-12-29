@@ -40,7 +40,7 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     CXX = g++
-    CXXFLAGS = -std=c++11
+    CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-sign-compare
 
     #---------------------------------------------------------------------------
     # required libraries
