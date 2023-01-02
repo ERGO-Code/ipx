@@ -211,6 +211,72 @@ private:
     // Builds computational form model from user input.
     void PresolveModel(const Control& control);
 
+    // Translates arbitrary primal-dual point from user model to computational
+    // form. No sign conditions are assumed for the user point.
+    void PresolveGeneralPoint(const Vector& x_user,
+                              const Vector& slack_user,
+                              const Vector& y_user,
+                              const Vector& z_user,
+                              Vector& x_solver,
+                              Vector& y_solver,
+                              Vector& z_solver) const;
+
+    // Translates interior point from user model to computational form. The user
+    // point must satisfy the sign conditions imposed by the user model.
+    // Currently only implemented for dualized_ == false.
+    void PresolveInteriorPoint(const Vector& x_user,
+                               const Vector& xl_user,
+                               const Vector& xu_user,
+                               const Vector& slack_user,
+                               const Vector& y_user,
+                               const Vector& zl_user,
+                               const Vector& zu_user,
+                               Vector& x_solver,
+                               Vector& xl_solver,
+                               Vector& xu_solver,
+                               Vector& y_solver,
+                               Vector& zl_solver,
+                               Vector& zu_solver) const;
+
+    // Translates arbitrary primal-dual point from computational form to user
+    // model. No sign conditions are assumed.
+    void PostsolveGeneralPoint(const Vector& x_solver,
+                               const Vector& y_solver,
+                               const Vector& z_solver,
+                               Vector& x_user,
+                               Vector& slack_user,
+                               Vector& y_user,
+                               Vector& z_user) const;
+
+    // Translates interior point from computational form to user model. The
+    // solver point must satisfy the sign conditions imposed by the
+    // computational form model.
+    void PostsolveInteriorPoint(const Vector& x_solver,
+                                const Vector& xl_solver,
+                                const Vector& xu_solver,
+                                const Vector& y_solver,
+                                const Vector& zl_solver,
+                                const Vector& zu_solver,
+                                Vector& x_user,
+                                Vector& xl_user,
+                                Vector& xu_user,
+                                Vector& slack_user,
+                                Vector& y_user,
+                                Vector& zl_user,
+                                Vector& zu_user) const;
+
+    // Translates basic statuses from computational form to user model.
+    void PostsolveBasis(const std::vector<Int>& basic_status_solver,
+                        std::vector<Int>& cbasis_user,
+                        std::vector<Int>& vbasis_user) const;
+
+    // Adjusts primal-dual point to be consistent with basis:
+    // - For nonbasic variables sets the primal variable to its bound.
+    // - For basic variables sets the dual variable to zero.
+    void CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
+                              const std::vector<Int> cbasis,
+                              const std::vector<Int> vbasis) const;
+
     // Computes norms of input data.
     void ComputeInputNorms();
 
@@ -269,72 +335,6 @@ private:
 
     // Prints preprocessing operations to control.Log().
     void PrintPreprocessingLog(const Control& control) const;
-
-    // Translates arbitrary primal-dual point from user model to computational
-    // form. No sign conditions are assumed for the user point.
-    void PresolveGeneralPoint(const Vector& x_user,
-                              const Vector& slack_user,
-                              const Vector& y_user,
-                              const Vector& z_user,
-                              Vector& x_solver,
-                              Vector& y_solver,
-                              Vector& z_solver) const;
-
-    // Translates interior point from user model to computational form. The user
-    // point must satisfy the sign conditions imposed by the user model.
-    // Currently only implemented for dualized_ == false.
-    void PresolveInteriorPoint(const Vector& x_user,
-                               const Vector& xl_user,
-                               const Vector& xu_user,
-                               const Vector& slack_user,
-                               const Vector& y_user,
-                               const Vector& zl_user,
-                               const Vector& zu_user,
-                               Vector& x_solver,
-                               Vector& xl_solver,
-                               Vector& xu_solver,
-                               Vector& y_solver,
-                               Vector& zl_solver,
-                               Vector& zu_solver) const;
-
-    // Translates interior point from computational form to user model. The
-    // solver point must satisfy the sign conditions imposed by the
-    // computational form model.
-    void PostsolveInteriorPoint(const Vector& x_solver,
-                                const Vector& xl_solver,
-                                const Vector& xu_solver,
-                                const Vector& y_solver,
-                                const Vector& zl_solver,
-                                const Vector& zu_solver,
-                                Vector& x_user,
-                                Vector& xl_user,
-                                Vector& xu_user,
-                                Vector& slack_user,
-                                Vector& y_user,
-                                Vector& zl_user,
-                                Vector& zu_user) const;
-
-    // Translates arbitrary primal-dual point from computational form to user
-    // model. No sign conditions are assumed.
-    void PostsolveGeneralPoint(const Vector& x_solver,
-                               const Vector& y_solver,
-                               const Vector& z_solver,
-                               Vector& x_user,
-                               Vector& slack_user,
-                               Vector& y_user,
-                               Vector& z_user) const;
-
-    // Translates basic statuses from computational form to user model.
-    void PostsolveBasis(const std::vector<Int>& basic_status_solver,
-                        std::vector<Int>& cbasis_user,
-                        std::vector<Int>& vbasis_user) const;
-
-    // Adjusts primal-dual point to be consistent with basis:
-    // - For nonbasic variables sets the primal variable to its bound.
-    // - For basic variables sets the dual variable to zero.
-    void CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
-                              const std::vector<Int> cbasis,
-                              const std::vector<Int> vbasis) const;
 
     double colscale(Int j) const {
         return colscale_.size() > 0 ? colscale_[j] : 1.0;

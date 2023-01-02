@@ -551,6 +551,460 @@ void Model::PresolveModel(const Control& control) {
     PrintPreprocessingLog(control);
 }
 
+void Model::PresolveGeneralPoint(const Vector& x_user,
+                                 const Vector& slack_user,
+                                 const Vector& y_user,
+                                 const Vector& z_user,
+                                 Vector& x_solver,
+                                 Vector& y_solver,
+                                 Vector& z_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+
+        // Build dual solver variables from primal user variables.
+        y_solver = -x_user;
+        for (Int j : negated_vars_)
+            y_solver[j] *= -1.0;
+        for (Int i = 0; i < num_constr_; i++)
+            z_solver[i] = -slack_user[i];
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            z_solver[num_constr_+k] = c(num_constr_+k) + y_solver[j];
+        }
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
+
+        // Build primal solver variables from dual user variables.
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(x_solver));
+        std::copy_n(std::begin(z_user), num_var_, std::begin(x_solver) + n);
+        for (Int j : negated_vars_)
+            x_solver[n+j] *= -1.0;
+        for (Int k = 0; k < boxed_vars_.size(); k++) {
+            Int j = boxed_vars_[k];
+            if (x_solver[n+j] < 0.0) {
+                // j is a boxed variable and z_user[j] < 0
+                x_solver[num_constr_+k] = -x_solver[n+j];
+                x_solver[n+j] = 0.0;
+            } else {
+                x_solver[num_constr_+k] = 0.0;
+            }
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        std::copy_n(std::begin(x_user), n, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), m, std::begin(x_solver) + n);
+        std::copy_n(std::begin(y_user), m, std::begin(y_solver));
+        std::copy_n(std::begin(z_user), n, std::begin(z_solver));
+        for (Int i = 0; i < m; i++)
+            z_solver[n+i] = c(n+i)-y_solver[i];
+    }
+
+    // Apply scaling.
+    if (colscale_.size() > 0) {
+        for (Int j = 0; j < num_cols_; j++) {
+            x_solver[j] /= colscale_[j];
+            z_solver[j] *= colscale_[j];
+        }
+    }
+    if (rowscale_.size() > 0) {
+        for (Int i = 0; i < num_rows_; i++) {
+            y_solver[i] /= rowscale_[i];
+            x_solver[num_cols_+i] *= rowscale_[i];
+            z_solver[num_cols_+i] /= rowscale_[i];
+        }
+    }
+}
+
+void Model::PresolveInteriorPoint(const Vector& x_user,
+                                  const Vector& xl_user,
+                                  const Vector& xu_user,
+                                  const Vector& slack_user,
+                                  const Vector& y_user,
+                                  const Vector& zl_user,
+                                  const Vector& zu_user,
+                                  Vector& x_solver,
+                                  Vector& xl_solver,
+                                  Vector& xu_solver,
+                                  Vector& y_solver,
+                                  Vector& zl_solver,
+                                  Vector& zu_solver) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        // Not implemented.
+        assert(false);
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+
+        std::copy_n(std::begin(x_user), num_var_, std::begin(x_solver));
+        std::copy_n(std::begin(slack_user), num_constr_,
+                    std::begin(x_solver) + n);
+        std::copy_n(std::begin(xl_user), num_var_, std::begin(xl_solver));
+        std::copy_n(std::begin(xu_user), num_var_, std::begin(xu_solver));
+        std::copy_n(std::begin(y_user), num_constr_, std::begin(y_solver));
+        std::copy_n(std::begin(zl_user), num_var_, std::begin(zl_solver));
+        std::copy_n(std::begin(zu_user), num_var_, std::begin(zu_solver));
+
+        for (Int i = 0; i < m; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == 0.0);
+                // For a fixed slack variable xl, xu, zl and zu won't be used
+                // by the IPM. Just put them to zero.
+                xl_solver[n+i] = 0.0;
+                xu_solver[n+i] = 0.0;
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = 0.0;
+                break;
+            case '<':
+                assert(lb_[n+i] == 0.0 && ub_[n+i] == INFINITY);
+                xl_solver[n+i] = slack_user[i];
+                xu_solver[n+i] = INFINITY;
+                zl_solver[n+i] = -y_user[i];
+                zu_solver[n+i] = 0.0;
+                break;
+            case '>':
+                assert(lb_[n+i] == -INFINITY && ub_[n+i] == 0.0);
+                xl_solver[n+i] = INFINITY;
+                xu_solver[n+i] = -slack_user[i];
+                zl_solver[n+i] = 0.0;
+                zu_solver[n+i] = y_user[i];
+                break;
+            }
+        }
+    }
+
+    // Apply scaling.
+    if (colscale_.size() > 0) {
+        for (Int j = 0; j < num_cols_; j++) {
+            x_solver[j] /= colscale_[j];
+            xl_solver[j] /= colscale_[j];
+            xu_solver[j] /= colscale_[j];
+            zl_solver[j] *= colscale_[j];
+            zu_solver[j] *= colscale_[j];
+        }
+    }
+    if (rowscale_.size() > 0) {
+        for (Int i = 0; i < num_rows_; i++) {
+            y_solver[i] /= rowscale_[i];
+            x_solver[num_cols_+i] *= rowscale_[i];
+            xl_solver[num_cols_+i] *= rowscale_[i];
+            xu_solver[num_cols_+i] *= rowscale_[i];
+            zl_solver[num_cols_+i] /= rowscale_[i];
+            zu_solver[num_cols_+i] /= rowscale_[i];
+        }
+    }
+}
+
+void Model::PostsolveGeneralPoint(const Vector& x_solver,
+                                  const Vector& y_solver,
+                                  const Vector& z_solver,
+                                  Vector& x_user,
+                                  Vector& slack_user,
+                                  Vector& y_user,
+                                  Vector& z_user) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+        for (Int j = 0; j < num_var_; j++) {
+            x_user[j] = -y_solver[j] * rowscale(j);
+            z_user[j] = x_solver[n+j] / rowscale(j);
+        }
+        for (Int i = 0; i < num_constr_; i++) {
+            slack_user[i] = -z_solver[i] / colscale(i);
+            y_user[i] = x_solver[i] * colscale(i);
+        }
+        Int k = num_constr_;
+        for (Int j : boxed_vars_) {
+            z_user[j] -= x_solver[k] * colscale(k);
+            k++;
+        }
+        assert(k == n);
+        for (Int j : negated_vars_) {
+            x_user[j] *= -1.0;
+            z_user[j] *= -1.0;
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        if (colscale_.size() > 0) {
+            x_user = x_solver[std::slice(0, num_var_, 1)] * colscale_;
+            z_user = z_solver[std::slice(0, num_var_, 1)] / colscale_;
+        } else {
+            x_user = x_solver[std::slice(0, num_var_, 1)];
+            z_user = z_solver[std::slice(0, num_var_, 1)];
+        }
+        if (rowscale_.size() > 0) {
+            slack_user = x_solver[std::slice(n, num_constr_, 1)] / rowscale_;
+            y_user = y_solver * rowscale_;
+        } else {
+            slack_user = x_solver[std::slice(n, num_constr_, 1)];
+            y_user = y_solver;
+        }
+    }
+}
+
+void Model::PostsolveInteriorPoint(const Vector& x_solver,
+                                   const Vector& xl_solver,
+                                   const Vector& xu_solver,
+                                   const Vector& y_solver,
+                                   const Vector& zl_solver,
+                                   const Vector& zu_solver,
+                                   Vector& x_user,
+                                   Vector& xl_user,
+                                   Vector& xu_user,
+                                   Vector& slack_user,
+                                   Vector& y_user,
+                                   Vector& zl_user,
+                                   Vector& zu_user) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+        if (rowscale_.size() > 0)
+            x_user = -y_solver * rowscale_;
+        else
+            x_user = -y_solver;
+
+        // If the solution from the solver would be exact, we could copy the
+        // first num_constr_ entries from x_solver into y_user. However, to
+        // satisfy the sign condition on y_user even if the solution is not
+        // exact, we have to use the xl_solver and xu_solver entries for
+        // inequality constraints.
+        for (Int i = 0; i < num_constr_; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                y_user[i] = x_solver[i] * colscale(i);
+                break;
+            case '<':
+                y_user[i] = -xu_solver[i] * colscale(i);
+                break;
+            case '>':
+                y_user[i] = xl_solver[i] * colscale(i);
+                break;
+            }
+            assert(std::isfinite(y_user[i]));
+        }
+
+        // Dual variables associated with lbuser <= x in the scaled user model
+        // are the slack variables from the solver. For an exact solution we
+        // would have x_solver[n+1:n+m] == xl_solver[n+1:n+m]. Using xl_solver
+        // guarantees that zl_user >= 0 in any case. If variable j has no lower
+        // bound in the scaled user model (i.e. is free), then the j-th slack
+        // variable was fixed at zero in the solver model, but the IPM solution
+        // may not satisfy this. Hence we must set zl_user[j] = 0 explicitly.
+        if (rowscale_.size() > 0)
+            zl_user = xl_solver[std::slice(n, num_var_, 1)] / rowscale_;
+        else
+            zl_user = xl_solver[std::slice(n, num_var_, 1)];
+        for (Int j = 0; j < num_var_; j++)
+            if (!std::isfinite(lbuser_[j]))
+                zl_user[j] = 0.0;
+
+        // Dual variables associated with x <= ubuser in the scaled user model
+        // are the primal variables that were added for boxed variables in the
+        // solver model.
+        zu_user = 0.0;
+        Int k = num_constr_;
+        for (Int j : boxed_vars_) {
+            zu_user[j] = xl_solver[k] * colscale(k);
+            k++;
+        }
+        assert(k == n);
+
+        // xl in the scaled user model is zl[n+1:n+m] in the solver model or
+        // infinity.
+        for (Int i = 0; i < m; i++) {
+            if (std::isfinite(lbuser_[i]))
+                xl_user[i] = zl_solver[n+i] * rowscale(i);
+            else
+                xl_user[i] = INFINITY;
+        }
+
+        // xu in the scaled user model are the entries in zl for columns of the
+        // negative identity matrix (that were added for boxed variables).
+        xu_user = INFINITY;
+        k = num_constr_;
+        for (Int j : boxed_vars_) {
+            xu_user[j] = zl_solver[k] / colscale(k);
+            k++;
+        }
+        assert(k == n);
+
+        for (Int i = 0; i < num_constr_; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                slack_user[i] = 0.0;
+                break;
+            case '<':
+                slack_user[i] = zu_solver[i] / colscale(i);
+                break;
+            case '>':
+                slack_user[i] = -zl_solver[i] / colscale(i);
+                break;
+            }
+        }
+
+        for (Int j : negated_vars_) {
+            assert(std::isfinite(xl_user[j]));
+            assert(std::isinf(xu_user[j]));
+            assert(zu_user[j] == 0.0);
+            x_user[j] *= -1.0;
+            xu_user[j] = xl_user[j];
+            xl_user[j] = INFINITY;
+            zu_user[j] = zl_user[j];
+            zl_user[j] = 0.0;
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        if (colscale_.size() > 0)
+            x_user = x_solver[std::slice(0, num_var_, 1)] * colscale_;
+        else
+            x_user = x_solver[std::slice(0, num_var_, 1)];
+
+        // Instead of copying y_solver into y_user, we use the entries from
+        // zl_solver and zu_solver for inequality constraints, so that the sign
+        // condition on y_user is satisfied.
+        for (Int i = 0; i < m; i++) {
+            assert(lb_[n+i] == 0.0 || lb_[n+i] == -INFINITY);
+            assert(ub_[n+i] == 0.0 || ub_[n+i] ==  INFINITY);
+            assert(lb_[n+i] == 0.0 || ub_[n+i] == 0.0);
+            switch (constr_type_[i]) {
+            case '=':
+                y_user[i] = y_solver[i] * rowscale(i);
+                break;
+            case '<':
+                y_user[i] = -zl_solver[n+i] * rowscale(i);
+                break;
+            case '>':
+                y_user[i] = zu_solver[n+i] * rowscale(i);
+                break;
+            }
+            assert(std::isfinite(y_user[i]));
+        }
+        if (colscale_.size() > 0) {
+            zl_user = zl_solver[std::slice(0, num_var_, 1)] / colscale_;
+            zu_user = zu_solver[std::slice(0, num_var_, 1)] / colscale_;
+            xl_user = xl_solver[std::slice(0, num_var_, 1)] * colscale_;
+            xu_user = xu_solver[std::slice(0, num_var_, 1)] * colscale_;
+        }
+        else {
+            zl_user = zl_solver[std::slice(0, num_var_, 1)];
+            zu_user = zu_solver[std::slice(0, num_var_, 1)];
+            xl_user = xl_solver[std::slice(0, num_var_, 1)];
+            xu_user = xu_solver[std::slice(0, num_var_, 1)];
+        }
+
+        // If the solution would be exact, slack_user were given by the entries
+        // of x_solver corresponding to slack columns. To satisfy the sign
+        // condition in any case, we build the slack for inequality constraints
+        // from xl_solver and xu_solver and set the slack for equality
+        // constraints to zero.
+        for (Int i = 0; i < m; i++) {
+            switch (constr_type_[i]) {
+            case '=':
+                slack_user[i] = 0.0;
+                break;
+            case '<':
+                slack_user[i] = xl_solver[n+i] / rowscale(i);
+                break;
+            case '>':
+                slack_user[i] = -xu_solver[n+i] / rowscale(i);
+                break;
+            }
+            assert(std::isfinite(slack_user[i]));
+        }
+    }
+}
+
+void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
+                           std::vector<Int>& cbasis_user,
+                           std::vector<Int>& vbasis_user) const {
+    const Int m = rows();
+    const Int n = cols();
+
+    if (dualized_) {
+        assert(num_var_ == m);
+        assert(num_constr_ + boxed_vars_.size() == n);
+        for (Int i = 0; i < num_constr_; i++) {
+            if (basic_status_solver[i] == IPX_basic)
+                cbasis_user[i] = IPX_nonbasic;
+            else
+                cbasis_user[i] = IPX_basic;
+        }
+        for (Int j = 0; j < num_var_; j++) {
+            // slack cannot be superbasic
+            assert(basic_status_solver[n+j] != IPX_superbasic);
+            if (basic_status_solver[n+j] == 0)
+                vbasis_user[j] = std::isfinite(lbuser_[j]) ?
+                    IPX_nonbasic_lb : IPX_superbasic;
+            else
+                vbasis_user[j] = IPX_basic;
+        }
+        Int k = num_constr_;
+        for (Int j : boxed_vars_)
+            if (basic_status_solver[k++] == IPX_basic) {
+                assert(vbasis_user[j] == IPX_basic);
+                vbasis_user[j] = IPX_nonbasic_ub;
+            }
+        for (Int j : negated_vars_) {
+            assert(vbasis_user[j] != IPX_nonbasic_ub);
+            if (vbasis_user[j] == IPX_nonbasic_lb)
+                vbasis_user[j] = IPX_nonbasic_ub;
+        }
+    }
+    else {
+        assert(num_constr_ == m);
+        assert(num_var_ == n);
+        for (Int i = 0; i < num_constr_; i++) {
+            // slack cannot be superbasic
+            assert(basic_status_solver[n+i] != IPX_superbasic);
+            if (basic_status_solver[n+i] == IPX_basic)
+                cbasis_user[i] = IPX_basic;
+            else
+                cbasis_user[i] = IPX_nonbasic;
+        }
+        for (Int j = 0; j < num_var_; j++)
+            vbasis_user[j] = basic_status_solver[j];
+    }
+}
+
+void Model::CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
+                                 const std::vector<Int> cbasis,
+                                 const std::vector<Int> vbasis) const {
+    for (Int j = 0; j < num_var_; j++) {
+        if (vbasis[j] == IPX_nonbasic_lb)
+            x[j] = lbuser_[j];
+        if (vbasis[j] == IPX_nonbasic_ub)
+            x[j] = ubuser_[j];
+        if (vbasis[j] == IPX_basic)
+            z[j] = 0.0;
+    }
+    for (Int i = 0; i < num_constr_; i++) {
+        if (cbasis[i] == IPX_nonbasic)
+            slack[i] = 0.0;
+        if (cbasis[i] == IPX_basic)
+            y[i] = 0.0;
+    }
+}
+
 void Model::ComputeInputNorms() {
     norm_obj_ = Infnorm(obj_);
     norm_rhs_ = Infnorm(rhs_);
@@ -935,460 +1389,6 @@ void Model::PrintPreprocessingLog(const Control& control) const {
             << Textline("Range of scaling factors:") << "["
             << Scientific(minscale, 8, 2) << ", "
             << Scientific(maxscale, 8, 2) << "]\n";
-    }
-}
-
-void Model::PresolveGeneralPoint(const Vector& x_user,
-                                 const Vector& slack_user,
-                                 const Vector& y_user,
-                                 const Vector& z_user,
-                                 Vector& x_solver,
-                                 Vector& y_solver,
-                                 Vector& z_solver) const {
-    const Int m = rows();
-    const Int n = cols();
-
-    if (dualized_) {
-        assert(num_var_ == m);
-        assert(num_constr_ + boxed_vars_.size() == n);
-
-        // Build dual solver variables from primal user variables.
-        y_solver = -x_user;
-        for (Int j : negated_vars_)
-            y_solver[j] *= -1.0;
-        for (Int i = 0; i < num_constr_; i++)
-            z_solver[i] = -slack_user[i];
-        for (Int k = 0; k < boxed_vars_.size(); k++) {
-            Int j = boxed_vars_[k];
-            z_solver[num_constr_+k] = c(num_constr_+k) + y_solver[j];
-        }
-        for (Int i = 0; i < m; i++)
-            z_solver[n+i] = c(n+i)-y_solver[i];
-
-        // Build primal solver variables from dual user variables.
-        std::copy_n(std::begin(y_user), num_constr_, std::begin(x_solver));
-        std::copy_n(std::begin(z_user), num_var_, std::begin(x_solver) + n);
-        for (Int j : negated_vars_)
-            x_solver[n+j] *= -1.0;
-        for (Int k = 0; k < boxed_vars_.size(); k++) {
-            Int j = boxed_vars_[k];
-            if (x_solver[n+j] < 0.0) {
-                // j is a boxed variable and z_user[j] < 0
-                x_solver[num_constr_+k] = -x_solver[n+j];
-                x_solver[n+j] = 0.0;
-            } else {
-                x_solver[num_constr_+k] = 0.0;
-            }
-        }
-    }
-    else {
-        assert(num_constr_ == m);
-        assert(num_var_ == n);
-        std::copy_n(std::begin(x_user), n, std::begin(x_solver));
-        std::copy_n(std::begin(slack_user), m, std::begin(x_solver) + n);
-        std::copy_n(std::begin(y_user), m, std::begin(y_solver));
-        std::copy_n(std::begin(z_user), n, std::begin(z_solver));
-        for (Int i = 0; i < m; i++)
-            z_solver[n+i] = c(n+i)-y_solver[i];
-    }
-
-    // Apply scaling.
-    if (colscale_.size() > 0) {
-        for (Int j = 0; j < num_cols_; j++) {
-            x_solver[j] /= colscale_[j];
-            z_solver[j] *= colscale_[j];
-        }
-    }
-    if (rowscale_.size() > 0) {
-        for (Int i = 0; i < num_rows_; i++) {
-            y_solver[i] /= rowscale_[i];
-            x_solver[num_cols_+i] *= rowscale_[i];
-            z_solver[num_cols_+i] /= rowscale_[i];
-        }
-    }
-}
-
-void Model::PresolveInteriorPoint(const Vector& x_user,
-                                  const Vector& xl_user,
-                                  const Vector& xu_user,
-                                  const Vector& slack_user,
-                                  const Vector& y_user,
-                                  const Vector& zl_user,
-                                  const Vector& zu_user,
-                                  Vector& x_solver,
-                                  Vector& xl_solver,
-                                  Vector& xu_solver,
-                                  Vector& y_solver,
-                                  Vector& zl_solver,
-                                  Vector& zu_solver) const {
-    const Int m = rows();
-    const Int n = cols();
-
-    if (dualized_) {
-        // Not implemented.
-        assert(false);
-    }
-    else {
-        assert(num_constr_ == m);
-        assert(num_var_ == n);
-
-        std::copy_n(std::begin(x_user), num_var_, std::begin(x_solver));
-        std::copy_n(std::begin(slack_user), num_constr_,
-                    std::begin(x_solver) + n);
-        std::copy_n(std::begin(xl_user), num_var_, std::begin(xl_solver));
-        std::copy_n(std::begin(xu_user), num_var_, std::begin(xu_solver));
-        std::copy_n(std::begin(y_user), num_constr_, std::begin(y_solver));
-        std::copy_n(std::begin(zl_user), num_var_, std::begin(zl_solver));
-        std::copy_n(std::begin(zu_user), num_var_, std::begin(zu_solver));
-
-        for (Int i = 0; i < m; i++) {
-            switch (constr_type_[i]) {
-            case '=':
-                assert(lb_[n+i] == 0.0 && ub_[n+i] == 0.0);
-                // For a fixed slack variable xl, xu, zl and zu won't be used
-                // by the IPM. Just put them to zero.
-                xl_solver[n+i] = 0.0;
-                xu_solver[n+i] = 0.0;
-                zl_solver[n+i] = 0.0;
-                zu_solver[n+i] = 0.0;
-                break;
-            case '<':
-                assert(lb_[n+i] == 0.0 && ub_[n+i] == INFINITY);
-                xl_solver[n+i] = slack_user[i];
-                xu_solver[n+i] = INFINITY;
-                zl_solver[n+i] = -y_user[i];
-                zu_solver[n+i] = 0.0;
-                break;
-            case '>':
-                assert(lb_[n+i] == -INFINITY && ub_[n+i] == 0.0);
-                xl_solver[n+i] = INFINITY;
-                xu_solver[n+i] = -slack_user[i];
-                zl_solver[n+i] = 0.0;
-                zu_solver[n+i] = y_user[i];
-                break;
-            }
-        }
-    }
-
-    // Apply scaling.
-    if (colscale_.size() > 0) {
-        for (Int j = 0; j < num_cols_; j++) {
-            x_solver[j] /= colscale_[j];
-            xl_solver[j] /= colscale_[j];
-            xu_solver[j] /= colscale_[j];
-            zl_solver[j] *= colscale_[j];
-            zu_solver[j] *= colscale_[j];
-        }
-    }
-    if (rowscale_.size() > 0) {
-        for (Int i = 0; i < num_rows_; i++) {
-            y_solver[i] /= rowscale_[i];
-            x_solver[num_cols_+i] *= rowscale_[i];
-            xl_solver[num_cols_+i] *= rowscale_[i];
-            xu_solver[num_cols_+i] *= rowscale_[i];
-            zl_solver[num_cols_+i] /= rowscale_[i];
-            zu_solver[num_cols_+i] /= rowscale_[i];
-        }
-    }
-}
-
-void Model::PostsolveInteriorPoint(const Vector& x_solver,
-                                   const Vector& xl_solver,
-                                   const Vector& xu_solver,
-                                   const Vector& y_solver,
-                                   const Vector& zl_solver,
-                                   const Vector& zu_solver,
-                                   Vector& x_user,
-                                   Vector& xl_user,
-                                   Vector& xu_user,
-                                   Vector& slack_user,
-                                   Vector& y_user,
-                                   Vector& zl_user,
-                                   Vector& zu_user) const {
-    const Int m = rows();
-    const Int n = cols();
-
-    if (dualized_) {
-        assert(num_var_ == m);
-        assert(num_constr_ + boxed_vars_.size() == n);
-        if (rowscale_.size() > 0)
-            x_user = -y_solver * rowscale_;
-        else
-            x_user = -y_solver;
-
-        // If the solution from the solver would be exact, we could copy the
-        // first num_constr_ entries from x_solver into y_user. However, to
-        // satisfy the sign condition on y_user even if the solution is not
-        // exact, we have to use the xl_solver and xu_solver entries for
-        // inequality constraints.
-        for (Int i = 0; i < num_constr_; i++) {
-            switch (constr_type_[i]) {
-            case '=':
-                y_user[i] = x_solver[i] * colscale(i);
-                break;
-            case '<':
-                y_user[i] = -xu_solver[i] * colscale(i);
-                break;
-            case '>':
-                y_user[i] = xl_solver[i] * colscale(i);
-                break;
-            }
-            assert(std::isfinite(y_user[i]));
-        }
-
-        // Dual variables associated with lbuser <= x in the scaled user model
-        // are the slack variables from the solver. For an exact solution we
-        // would have x_solver[n+1:n+m] == xl_solver[n+1:n+m]. Using xl_solver
-        // guarantees that zl_user >= 0 in any case. If variable j has no lower
-        // bound in the scaled user model (i.e. is free), then the j-th slack
-        // variable was fixed at zero in the solver model, but the IPM solution
-        // may not satisfy this. Hence we must set zl_user[j] = 0 explicitly.
-        if (rowscale_.size() > 0)
-            zl_user = xl_solver[std::slice(n, num_var_, 1)] / rowscale_;
-        else
-            zl_user = xl_solver[std::slice(n, num_var_, 1)];
-        for (Int j = 0; j < num_var_; j++)
-            if (!std::isfinite(lbuser_[j]))
-                zl_user[j] = 0.0;
-
-        // Dual variables associated with x <= ubuser in the scaled user model
-        // are the primal variables that were added for boxed variables in the
-        // solver model.
-        zu_user = 0.0;
-        Int k = num_constr_;
-        for (Int j : boxed_vars_) {
-            zu_user[j] = xl_solver[k] * colscale(k);
-            k++;
-        }
-        assert(k == n);
-
-        // xl in the scaled user model is zl[n+1:n+m] in the solver model or
-        // infinity.
-        for (Int i = 0; i < m; i++) {
-            if (std::isfinite(lbuser_[i]))
-                xl_user[i] = zl_solver[n+i] * rowscale(i);
-            else
-                xl_user[i] = INFINITY;
-        }
-
-        // xu in the scaled user model are the entries in zl for columns of the
-        // negative identity matrix (that were added for boxed variables).
-        xu_user = INFINITY;
-        k = num_constr_;
-        for (Int j : boxed_vars_) {
-            xu_user[j] = zl_solver[k] / colscale(k);
-            k++;
-        }
-        assert(k == n);
-
-        for (Int i = 0; i < num_constr_; i++) {
-            switch (constr_type_[i]) {
-            case '=':
-                slack_user[i] = 0.0;
-                break;
-            case '<':
-                slack_user[i] = zu_solver[i] / colscale(i);
-                break;
-            case '>':
-                slack_user[i] = -zl_solver[i] / colscale(i);
-                break;
-            }
-        }
-
-        for (Int j : negated_vars_) {
-            assert(std::isfinite(xl_user[j]));
-            assert(std::isinf(xu_user[j]));
-            assert(zu_user[j] == 0.0);
-            x_user[j] *= -1.0;
-            xu_user[j] = xl_user[j];
-            xl_user[j] = INFINITY;
-            zu_user[j] = zl_user[j];
-            zl_user[j] = 0.0;
-        }
-    }
-    else {
-        assert(num_constr_ == m);
-        assert(num_var_ == n);
-        if (colscale_.size() > 0)
-            x_user = x_solver[std::slice(0, num_var_, 1)] * colscale_;
-        else
-            x_user = x_solver[std::slice(0, num_var_, 1)];
-
-        // Instead of copying y_solver into y_user, we use the entries from
-        // zl_solver and zu_solver for inequality constraints, so that the sign
-        // condition on y_user is satisfied.
-        for (Int i = 0; i < m; i++) {
-            assert(lb_[n+i] == 0.0 || lb_[n+i] == -INFINITY);
-            assert(ub_[n+i] == 0.0 || ub_[n+i] ==  INFINITY);
-            assert(lb_[n+i] == 0.0 || ub_[n+i] == 0.0);
-            switch (constr_type_[i]) {
-            case '=':
-                y_user[i] = y_solver[i] * rowscale(i);
-                break;
-            case '<':
-                y_user[i] = -zl_solver[n+i] * rowscale(i);
-                break;
-            case '>':
-                y_user[i] = zu_solver[n+i] * rowscale(i);
-                break;
-            }
-            assert(std::isfinite(y_user[i]));
-        }
-        if (colscale_.size() > 0) {
-            zl_user = zl_solver[std::slice(0, num_var_, 1)] / colscale_;
-            zu_user = zu_solver[std::slice(0, num_var_, 1)] / colscale_;
-            xl_user = xl_solver[std::slice(0, num_var_, 1)] * colscale_;
-            xu_user = xu_solver[std::slice(0, num_var_, 1)] * colscale_;
-        }
-        else {
-            zl_user = zl_solver[std::slice(0, num_var_, 1)];
-            zu_user = zu_solver[std::slice(0, num_var_, 1)];
-            xl_user = xl_solver[std::slice(0, num_var_, 1)];
-            xu_user = xu_solver[std::slice(0, num_var_, 1)];
-        }
-
-        // If the solution would be exact, slack_user were given by the entries
-        // of x_solver corresponding to slack columns. To satisfy the sign
-        // condition in any case, we build the slack for inequality constraints
-        // from xl_solver and xu_solver and set the slack for equality
-        // constraints to zero.
-        for (Int i = 0; i < m; i++) {
-            switch (constr_type_[i]) {
-            case '=':
-                slack_user[i] = 0.0;
-                break;
-            case '<':
-                slack_user[i] = xl_solver[n+i] / rowscale(i);
-                break;
-            case '>':
-                slack_user[i] = -xu_solver[n+i] / rowscale(i);
-                break;
-            }
-            assert(std::isfinite(slack_user[i]));
-        }
-    }
-}
-
-void Model::PostsolveGeneralPoint(const Vector& x_solver,
-                                  const Vector& y_solver,
-                                  const Vector& z_solver,
-                                  Vector& x_user,
-                                  Vector& slack_user,
-                                  Vector& y_user,
-                                  Vector& z_user) const {
-    const Int m = rows();
-    const Int n = cols();
-
-    if (dualized_) {
-        assert(num_var_ == m);
-        assert(num_constr_ + boxed_vars_.size() == n);
-        for (Int j = 0; j < num_var_; j++) {
-            x_user[j] = -y_solver[j] * rowscale(j);
-            z_user[j] = x_solver[n+j] / rowscale(j);
-        }
-        for (Int i = 0; i < num_constr_; i++) {
-            slack_user[i] = -z_solver[i] / colscale(i);
-            y_user[i] = x_solver[i] * colscale(i);
-        }
-        Int k = num_constr_;
-        for (Int j : boxed_vars_) {
-            z_user[j] -= x_solver[k] * colscale(k);
-            k++;
-        }
-        assert(k == n);
-        for (Int j : negated_vars_) {
-            x_user[j] *= -1.0;
-            z_user[j] *= -1.0;
-        }
-    }
-    else {
-        assert(num_constr_ == m);
-        assert(num_var_ == n);
-        if (colscale_.size() > 0) {
-            x_user = x_solver[std::slice(0, num_var_, 1)] * colscale_;
-            z_user = z_solver[std::slice(0, num_var_, 1)] / colscale_;
-        } else {
-            x_user = x_solver[std::slice(0, num_var_, 1)];
-            z_user = z_solver[std::slice(0, num_var_, 1)];
-        }
-        if (rowscale_.size() > 0) {
-            slack_user = x_solver[std::slice(n, num_constr_, 1)] / rowscale_;
-            y_user = y_solver * rowscale_;
-        } else {
-            slack_user = x_solver[std::slice(n, num_constr_, 1)];
-            y_user = y_solver;
-        }
-    }
-}
-
-void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
-                           std::vector<Int>& cbasis_user,
-                           std::vector<Int>& vbasis_user) const {
-    const Int m = rows();
-    const Int n = cols();
-
-    if (dualized_) {
-        assert(num_var_ == m);
-        assert(num_constr_ + boxed_vars_.size() == n);
-        for (Int i = 0; i < num_constr_; i++) {
-            if (basic_status_solver[i] == IPX_basic)
-                cbasis_user[i] = IPX_nonbasic;
-            else
-                cbasis_user[i] = IPX_basic;
-        }
-        for (Int j = 0; j < num_var_; j++) {
-            // slack cannot be superbasic
-            assert(basic_status_solver[n+j] != IPX_superbasic);
-            if (basic_status_solver[n+j] == 0)
-                vbasis_user[j] = std::isfinite(lbuser_[j]) ?
-                    IPX_nonbasic_lb : IPX_superbasic;
-            else
-                vbasis_user[j] = IPX_basic;
-        }
-        Int k = num_constr_;
-        for (Int j : boxed_vars_)
-            if (basic_status_solver[k++] == IPX_basic) {
-                assert(vbasis_user[j] == IPX_basic);
-                vbasis_user[j] = IPX_nonbasic_ub;
-            }
-        for (Int j : negated_vars_) {
-            assert(vbasis_user[j] != IPX_nonbasic_ub);
-            if (vbasis_user[j] == IPX_nonbasic_lb)
-                vbasis_user[j] = IPX_nonbasic_ub;
-        }
-    }
-    else {
-        assert(num_constr_ == m);
-        assert(num_var_ == n);
-        for (Int i = 0; i < num_constr_; i++) {
-            // slack cannot be superbasic
-            assert(basic_status_solver[n+i] != IPX_superbasic);
-            if (basic_status_solver[n+i] == IPX_basic)
-                cbasis_user[i] = IPX_basic;
-            else
-                cbasis_user[i] = IPX_nonbasic;
-        }
-        for (Int j = 0; j < num_var_; j++)
-            vbasis_user[j] = basic_status_solver[j];
-    }
-}
-
-void Model::CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
-                                 const std::vector<Int> cbasis,
-                                 const std::vector<Int> vbasis) const {
-    for (Int j = 0; j < num_var_; j++) {
-        if (vbasis[j] == IPX_nonbasic_lb)
-            x[j] = lbuser_[j];
-        if (vbasis[j] == IPX_nonbasic_ub)
-            x[j] = ubuser_[j];
-        if (vbasis[j] == IPX_basic)
-            z[j] = 0.0;
-    }
-    for (Int i = 0; i < num_constr_; i++) {
-        if (cbasis[i] == IPX_nonbasic)
-            slack[i] = 0.0;
-        if (cbasis[i] == IPX_basic)
-            y[i] = 0.0;
     }
 }
 
