@@ -192,6 +192,9 @@ void UserModel::EvaluateBasicPoint(const Vector& x, const Vector& slack,
             primal_infeas = std::max(primal_infeas, slack[i]);
             dual_infeas = std::max(dual_infeas, -y[i]);
             break;
+        case '=':
+            primal_infeas = std::max(primal_infeas, std::abs(slack[i]));
+            break;
         }
     }
 
