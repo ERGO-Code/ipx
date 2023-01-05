@@ -6,15 +6,11 @@
 #include <vector>
 #include "control.h"
 #include "sparse_matrix.h"
+#include "user_model.h"
 
 namespace ipx {
 
-// Model provides the interface between an LP model given by the user,
-//
-//   minimize   obj'x                                                    (1)
-//   subject to A*x {=,<,>} rhs, lbuser <= x <= ubuser,
-//
-// and the computational form used by the solver,
+// Model holds an LP model the computational form
 //
 //   minimize   c'x
 //   subject to AI*x = b,                              (dual: y)
@@ -38,29 +34,12 @@ public:
     // Constructs an empty model.
     Model() = default;
 
-    // Initializes a Model object from the form (1).
-    // @num_constr: number of rows of A
-    // @num_var: number of columns of A
-    // @Ap, @Ai, @Ax: matrix A in CSC format, 0-based indexing
-    // @rhs: array of size num_constr
-    // @constr_type: array of size num_constr with entries '=', '<' or '>'
-    // @obj: array of size num_var
-    // @lbuser: array of size num_var, entries can be -INFINITY
-    // @ubuser: array of size num_var, entries can be +INFINITY
-    // If the input is invalid an error code is returned and the Model object
-    // becomes empty.
-    // Returns:
-    //  0
-    //  IPX_ERROR_argument_null
-    //  IPX_ERROR_invalid_dimension
-    //  IPX_ERROR_invalid_matrix
-    //  IPX_ERROR_invalid_vector
-    Int Load(const Control& control, Int num_constr, Int num_var,
-             const Int* Ap, const Int* Ai, const double* Ax,
-             const double* rhs, const char* constr_type, const double* obj,
-             const double* lbuser, const double* ubuser);
+    // Initializes a Model object from a user model. A pointer to @user_model is
+    // stored in the object and must be valid as long as the object is used.
+    // Returns: 0
+    Int Init(const Control& control, const UserModel& user_model);
 
-    // Writes statistics of input data and preprocessing to @info.
+    // Writes statistics of solver model and preprocessing to @info.
     void GetInfo(Info* info) const;
 
     // Returns true if the model is empty.
@@ -194,20 +173,6 @@ public:
                         Int* cbasis, Int* vbasis) const;
 
 private:
-    // Checks that the input is valid, and if so copies into the members below
-    // (see "User model"). If the input is invalid, an error code is returned
-    // and the object remains unchanged.
-    // Returns:
-    //  0
-    //  IPX_ERROR_argument_null
-    //  IPX_ERROR_invalid_dimension
-    //  IPX_ERROR_invalid_matrix
-    //  IPX_ERROR_invalid_vector
-    Int CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                  const double* Ax, const double* rhs, const char* constr_type,
-                  const double* obj, const double* lbuser,
-                  const double* ubuser);
-
     // Builds computational form model from user input.
     void PresolveModel(const Control& control);
 
@@ -277,8 +242,8 @@ private:
                               const std::vector<Int> cbasis,
                               const std::vector<Int> vbasis) const;
 
-    // Computes norms of input data.
-    void ComputeInputNorms();
+    // Computes quantities associated with user_model_.
+    void ComputeUserModelAttributes();
 
     // Scales AI_, b_, c_, lb_ and ub_ according to parameter control.scale().
     // The scaling factors are stored in colscale_ and rowscale_. If all factors
@@ -359,21 +324,13 @@ private:
     double norm_bounds_{0.0};     // infinity norm of [b;lb;ub]
     double norm_c_{0.0};          // infinity norm of c
 
-    // User model.
+    // User model and attributes.
+    const UserModel* user_model_{nullptr};
     Int num_constr_{0};           // # constraints
     Int num_eqconstr_{0};         // # equality constraints
     Int num_var_{0};              // # variables
     Int num_free_var_{0};         // # free variables
-    Int num_entries_{0};          // # entries in input matrix
     std::vector<Int> boxed_vars_; // indices of boxed variables
-    std::vector<char> constr_type_;
-    double norm_obj_{0.0};        // Infnorm(obj) as given by user
-    double norm_rhs_{0.0};        // Infnorm(rhs,lb,ub) as given by user
-    Vector obj_;
-    Vector rhs_;
-    Vector lbuser_;
-    Vector ubuser_;
-    SparseMatrix A_;
 
     // Data from ScaleModel(). Empty when no scaling was applied.
     Vector colscale_;

@@ -19,10 +19,20 @@ Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
                         const Int* Ai, const double* Ax, const double* rhs,
                         const char* constr_type) {
     ClearModel();
-    Int errflag = model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs,
-                              constr_type, obj, lb, ub);
+    Int errflag = 0;
+
+    errflag = user_model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs,
+                               constr_type, obj, lb, ub);
+    if (errflag)
+        return errflag;
+    user_model_.GetInfo(&info_);
+
+    errflag = model_.Init(control_, user_model_);
+    if (errflag)
+        return errflag;
     model_.GetInfo(&info_);
-    return errflag;
+
+    return 0;
 }
 
 Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
@@ -147,6 +157,7 @@ Int LpSolver::WriteParameters(const char* filename) {
 }
 
 void LpSolver::ClearModel() {
+    user_model_.clear();
     model_.clear();
     ClearSolution();
     ClearIPMStartingPoint();
@@ -266,6 +277,7 @@ void LpSolver::ClearSolution() {
     basic_statuses_.shrink_to_fit();
     info_ = Info();
     // Restore info entries that belong to model.
+    user_model_.GetInfo(&info_);
     model_.GetInfo(&info_);
 
 }

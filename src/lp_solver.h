@@ -9,6 +9,7 @@
 #include "ipm.h"
 #include "iterate.h"
 #include "model.h"
+#include "user_model.h"
 
 namespace ipx {
 
@@ -165,6 +166,7 @@ private:
 
     Control control_;
     Info info_;
+    UserModel user_model_;
     Model model_;
     std::unique_ptr<Iterate> iterate_;
     std::unique_ptr<Basis> basis_;

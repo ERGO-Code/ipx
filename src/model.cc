@@ -8,23 +8,15 @@
 
 namespace ipx {
 
-Int Model::Load(const Control& control, Int num_constr, Int num_var,
-                const Int* Ap, const Int* Ai, const double* Ax,
-                const double* rhs, const char* constr_type, const double* obj,
-                const double* lbuser, const double* ubuser) {
+Int Model::Init(const Control& control, const UserModel& user_model) {
     clear();
-    Int errflag = CopyInput(num_constr, num_var, Ap, Ai, Ax, rhs, constr_type,
-                            obj, lbuser, ubuser);
-    if (errflag)
-        return errflag;
+    user_model_ = &user_model;
+    ComputeUserModelAttributes();
     PresolveModel(control);
     return 0;
 }
 
 void Model::GetInfo(Info *info) const {
-    info->num_var = num_var_;
-    info->num_constr = num_constr_;
-    info->num_entries = num_entries_;
     info->num_rows_solver = num_rows_;
     info->num_cols_solver = num_cols_ + num_rows_; // including slack columns
     info->num_entries_solver = AI_.entries();
@@ -50,20 +42,12 @@ void Model::clear() {
     norm_c_ = 0.0;
 
     // clear user model
+    user_model_ = nullptr;
     num_constr_ = 0;
     num_eqconstr_ = 0;
     num_var_ = 0;
     num_free_var_ = 0;
-    num_entries_ = 0;
     boxed_vars_.clear();
-    constr_type_.clear();
-    norm_obj_ = 0.0;
-    norm_rhs_ = 0.0;
-    obj_.resize(0);
-    rhs_.resize(0);
-    lbuser_.resize(0);
-    ubuser_.resize(0);
-    A_.clear();
 
     colscale_.resize(0);
     rowscale_.resize(0);
@@ -111,9 +95,12 @@ Int Model::PresolveIPMStartingPoint(const double* x_user,
                                     Vector& y_solver,
                                     Vector& zl_solver,
                                     Vector& zu_solver) const {
-    if (!x_user || !xl_user || !xu_user || !slack_user ||
-        !y_user || !zl_user || !zu_user)
-        return IPX_ERROR_argument_null;
+    Int errflag =
+        user_model_->CheckInteriorPoint(x_user, xl_user, xu_user, slack_user,
+                                        y_user, zl_user, zu_user);
+    if (errflag)
+        return errflag;
+
     if (dualized_)
         return IPX_ERROR_not_implemented;
 
@@ -125,47 +112,6 @@ Int Model::PresolveIPMStartingPoint(const double* x_user,
     Vector y_temp(y_user, num_constr_);
     Vector zl_temp(zl_user, num_var_);
     Vector zu_temp(zu_user, num_var_);
-
-    // Check that point is compatible with bounds.
-    for (Int j = 0; j < num_var_; ++j) {
-        if (!std::isfinite(x_temp[j]))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int j = 0; j < num_var_; ++j) {
-        if (!(xl_temp[j] >= 0.0) ||
-            (lbuser_[j] == -INFINITY && xl_temp[j] != INFINITY) ||
-            (lbuser_[j] != -INFINITY && xl_temp[j] == INFINITY))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int j = 0; j < num_var_; ++j) {
-        if (!(xu_temp[j] >= 0.0) ||
-            (ubuser_[j] == INFINITY && xu_temp[j] != INFINITY) ||
-            (ubuser_[j] != INFINITY && xu_temp[j] == INFINITY))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int i = 0; i < num_constr_; ++i) {
-        if (!std::isfinite(slack_temp[i]) ||
-            (constr_type_[i] == '=' && !(slack_temp[i] == 0.0)) ||
-            (constr_type_[i] == '<' && !(slack_temp[i] >= 0.0)) ||
-            (constr_type_[i] == '>' && !(slack_temp[i] <= 0.0)))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int i = 0; i < num_constr_; ++i) {
-        if (!std::isfinite(y_temp[i]) ||
-            (constr_type_[i] == '<' && !(y_temp[i] <= 0.0)) ||
-            (constr_type_[i] == '>' && !(y_temp[i] >= 0.0)))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int j = 0; j < num_var_; ++j) {
-        if (!(zl_temp[j] >= 0.0 && zl_temp[j] < INFINITY) ||
-            (lbuser_[j] == -INFINITY && zl_temp[j] != 0.0))
-            return IPX_ERROR_invalid_vector;
-    }
-    for (Int j = 0; j < num_var_; ++j) {
-        if (!(zu_temp[j] >= 0.0 && zu_temp[j] < INFINITY) ||
-            (ubuser_[j] == INFINITY && zu_temp[j] != 0.0))
-            return IPX_ERROR_invalid_vector;
-    }
 
     PresolveInteriorPoint(x_temp, xl_temp, xu_temp, slack_temp, y_temp, zl_temp,
                           zu_temp, x_solver, xl_solver, xu_solver, y_solver,
@@ -247,74 +193,8 @@ void Model::EvaluateInteriorSolution(const Vector& x_solver,
     PostsolveInteriorPoint(x_solver, xl_solver, xu_solver, y_solver, zl_solver,
                            zu_solver, x, xl, xu, slack, y, zl, zu);
 
-    // Build residuals for user model.
-    // rl = lb-x+xl
-    Vector rl(num_var_);
-    for (Int j = 0; j < num_var_; j++) {
-        if (std::isfinite(lbuser_[j]))
-            rl[j] = lbuser_[j] - x[j] + xl[j];
-        else
-            assert(xl[j] == INFINITY);
-    }
-    // ru = ub-x-xu
-    Vector ru(num_var_);
-    for (Int j = 0; j < num_var_; j++) {
-        if (std::isfinite(ubuser_[j]))
-            ru[j] = ubuser_[j] - x[j] - xu[j];
-        else
-            assert(xu[j] == INFINITY);
-    }
-    // rb = rhs-slack-A*x
-    // Add rhs at the end to avoid loosing digits when x is huge.
-    Vector rb(num_constr_);
-    MultiplyAdd(A_, x, -1.0, rb, 'N');
-    rb -= slack;
-    rb += rhs_;
-    // rc = obj-zl+zu-A'y
-    // Add obj at the end to avoid loosing digits when y, z are huge.
-    Vector rc(num_var_);
-    MultiplyAdd(A_, y, -1.0, rc, 'T');
-    rc -= zl - zu;
-    rc += obj_;
-
-    double presidual = Infnorm(rb);
-    presidual = std::max(presidual, Infnorm(rl));
-    presidual = std::max(presidual, Infnorm(ru));
-    double dresidual = Infnorm(rc);
-
-    double pobjective = Dot(obj_, x);
-    double dobjective = Dot(rhs_, y);
-    for (Int j = 0; j < num_var_; j++) {
-        if (std::isfinite(lbuser_[j]))
-            dobjective += lbuser_[j] * zl[j];
-        if (std::isfinite(ubuser_[j]))
-            dobjective -= ubuser_[j] * zu[j];
-    }
-    assert(std::isfinite(dobjective));
-    double objective_gap = (pobjective-dobjective) /
-        (1.0 + 0.5*std::abs(pobjective+dobjective));
-
-    double complementarity = 0.0;
-    for (Int j = 0; j < num_var_; j++) {
-        if (std::isfinite(lbuser_[j]))
-            complementarity += xl[j]*zl[j];
-        if (std::isfinite(ubuser_[j]))
-            complementarity += xu[j]*zu[j];
-    }
-    for (Int i = 0; i < num_constr_; i++)
-        complementarity -= y[i]*slack[i];
-
-    info->abs_presidual = presidual;
-    info->abs_dresidual = dresidual;
-    info->rel_presidual = presidual/(1.0+norm_rhs_);
-    info->rel_dresidual = dresidual/(1.0+norm_obj_);
-    info->pobjval = pobjective;
-    info->dobjval = dobjective;
-    info->rel_objgap = objective_gap;
-    info->complementarity = complementarity;
-    info->normx = Infnorm(x);
-    info->normy = Infnorm(y);
-    info->normz = std::max(Infnorm(zl), Infnorm(zu));
+    // Evaluate solution to user model.
+    user_model_->EvaluateInteriorPoint(x, xl, xu, slack, y, zl, zu, info);
 }
 
 void Model::PostsolveBasicSolution(const Vector& x_solver,
@@ -373,41 +253,9 @@ void Model::EvaluateBasicSolution(const Vector& x_solver,
     PostsolveGeneralPoint(x_solver, y_solver, z_solver, x, slack, y, z);
     PostsolveBasis(basic_status_solver, cbasis, vbasis);
     CorrectBasicSolution(x, slack, y, z, cbasis, vbasis);
-    double pobj = Dot(obj_, x);
 
-    // Build infeasibilities for user model.
-    Vector xinfeas(num_var_);
-    Vector sinfeas(num_constr_);
-    Vector yinfeas(num_constr_);
-    Vector zinfeas(num_var_);
-    for (Int j = 0; j < num_var_; j++) {
-        if (x[j] < lbuser_[j])
-            xinfeas[j] = x[j]-lbuser_[j];
-        if (x[j] > ubuser_[j])
-            xinfeas[j] = x[j]-ubuser_[j];
-        if (vbasis[j] != IPX_nonbasic_lb && z[j] > 0.0)
-            zinfeas[j] = z[j];
-        if (vbasis[j] != IPX_nonbasic_ub && z[j] < 0.0)
-            zinfeas[j] = z[j];
-    }
-    for (Int i = 0; i < num_constr_; i++) {
-        if (constr_type_[i] == '<') {
-            if (slack[i] < 0.0)
-                sinfeas[i] = slack[i];
-            if (y[i] > 0.0)
-                yinfeas[i] = y[i];
-        }
-        if (constr_type_[i] == '>') {
-            if (slack[i] > 0.0)
-                sinfeas[i] = slack[i];
-            if (y[i] < 0.0)
-                yinfeas[i] = y[i];
-        }
-    }
-
-    info->primal_infeas = std::max(Infnorm(xinfeas), Infnorm(sinfeas));
-    info->dual_infeas = std::max(Infnorm(zinfeas), Infnorm(yinfeas));
-    info->objval = pobj;
+    // Evaluate basic solution to user model.
+    user_model_->EvaluateBasicPoint(x, slack, y, z, vbasis, cbasis, info);
 }
 
 void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
@@ -425,96 +273,6 @@ void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
         std::copy(std::begin(vbasis_temp), std::end(vbasis_temp), vbasis_user);
 }
 
-// Checks if the vectors are valid LP data vectors. Returns 0 if OK and a
-// negative value if a vector is invalid.
-static int CheckVectors(Int m, Int n, const double* rhs,const char* constr_type,
-                        const double* obj, const double* lb, const double* ub) {
-    for (Int i = 0; i < m; i++)
-        if (!std::isfinite(rhs[i]))
-            return -1;
-    for (Int j = 0; j < n; j++)
-        if (!std::isfinite(obj[j]))
-            return -2;
-    for (Int j = 0; j < n; j++) {
-        if (!std::isfinite(lb[j]) && lb[j] != -INFINITY)
-            return -3;
-        if (!std::isfinite(ub[j]) && ub[j] != INFINITY)
-            return -3;
-        if (lb[j] > ub[j])
-            return -3;
-    }
-    for (Int i = 0; i < m; i++)
-        if (constr_type[i] != '=' && constr_type[i] != '<' &&
-            constr_type[i] != '>')
-            return -4;
-    return 0;
-}
-
-// Checks if A is a valid m-by-n matrix in CSC format. Returns 0 if OK and a
-// negative value otherwise.
-Int CheckMatrix(Int m, Int n, const Int *Ap, const Int *Ai, const double *Ax) {
-    if (Ap[0] != 0)
-        return -5;
-    for (Int j = 0; j < n; j++)
-        if (Ap[j] > Ap[j+1])
-            return -5;
-    for (Int p = 0; p < Ap[n]; p++)
-        if (!std::isfinite(Ax[p]))
-            return -6;
-    // Test for out of bound indices and duplicates.
-    std::vector<Int> marked(m, -1);
-    for (Int j = 0; j < n; j++) {
-        for (Int p = Ap[j]; p < Ap[j+1]; p++) {
-            Int i = Ai[p];
-            if (i < 0 || i >= m)
-                return -7;
-            if (marked[i] == j)
-                return -8;
-            marked[i] = j;
-        }
-    }
-    return 0;
-}
-
-Int Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
-                     const double* Ax, const double* rhs,
-                     const char* constr_type, const double* obj,
-                     const double* lbuser, const double* ubuser) {
-    if (!(Ap && Ai && Ax && rhs && constr_type && obj && lbuser && ubuser)) {
-        return IPX_ERROR_argument_null;
-    }
-    if (num_constr < 0 || num_var <= 0) {
-        return IPX_ERROR_invalid_dimension;
-    }
-    if (CheckVectors(num_constr, num_var, rhs, constr_type, obj, lbuser, ubuser)
-        != 0) {
-        return IPX_ERROR_invalid_vector;
-    }
-    if (CheckMatrix(num_constr, num_var, Ap, Ai, Ax) != 0) {
-        return IPX_ERROR_invalid_matrix;
-    }
-    num_constr_ = num_constr;
-    num_eqconstr_ = std::count(constr_type, constr_type+num_constr, '=');
-    num_var_ = num_var;
-    num_entries_ = Ap[num_var];
-    num_free_var_ = 0;
-    boxed_vars_.clear();
-    for (Int j = 0; j < num_var; j++) {
-        if (std::isinf(lbuser[j]) && std::isinf(ubuser[j]))
-            num_free_var_++;
-        if (std::isfinite(lbuser[j]) && std::isfinite(ubuser[j]))
-            boxed_vars_.push_back(j);
-    }
-    constr_type_ = std::vector<char>(constr_type, constr_type+num_constr);
-    obj_ = Vector(obj, num_var);
-    rhs_ = Vector(rhs, num_constr);
-    lbuser_ = Vector(lbuser, num_var);
-    ubuser_ = Vector(ubuser, num_var);
-    A_.LoadFromArrays(num_constr, num_var, Ap, Ap+1, Ai, Ax);
-    ComputeInputNorms();
-    return 0;
-}
-
 void Model::PresolveModel(const Control& control) {
     control.Log()
         << "Input\n"
@@ -522,7 +280,8 @@ void Model::PresolveModel(const Control& control) {
         << Textline("Number of free variables:") << num_free_var_ << '\n'
         << Textline("Number of constraints:") << num_constr_ << '\n'
         << Textline("Number of equality constraints:") << num_eqconstr_ << '\n'
-        << Textline("Number of matrix entries:") << num_entries_ << '\n';
+        << Textline("Number of matrix entries:")
+        << user_model_->A().entries() << '\n';
     PrintCoefficientRange(control);
 
     // Make an automatic decision for dualization if not specified by user.
@@ -655,7 +414,7 @@ void Model::PresolveInteriorPoint(const Vector& x_user,
         std::copy_n(std::begin(zu_user), num_var_, std::begin(zu_solver));
 
         for (Int i = 0; i < m; i++) {
-            switch (constr_type_[i]) {
+            switch (user_model_->constr_type(i)) {
             case '=':
                 assert(lb_[n+i] == 0.0 && ub_[n+i] == 0.0);
                 // For a fixed slack variable xl, xu, zl and zu won't be used
@@ -787,7 +546,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
         // exact, we have to use the xl_solver and xu_solver entries for
         // inequality constraints.
         for (Int i = 0; i < num_constr_; i++) {
-            switch (constr_type_[i]) {
+            switch (user_model_->constr_type(i)) {
             case '=':
                 y_user[i] = x_solver[i] * colscale(i);
                 break;
@@ -813,7 +572,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
         else
             zl_user = xl_solver[std::slice(n, num_var_, 1)];
         for (Int j = 0; j < num_var_; j++)
-            if (!std::isfinite(lbuser_[j]))
+            if (!std::isfinite(user_model_->lb(j)))
                 zl_user[j] = 0.0;
 
         // Dual variables associated with x <= ubuser in the scaled user model
@@ -830,7 +589,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
         // xl in the scaled user model is zl[n+1:n+m] in the solver model or
         // infinity.
         for (Int i = 0; i < m; i++) {
-            if (std::isfinite(lbuser_[i]))
+            if (std::isfinite(user_model_->lb(i)))
                 xl_user[i] = zl_solver[n+i] * rowscale(i);
             else
                 xl_user[i] = INFINITY;
@@ -847,7 +606,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
         assert(k == n);
 
         for (Int i = 0; i < num_constr_; i++) {
-            switch (constr_type_[i]) {
+            switch (user_model_->constr_type(i)) {
             case '=':
                 slack_user[i] = 0.0;
                 break;
@@ -886,7 +645,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
             assert(lb_[n+i] == 0.0 || lb_[n+i] == -INFINITY);
             assert(ub_[n+i] == 0.0 || ub_[n+i] ==  INFINITY);
             assert(lb_[n+i] == 0.0 || ub_[n+i] == 0.0);
-            switch (constr_type_[i]) {
+            switch (user_model_->constr_type(i)) {
             case '=':
                 y_user[i] = y_solver[i] * rowscale(i);
                 break;
@@ -918,7 +677,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
         // from xl_solver and xu_solver and set the slack for equality
         // constraints to zero.
         for (Int i = 0; i < m; i++) {
-            switch (constr_type_[i]) {
+            switch (user_model_->constr_type(i)) {
             case '=':
                 slack_user[i] = 0.0;
                 break;
@@ -953,7 +712,7 @@ void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
             // slack cannot be superbasic
             assert(basic_status_solver[n+j] != IPX_superbasic);
             if (basic_status_solver[n+j] == 0)
-                vbasis_user[j] = std::isfinite(lbuser_[j]) ?
+                vbasis_user[j] = std::isfinite(user_model_->lb(j)) ?
                     IPX_nonbasic_lb : IPX_superbasic;
             else
                 vbasis_user[j] = IPX_basic;
@@ -991,9 +750,9 @@ void Model::CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
                                  const std::vector<Int> vbasis) const {
     for (Int j = 0; j < num_var_; j++) {
         if (vbasis[j] == IPX_nonbasic_lb)
-            x[j] = lbuser_[j];
+            x[j] = user_model_->lb(j);
         if (vbasis[j] == IPX_nonbasic_ub)
-            x[j] = ubuser_[j];
+            x[j] = user_model_->ub(j);
         if (vbasis[j] == IPX_basic)
             z[j] = 0.0;
     }
@@ -1005,15 +764,21 @@ void Model::CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
     }
 }
 
-void Model::ComputeInputNorms() {
-    norm_obj_ = Infnorm(obj_);
-    norm_rhs_ = Infnorm(rhs_);
-    for (double x : lbuser_)
-        if (std::isfinite(x))
-            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
-    for (double x : ubuser_)
-        if (std::isfinite(x))
-            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
+void Model::ComputeUserModelAttributes() {
+    num_constr_ = user_model_->num_constr();
+    num_eqconstr_ = std::count(user_model_->constr_type().begin(),
+                               user_model_->constr_type().end(), '=');
+    num_var_ = user_model_->num_var();
+    num_free_var_ = 0;
+    boxed_vars_.clear();
+    for (Int j = 0; j < num_var_; j++) {
+        bool has_lb = std::isfinite(user_model_->lb(j));
+        bool has_ub = std::isfinite(user_model_->ub(j));
+        if (!has_lb && !has_ub)
+            num_free_var_++;
+        else if (has_lb && has_ub)
+            boxed_vars_.push_back(j);
+    }
 }
 
 void Model::ScaleModel(const Control& control) {
@@ -1045,12 +810,19 @@ void Model::ScaleModel(const Control& control) {
 }
 
 void Model::LoadPrimal() {
+    const SparseMatrix& A = user_model_->A();
+    const Vector& obj = user_model_->obj();
+    const std::vector<char>& constr_type = user_model_->constr_type();
+    const Vector& rhs = user_model_->rhs();
+    const Vector& lbuser = user_model_->lb();
+    const Vector& ubuser = user_model_->ub();
+
     num_rows_ = num_constr_;
     num_cols_ = num_var_;
     dualized_ = false;
 
     // Copy A and append identity matrix.
-    AI_ = A_;
+    AI_ = A;
     for (Int i = 0; i < num_constr_; i++) {
         AI_.push_back(i, 1.0);
         AI_.add_column();
@@ -1058,16 +830,16 @@ void Model::LoadPrimal() {
     assert(AI_.cols() == num_var_+num_constr_);
 
     // Copy vectors and set bounds on slack variables.
-    b_ = rhs_;
+    b_ = rhs;
     c_.resize(num_var_+num_constr_);
     c_ = 0.0;
-    std::copy_n(std::begin(obj_), num_var_, std::begin(c_));
+    std::copy_n(std::begin(obj), num_var_, std::begin(c_));
     lb_.resize(num_rows_+num_cols_);
-    std::copy_n(std::begin(lbuser_), num_var_, std::begin(lb_));
+    std::copy_n(std::begin(lbuser), num_var_, std::begin(lb_));
     ub_.resize(num_rows_+num_cols_);
-    std::copy_n(std::begin(ubuser_), num_var_, std::begin(ub_));
+    std::copy_n(std::begin(ubuser), num_var_, std::begin(ub_));
     for (Int i = 0; i < num_constr_; i++) {
-        switch(constr_type_[i]) {
+        switch(constr_type[i]) {
         case '=':
             lb_[num_var_+i] = 0.0;
             ub_[num_var_+i] = 0.0;
@@ -1085,6 +857,13 @@ void Model::LoadPrimal() {
 }
 
 void Model::LoadDual() {
+    const SparseMatrix& A = user_model_->A();
+    const Vector& obj = user_model_->obj();
+    const std::vector<char>& constr_type = user_model_->constr_type();
+    const Vector& rhs = user_model_->rhs();
+    const Vector& lbuser = user_model_->lb();
+    const Vector& ubuser = user_model_->ub();
+
     num_rows_ = num_var_;
     num_cols_ = num_constr_ + boxed_vars_.size();
     dualized_ = true;
@@ -1092,14 +871,14 @@ void Model::LoadDual() {
     // Implicitly negate variables with infinite lbuser_ but finite ubuser_.
     std::vector<bool> negated(num_var_);
     for (Int j = 0; j < num_var_; j++) {
-        if (std::isinf(lbuser_[j]) && std::isfinite(ubuser_[j])) {
+        if (std::isinf(lbuser[j]) && std::isfinite(ubuser[j])) {
             negated[j] = true;
             negated_vars_.push_back(j);
         }
     }
 
     // Build AI.
-    AI_ = Transpose(A_);
+    AI_ = Transpose(A);
     if (!negated_vars_.empty()) {
         for (Int pos = 0; pos < AI_.entries(); pos++) {
             if (negated[AI_.index(pos)])
@@ -1117,18 +896,18 @@ void Model::LoadDual() {
     }
 
     // Build vectors.
-    b_ = obj_;
+    b_ = obj;
     for (Int j : negated_vars_)
         b_[j] *= -1.0;
     c_.resize(num_cols_+num_rows_);
     Int put = 0;
-    for (double x : rhs_)
+    for (double x : rhs)
         c_[put++] = -x;
     for (Int j : boxed_vars_)
-        c_[put++] = ubuser_[j];
+        c_[put++] = ubuser[j];
     assert(put == num_cols_);
     for (Int j = 0; j < num_var_; j++) {
-        double lb = negated[j] ? -ubuser_[j] : lbuser_[j];
+        double lb = negated[j] ? -ubuser[j] : lbuser[j];
         // If lb is -infinity, then the variable will be fixed and we can give
         // it any (finite) cost.
         c_[put++] = std::isfinite(lb) ? -lb : 0.0;
@@ -1136,7 +915,7 @@ void Model::LoadDual() {
     lb_.resize(num_cols_+num_rows_);
     ub_.resize(num_cols_+num_rows_);
     for (Int i = 0; i < num_constr_; i++)
-        switch(constr_type_[i]) {
+        switch(constr_type[i]) {
         case '=':
             lb_[i] = -INFINITY;
             ub_[i] = INFINITY;
@@ -1155,7 +934,7 @@ void Model::LoadDual() {
         ub_[j] = INFINITY;
     }
     for (Int j = 0; j < num_var_; j++) {
-        double lb = negated[j] ? -ubuser_[j] : lbuser_[j];
+        double lb = negated[j] ? -ubuser[j] : lbuser[j];
         lb_[num_cols_+j] = 0.0;
         ub_[num_cols_+j] = std::isfinite(lb) ? INFINITY : 0.0;
     }
@@ -1289,11 +1068,17 @@ void Model::FindDenseColumns() {
 }
 
 void Model::PrintCoefficientRange(const Control& control) const {
+    const SparseMatrix& A = user_model_->A();
+    const Vector& obj = user_model_->obj();
+    const Vector& rhs = user_model_->rhs();
+    const Vector& lbuser = user_model_->lb();
+    const Vector& ubuser = user_model_->ub();
+
     double amin = INFINITY;
     double amax = 0.0;
-    for (Int j = 0; j < A_.cols(); j++) {
-        for (Int p = A_.begin(j); p < A_.end(j); p++) {
-            double x = A_.value(p);
+    for (Int j = 0; j < A.cols(); j++) {
+        for (Int p = A.begin(j); p < A.end(j); p++) {
+            double x = A.value(p);
             if (x != 0.0) {
                 amin = std::min(amin, std::abs(x));
                 amax = std::max(amax, std::abs(x));
@@ -1309,7 +1094,7 @@ void Model::PrintCoefficientRange(const Control& control) const {
 
     double rhsmin = INFINITY;
     double rhsmax = 0.0;
-    for (double x : rhs_) {
+    for (double x : rhs) {
         if (x != 0.0) {
             rhsmin = std::min(rhsmin, std::abs(x));
             rhsmax = std::max(rhsmax, std::abs(x));
@@ -1324,7 +1109,7 @@ void Model::PrintCoefficientRange(const Control& control) const {
 
     double objmin = INFINITY;
     double objmax = 0.0;
-    for (double x : obj_) {
+    for (double x : obj) {
         if (x != 0.0) {
             objmin = std::min(objmin, std::abs(x));
             objmax = std::max(objmax, std::abs(x));
@@ -1339,13 +1124,13 @@ void Model::PrintCoefficientRange(const Control& control) const {
 
     double boundmin = INFINITY;
     double boundmax = 0.0;
-    for (double x : lbuser_) {
+    for (double x : lbuser) {
         if (x != 0.0 && std::isfinite(x)) {
             boundmin = std::min(boundmin, std::abs(x));
             boundmax = std::max(boundmax, std::abs(x));
         }
     }
-    for (double x : ubuser_) {
+    for (double x : ubuser) {
         if (x != 0.0 && std::isfinite(x)) {
             boundmin = std::min(boundmin, std::abs(x));
             boundmax = std::max(boundmax, std::abs(x));
