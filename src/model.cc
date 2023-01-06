@@ -27,7 +27,7 @@ void Model::GetInfo(Info *info) const {
 void Model::clear() {
     // clear computational form model
     dualized_ = false;
-    negated_vars_.clear();
+    flipped_vars_.clear();
     num_rows_ = 0;
     num_cols_ = 0;
     num_dense_cols_ = 0;
@@ -326,7 +326,7 @@ void Model::PresolveGeneralPoint(const Vector& x_user,
 
         // Build dual solver variables from primal user variables.
         y_solver = -x_user;
-        for (Int j : negated_vars_)
+        for (Int j : flipped_vars_)
             y_solver[j] *= -1.0;
         for (Int i = 0; i < num_constr_; i++)
             z_solver[i] = -slack_user[i];
@@ -340,7 +340,7 @@ void Model::PresolveGeneralPoint(const Vector& x_user,
         // Build primal solver variables from dual user variables.
         std::copy_n(std::begin(y_user), num_constr_, std::begin(x_solver));
         std::copy_n(std::begin(z_user), num_var_, std::begin(x_solver) + n);
-        for (Int j : negated_vars_)
+        for (Int j : flipped_vars_)
             x_solver[n+j] *= -1.0;
         for (Int k = 0; k < boxed_vars_.size(); k++) {
             Int j = boxed_vars_[k];
@@ -491,7 +491,7 @@ void Model::PostsolveGeneralPoint(const Vector& x_solver,
             k++;
         }
         assert(k == n);
-        for (Int j : negated_vars_) {
+        for (Int j : flipped_vars_) {
             x_user[j] *= -1.0;
             z_user[j] *= -1.0;
         }
@@ -619,7 +619,7 @@ void Model::PostsolveInteriorPoint(const Vector& x_solver,
             }
         }
 
-        for (Int j : negated_vars_) {
+        for (Int j : flipped_vars_) {
             assert(std::isfinite(xl_user[j]));
             assert(std::isinf(xu_user[j]));
             assert(zu_user[j] == 0.0);
@@ -723,7 +723,7 @@ void Model::PostsolveBasis(const std::vector<Int>& basic_status_solver,
                 assert(vbasis_user[j] == IPX_basic);
                 vbasis_user[j] = IPX_nonbasic_ub;
             }
-        for (Int j : negated_vars_) {
+        for (Int j : flipped_vars_) {
             assert(vbasis_user[j] != IPX_nonbasic_ub);
             if (vbasis_user[j] == IPX_nonbasic_lb)
                 vbasis_user[j] = IPX_nonbasic_ub;
@@ -869,19 +869,19 @@ void Model::LoadDual() {
     dualized_ = true;
 
     // Implicitly negate variables with infinite lbuser_ but finite ubuser_.
-    std::vector<bool> negated(num_var_);
+    std::vector<bool> flipped(num_var_);
     for (Int j = 0; j < num_var_; j++) {
         if (std::isinf(lbuser[j]) && std::isfinite(ubuser[j])) {
-            negated[j] = true;
-            negated_vars_.push_back(j);
+            flipped[j] = true;
+            flipped_vars_.push_back(j);
         }
     }
 
     // Build AI.
     AI_ = Transpose(A);
-    if (!negated_vars_.empty()) {
+    if (!flipped_vars_.empty()) {
         for (Int pos = 0; pos < AI_.entries(); pos++) {
-            if (negated[AI_.index(pos)])
+            if (flipped[AI_.index(pos)])
                 AI_.value(pos) *= -1.0;
         }
     }
@@ -897,7 +897,7 @@ void Model::LoadDual() {
 
     // Build vectors.
     b_ = obj;
-    for (Int j : negated_vars_)
+    for (Int j : flipped_vars_)
         b_[j] *= -1.0;
     c_.resize(num_cols_+num_rows_);
     Int put = 0;
@@ -907,7 +907,7 @@ void Model::LoadDual() {
         c_[put++] = ubuser[j];
     assert(put == num_cols_);
     for (Int j = 0; j < num_var_; j++) {
-        double lb = negated[j] ? -ubuser[j] : lbuser[j];
+        double lb = flipped[j] ? -ubuser[j] : lbuser[j];
         // If lb is -infinity, then the variable will be fixed and we can give
         // it any (finite) cost.
         c_[put++] = std::isfinite(lb) ? -lb : 0.0;
@@ -934,7 +934,7 @@ void Model::LoadDual() {
         ub_[j] = INFINITY;
     }
     for (Int j = 0; j < num_var_; j++) {
-        double lb = negated[j] ? -ubuser[j] : lbuser[j];
+        double lb = flipped[j] ? -ubuser[j] : lbuser[j];
         lb_[num_cols_+j] = 0.0;
         ub_[num_cols_+j] = std::isfinite(lb) ? INFINITY : 0.0;
     }

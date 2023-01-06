@@ -275,8 +275,8 @@ private:
     // dualized = true
     // Here nc = num_constr, nv = num_var, nb is the number of boxed variables
     // and jboxed are their indices. Variables with infinite lbuser_ but finite
-    // ubuser_ are implicitly negated. Their indices are stored in
-    // negated_vars_. If a variable j of the input LP is a free variable, then
+    // ubuser_ are implicitly scaled by -1. Their indices are stored in
+    // flipped_vars_. If a variable j of the input LP is a free variable, then
     // the j-th slack variable of the model gets a zero upper bound (i.e. it is
     // fixed at zero) and its objective coefficient is set to zero.
     void LoadDual();
@@ -310,7 +310,7 @@ private:
 
     // Computational form model.
     bool dualized_{false};        // model was dualized in preprocessing?
-    std::vector<Int> negated_vars_; // user variables negated for dualization
+    std::vector<Int> flipped_vars_; // user variables flipped for dualization
     Int num_rows_{0};             // # rows of AI
     Int num_cols_{0};             // # structural columns of AI
     Int num_dense_cols_{0};       // # columns classified as dense
