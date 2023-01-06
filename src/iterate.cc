@@ -312,10 +312,6 @@ void Iterate::Postprocess() {
     evaluated_ = false;
 }
 
-void Iterate::EvaluatePostsolved(Info* info) const {
-    model_.EvaluateInteriorSolution(x_, xl_, xu_, y_, zl_, zu_, info);
-}
-
 void Iterate::DropToComplementarity(Vector& x, Vector& y, Vector& z) const {
     const Int m = model_.rows();
     const Int n = model_.cols();

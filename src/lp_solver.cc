@@ -295,7 +295,13 @@ void LpSolver::InteriorPointSolve() {
     RunIPM();
 
     iterate_->Postprocess();
-    iterate_->EvaluatePostsolved(&info_);
+    model_.EvaluateInteriorSolution(iterate_->x(),
+                                    iterate_->xl(),
+                                    iterate_->xu(),
+                                    iterate_->y(),
+                                    iterate_->zl(),
+                                    iterate_->zu(),
+                                    &info_);
 
     // Declare status_ipm "imprecise" if the IPM terminated optimal but the
     // solution after postprocessing/postsolve does not satisfy tolerances.

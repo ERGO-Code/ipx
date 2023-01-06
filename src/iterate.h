@@ -192,9 +192,6 @@ public:
     // invalid for use as an IPM iterate.
     void Postprocess();
 
-    // Calls Model::EvaluateInteriorSolution().
-    void EvaluatePostsolved(Info* info) const;
-
     // Copies y and constructs x and z from the iterate such that
     // x[j]==lb[j] || x[j]==ub[j] || z[j]==0.0 is true for each j.
     // The method can only be called after Postprocess().
