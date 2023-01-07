@@ -20,26 +20,17 @@ namespace ipx {
 // The matrix AI has m >= 0 rows and n+m columns, where n > 0 is the number of
 // "structural" variables. The last m columns of AI form the identity matrix.
 // The last m components of c do not need to be zero (can happen when the model
-// was dualized in preprocessing). Entries of -lb and ub can be infinity.
-//
-// The user model is translated into computational form in two steps:
-// (1) dualization if appropriate
-// (2) scaling
+// was dualized by presolver). Entries of -lb and ub can be infinity.
 //
 // A Model object cannot be modified other than discarding the data and loading
-// a new user model.
+// a new model through a Presolver object.
 
 class Model {
 public:
     // Constructs an empty model.
     Model() = default;
 
-    // Initializes a Model object from a user model. A pointer to @user_model is
-    // stored in the object and must be valid as long as the object is used.
-    // Returns: 0
-    Int Init(const Control& control, const UserModel& user_model);
-
-    // Writes statistics of solver model and preprocessing to @info.
+    // Writes statistics of solver model to @info.
     void GetInfo(Info* info) const;
 
     // Returns true if the model is empty.
@@ -63,7 +54,7 @@ public:
         return AI_.entries(j) >= nz_dense_;
     }
 
-    // Returns true if the user model was dualized in preprocessing.
+    // Returns true if the user model was dualized by presolver.
     bool dualized() const { return dualized_; }
 
     // Returns a reference to the matrix AI in CSC and CSR format.
@@ -88,206 +79,9 @@ public:
     // Returns the infinity norm of c.
     double norm_c() const { return norm_c_; }
 
-    // Transforms point from user model to solver model. Each of the pointer
-    // arguments can be NULL, in which case its components are assumed 0.0.
-    void PresolveStartingPoint(const double* x_user, const double* slack_user,
-                               const double* y_user, const double* z_user,
-                               Vector& x_solver, Vector& y_solver,
-                               Vector& z_solver) const;
-
-    // Performs the inverse operations to PostsolveInteriorSolution().
-    // The user vectors must all be given and must satisfy the sign conditions
-    // given in the reference documentation. Otherwise an error code will be
-    // returned. At the moment PresolveIPMStartingPoint() is not implemented
-    // for the case that the model was dualized in preprocessing.
-    // Returns:
-    //  0
-    //  IPX_ERROR_argument_null
-    //  IPX_ERROR_invalid_vector if a sign condition is violated
-    //  IPX_ERROR_not_implemented if the model was dualized in preprocessing.
-    Int PresolveIPMStartingPoint(const double* x_user,
-                                 const double* xl_user,
-                                 const double* xu_user,
-                                 const double* slack_user,
-                                 const double* y_user,
-                                 const double* zl_user,
-                                 const double* zu_user,
-                                 Vector& x_solver,
-                                 Vector& xl_solver,
-                                 Vector& xu_solver,
-                                 Vector& y_solver,
-                                 Vector& zl_solver,
-                                 Vector& zu_solver) const;
-
-    // Given an IPM iterate, recovers the solution to the user model (see the
-    // reference documentation). Each of the pointer arguments can be NULL, in
-    // which case the quantity is not returned. The sign conditions on the dual
-    // variables and those on the primal slack variables are satisfied if
-    // xl_solver, xu_solver, zl_solver and zu_solver are nonnegative.
-    void PostsolveInteriorSolution(const Vector& x_solver,
-                                   const Vector& xl_solver,
-                                   const Vector& xu_solver,
-                                   const Vector& y_solver,
-                                   const Vector& zl_solver,
-                                   const Vector& zu_solver,
-                                   double* x_user,
-                                   double* xl_user, double* xu_user,
-                                   double* slack_user,
-                                   double* y_user,
-                                   double* zl_user, double* zu_user) const;
-
-    // Evaluates the solution to the user model obtained from postsolving the
-    // IPM iterate. The following info members are set: abs_presidual,
-    // abs_dresidual, rel_presidual, rel_dresidual, pobjval, dobjval,
-    // rel_objgap, complementarity, normx, normy, normz.
-    void EvaluateInteriorSolution(const Vector& x_solver,
-                                  const Vector& xl_solver,
-                                  const Vector& xu_solver,
-                                  const Vector& y_solver,
-                                  const Vector& zl_solver,
-                                  const Vector& zu_solver,
-                                  Info* info) const;
-
-    // Given a basic solution to the solver model, recovers the basic solution
-    // to the user model. Each of the pointer arguments can be NULL.
-    void PostsolveBasicSolution(const Vector& x_solver,
-                                const Vector& y_solver,
-                                const Vector& z_solver,
-                                const std::vector<Int>& basic_status_solver,
-                                double* x_user, double* slack_user,
-                                double* y_user, double* z_user) const;
-
-    // Evaluates the solution to the user model obtained from postsolving the
-    // basic solution from the solver. The following info members are set:
-    // primal_infeas, dual_infeas, objval
-    void EvaluateBasicSolution(const Vector& x_solver,
-                               const Vector& y_solver,
-                               const Vector& z_solver,
-                               const std::vector<Int>& basic_status_solver,
-                               Info* info) const;
-
-    // Given a basic status for each variable in the solver model, recovers the
-    // basic statuses for constraints and variables in the user model. Each
-    // of the pointer arguments can be NULL.
-    void PostsolveBasis(const std::vector<Int>& basic_status_solver,
-                        Int* cbasis, Int* vbasis) const;
-
 private:
-    // Builds computational form model from user input.
-    void PresolveModel(const Control& control);
-
-    // Translates arbitrary primal-dual point from user model to computational
-    // form. No sign conditions are assumed for the user point.
-    void PresolveGeneralPoint(const Vector& x_user,
-                              const Vector& slack_user,
-                              const Vector& y_user,
-                              const Vector& z_user,
-                              Vector& x_solver,
-                              Vector& y_solver,
-                              Vector& z_solver) const;
-
-    // Translates interior point from user model to computational form. The user
-    // point must satisfy the sign conditions imposed by the user model.
-    // Currently only implemented for dualized_ == false.
-    void PresolveInteriorPoint(const Vector& x_user,
-                               const Vector& xl_user,
-                               const Vector& xu_user,
-                               const Vector& slack_user,
-                               const Vector& y_user,
-                               const Vector& zl_user,
-                               const Vector& zu_user,
-                               Vector& x_solver,
-                               Vector& xl_solver,
-                               Vector& xu_solver,
-                               Vector& y_solver,
-                               Vector& zl_solver,
-                               Vector& zu_solver) const;
-
-    // Translates arbitrary primal-dual point from computational form to user
-    // model. No sign conditions are assumed.
-    void PostsolveGeneralPoint(const Vector& x_solver,
-                               const Vector& y_solver,
-                               const Vector& z_solver,
-                               Vector& x_user,
-                               Vector& slack_user,
-                               Vector& y_user,
-                               Vector& z_user) const;
-
-    // Translates interior point from computational form to user model. The
-    // solver point must satisfy the sign conditions imposed by the
-    // computational form model.
-    void PostsolveInteriorPoint(const Vector& x_solver,
-                                const Vector& xl_solver,
-                                const Vector& xu_solver,
-                                const Vector& y_solver,
-                                const Vector& zl_solver,
-                                const Vector& zu_solver,
-                                Vector& x_user,
-                                Vector& xl_user,
-                                Vector& xu_user,
-                                Vector& slack_user,
-                                Vector& y_user,
-                                Vector& zl_user,
-                                Vector& zu_user) const;
-
-    // Translates basic statuses from computational form to user model.
-    void PostsolveBasis(const std::vector<Int>& basic_status_solver,
-                        std::vector<Int>& cbasis_user,
-                        std::vector<Int>& vbasis_user) const;
-
-    // Adjusts primal-dual point to be consistent with basis:
-    // - For nonbasic variables sets the primal variable to its bound.
-    // - For basic variables sets the dual variable to zero.
-    void CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
-                              const std::vector<Int> cbasis,
-                              const std::vector<Int> vbasis) const;
-
-    // Computes quantities associated with user_model_.
-    void ComputeUserModelAttributes();
-
-    // Scales AI_, b_, c_, lb_ and ub_ according to parameter control.scale().
-    // The scaling factors are stored in colscale_ and rowscale_. If all factors
-    // are 1.0 (either because scaling was turned off or because the algorithm
-    // did nothing), rowscale_ and colscale_ have size 0.
-    void ScaleModel(const Control& control);
-
-    // Builds computational form without dualization. In Julia notation:
-    // num_rows = nc
-    // num_cols = nv
-    // AI       = [A eye(nc)]
-    // b        = rhs
-    // c        = [obj    ; zeros(nc)                      ]
-    // lb       = [lbuser ; constr_type_ .== '>' ? -Inf : 0]
-    // ub       = [ubuser ; constr_type_ .== '<' ? +Inf : 0]
-    // dualized = false
-    // Here nc = num_constr and nv = num_var. The data must have been loaded
-    // into the class member below ("User model") before calling this method.
-    void LoadPrimal();
-
-    // Builds computational form with dualization. In Julia notation:
-    // num_rows = nv
-    // num_cols = nc + nb
-    // AI       = [A' -eye(nv)[:,jboxed] eye(nv)]
-    // b        = obj
-    // c        = [-rhs                          ; ubuser[jb]  ; -lbuser     ]
-    // lb       = [constr_type .== '>' ? 0 : -Inf; zeros(nb)   ; zeros(nv)   ]
-    // ub       = [constr_type .== '<' ? 0 : +Inf; Inf*ones(nb); Inf*ones(nv)]
-    // dualized = true
-    // Here nc = num_constr, nv = num_var, nb is the number of boxed variables
-    // and jboxed are their indices. Variables with infinite lbuser_ but finite
-    // ubuser_ are implicitly scaled by -1. Their indices are stored in
-    // flipped_vars_. If a variable j of the input LP is a free variable, then
-    // the j-th slack variable of the model gets a zero upper bound (i.e. it is
-    // fixed at zero) and its objective coefficient is set to zero.
-    void LoadDual();
-
-    // Recursively equilibrates AI_ in infinity norm using the algorithm from
-    // [1]. The scaling factors are truncated to powers of 2. Terminates when
-    // the entries of AI_ are within the range [0.5,8). Preserves the rightmost
-    // identity matrix in AI_.
-    // [1] P. A. Knight, D. Ruiz, B. Ucar, "A symmetry preserving algorithm for
-    //     matrix scaling", SIAM J. Matrix Anal., 35(3), 2014.
-    void EquilibrateMatrix();
+    // Presolver can access data members to initialize them.
+    friend class Presolver;
 
     // Initializes num_dense_cols_ and nz_dense_. We classify the maximum #
     // columns as "dense" which have more than 40 nonzeros and more than 10
@@ -295,22 +89,10 @@ private:
     // more than 1000 dense columns, then no columns are classified as dense.
     void FindDenseColumns();
 
-    // Prints the coefficient ranges of input data to control.Log().
-    void PrintCoefficientRange(const Control& control) const;
+    // Computes norms of model data.
+    void ComputeNorms();
 
-    // Prints preprocessing operations to control.Log().
-    void PrintPreprocessingLog(const Control& control) const;
-
-    double colscale(Int j) const {
-        return colscale_.size() > 0 ? colscale_[j] : 1.0;
-    }
-    double rowscale(Int i) const {
-        return rowscale_.size() > 0 ? rowscale_[i] : 1.0;
-    }
-
-    // Computational form model.
-    bool dualized_{false};        // model was dualized in preprocessing?
-    std::vector<Int> flipped_vars_; // user variables flipped for dualization
+    bool dualized_{false};        // model was dualized by presolver?
     Int num_rows_{0};             // # rows of AI
     Int num_cols_{0};             // # structural columns of AI
     Int num_dense_cols_{0};       // # columns classified as dense
@@ -323,18 +105,6 @@ private:
     Vector ub_;
     double norm_bounds_{0.0};     // infinity norm of [b;lb;ub]
     double norm_c_{0.0};          // infinity norm of c
-
-    // User model and attributes.
-    const UserModel* user_model_{nullptr};
-    Int num_constr_{0};           // # constraints
-    Int num_eqconstr_{0};         // # equality constraints
-    Int num_var_{0};              // # variables
-    Int num_free_var_{0};         // # free variables
-    std::vector<Int> boxed_vars_; // indices of boxed variables
-
-    // Data from ScaleModel(). Empty when no scaling was applied.
-    Vector colscale_;
-    Vector rowscale_;
 };
 
 // Returns the maximum violation of lb <= x <= ub.

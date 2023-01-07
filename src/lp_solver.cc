@@ -27,10 +27,11 @@ Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
         return errflag;
     user_model_.GetInfo(&info_);
 
-    errflag = model_.Init(control_, user_model_);
+    errflag = presolver_.PresolveModel(control_);
     if (errflag)
         return errflag;
     model_.GetInfo(&info_);
+    presolver_.GetInfo(&info_);
 
     return 0;
 }
@@ -47,10 +48,10 @@ Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
     y_start_.resize(m);
     zl_start_.resize(n+m);
     zu_start_.resize(n+m);
-    Int errflag = model_.PresolveIPMStartingPoint(x, xl, xu, slack, y, zl, zu,
-                                                  x_start_, xl_start_,
-                                                  xu_start_, y_start_,
-                                                  zl_start_, zu_start_);
+    Int errflag = presolver_.PresolveIPMStartingPoint(x, xl, xu, slack, y, zl,
+                                                      zu, x_start_, xl_start_,
+                                                      xu_start_, y_start_,
+                                                      zl_start_, zu_start_);
     if (errflag) {
         ClearIPMStartingPoint();
         return errflag;
@@ -123,7 +124,7 @@ Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* zu) const {
     if (!iterate_)
         return -1;
-    model_.PostsolveInteriorSolution(
+    presolver_.PostsolveInteriorSolution(
         iterate_->x(), iterate_->xl(), iterate_->xu(),
         iterate_->y(), iterate_->zl(), iterate_->zu(),
         x, xl, xu, slack, y, zl, zu);
@@ -134,9 +135,9 @@ Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
     if (basic_statuses_.empty())
         return -1;
-    model_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
-                                  basic_statuses_, x, slack, y, z);
-    model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
+    presolver_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                      basic_statuses_, x, slack, y, z);
+    presolver_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     return 0;
 }
 
@@ -159,6 +160,7 @@ Int LpSolver::WriteParameters(const char* filename) {
 void LpSolver::ClearModel() {
     user_model_.clear();
     model_.clear();
+    presolver_.clear();
     ClearSolution();
     ClearIPMStartingPoint();
 }
@@ -219,9 +221,9 @@ Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
         return -1;
     if (!basic_statuses_.empty()) {
         // crossover provides basic statuses
-        model_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
+        presolver_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     } else {
-        model_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
+        presolver_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
     return 0;
 }
@@ -279,7 +281,7 @@ void LpSolver::ClearSolution() {
     // Restore info entries that belong to model.
     user_model_.GetInfo(&info_);
     model_.GetInfo(&info_);
-
+    presolver_.GetInfo(&info_);
 }
 
 void LpSolver::InteriorPointSolve() {
@@ -295,13 +297,13 @@ void LpSolver::InteriorPointSolve() {
     RunIPM();
 
     iterate_->Postprocess();
-    model_.EvaluateInteriorSolution(iterate_->x(),
-                                    iterate_->xl(),
-                                    iterate_->xu(),
-                                    iterate_->y(),
-                                    iterate_->zl(),
-                                    iterate_->zu(),
-                                    &info_);
+    presolver_.EvaluateInteriorSolution(iterate_->x(),
+                                        iterate_->xl(),
+                                        iterate_->xu(),
+                                        iterate_->y(),
+                                        iterate_->zl(),
+                                        iterate_->zu(),
+                                        &info_);
 
     // Declare status_ipm "imprecise" if the IPM terminated optimal but the
     // solution after postprocessing/postsolve does not satisfy tolerances.
@@ -549,8 +551,8 @@ void LpSolver::RunCrossover() {
 
     // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
-    model_.EvaluateBasicSolution(x_crossover_, y_crossover_, z_crossover_,
-                                 basic_statuses_, &info_);
+    presolver_.EvaluateBasicSolution(x_crossover_, y_crossover_, z_crossover_,
+                                     basic_statuses_, &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;

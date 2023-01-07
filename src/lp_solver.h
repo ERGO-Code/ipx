@@ -9,12 +9,15 @@
 #include "ipm.h"
 #include "iterate.h"
 #include "model.h"
+#include "presolver.h"
 #include "user_model.h"
 
 namespace ipx {
 
 class LpSolver {
 public:
+    LpSolver() : presolver_{user_model_, model_} {}
+
     // Loads an LP model in the form given in the reference documentation.
     // @num_var: number of variables, must be > 0.
     // @obj: size num_var array of objective coefficients.
@@ -168,6 +171,7 @@ private:
     Info info_;
     UserModel user_model_;
     Model model_;
+    Presolver presolver_;
     std::unique_ptr<Iterate> iterate_;
     std::unique_ptr<Basis> basis_;
 
