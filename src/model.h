@@ -27,11 +27,8 @@ namespace ipx {
 // was dualized in preprocessing). Entries of -lb and ub can be infinity.
 //
 // The user model is translated into computational form in two steps:
-// (a) scaling, which consists of
-//     - applying an automatic scaling algorithm to A (optional), and
-//     - "flipping" variables for which lbuser[j] is infinite but ubuser[j] is
-//        finite by multiplying the column of A by -1.
-// (b) dualization if appropriate
+// (1) dualization if appropriate
+// (2) scaling
 //
 // A Model object cannot be modified other than discarding the data and loading
 // a new user model.
@@ -146,7 +143,7 @@ public:
     // Given an IPM iterate, recovers the solution to the user model (see the
     // reference documentation). Each of the pointer arguments can be NULL, in
     // which case the quantity is not returned. The sign conditions on the dual
-    // variables and those on the primal slack variables are staisfied if
+    // variables and those on the primal slack variables are satisfied if
     // xl_solver, xu_solver, zl_solver and zu_solver are nonnegative.
     void PostsolveInteriorSolution(const Vector& x_solver,
                                    const Vector& xl_solver,
@@ -161,9 +158,9 @@ public:
                                    double* zl_user, double* zu_user) const;
 
     // Evaluates the solution to the user model obtained from postsolving the
-    // IPM iterate. The following info members are set:
-    // abs_presidual, abs_dresidual, rel_presidual, rel_dresidual,
-    // pobjval, dobjval, rel_objgap, complementarity, normx, normy, normz.
+    // IPM iterate. The following info members are set: abs_presidual,
+    // abs_dresidual, rel_presidual, rel_dresidual, pobjval, dobjval,
+    // rel_objgap, complementarity, normx, normy, normz.
     void EvaluateInteriorSolution(const Vector& x_solver,
                                   const Vector& xl_solver,
                                   const Vector& xu_solver,
@@ -198,8 +195,8 @@ public:
 
 private:
     // Checks that the input is valid, and if so copies into the members below
-    // (see "User model after scaling"). If the input is invalid, an error code
-    // is returned and the object remains unchanged.
+    // (see "User model"). If the input is invalid, an error code is returned
+    // and the object remains unchanged.
     // Returns:
     //  0
     //  IPX_ERROR_argument_null
@@ -212,18 +209,15 @@ private:
                   const double* ubuser);
 
     // Builds computational form model from user input.
-    void Presolve(const Control& control);
+    void PresolveModel(const Control& control);
 
     // Computes norms of input data.
     void ComputeInputNorms();
 
-    // Scales A_, scaled_obj_, scaled_rhs_, scaled_lbuser_ and scaled_ubuser_
-    // according to parameter control.scale(). The scaling factors are stored in
-    // colscale_ and rowscale_. If all factors are 1.0 (either because scaling
-    // was turned off or because the algorithm did nothing), rowscale_ and
-    // colscale_ have size 0.
-    // In any case, variables for which lbuser is infinite but ubbuser is finite
-    // are "flipped" and their indices are kept in flipped_vars_.
+    // Scales AI_, b_, c_, lb_ and ub_ according to parameter control.scale().
+    // The scaling factors are stored in colscale_ and rowscale_. If all factors
+    // are 1.0 (either because scaling was turned off or because the algorithm
+    // did nothing), rowscale_ and colscale_ have size 0.
     void ScaleModel(const Control& control);
 
     // Builds computational form without dualization. In Julia notation:
@@ -236,8 +230,7 @@ private:
     // ub       = [ubuser ; constr_type_ .== '<' ? +Inf : 0]
     // dualized = false
     // Here nc = num_constr and nv = num_var. The data must have been loaded
-    // into the class member below ("User model after scaling") before calling
-    // this method.
+    // into the class member below ("User model") before calling this method.
     void LoadPrimal();
 
     // Builds computational form with dualization. In Julia notation:
@@ -250,16 +243,17 @@ private:
     // ub       = [constr_type .== '<' ? 0 : +Inf; Inf*ones(nb); Inf*ones(nv)]
     // dualized = true
     // Here nc = num_constr, nv = num_var, nb is the number of boxed variables
-    // and jboxed are their indices. Every variable with a finite upper bound
-    // must have a finite lower bound (this is ensured after scaling). If a
-    // variable j of the input LP is a free variable, then the j-th slack
-    // variable of the model gets a zero upper bound (i.e. it is fixed at zero)
-    // and its objective coefficient is set to zero.
+    // and jboxed are their indices. Variables with infinite lbuser_ but finite
+    // ubuser_ are implicitly negated. Their indices are stored in
+    // negated_vars_. If a variable j of the input LP is a free variable, then
+    // the j-th slack variable of the model gets a zero upper bound (i.e. it is
+    // fixed at zero) and its objective coefficient is set to zero.
     void LoadDual();
 
-    // Recursively equilibrates A_ in infinity norm using the algorithm from
+    // Recursively equilibrates AI_ in infinity norm using the algorithm from
     // [1]. The scaling factors are truncated to powers of 2. Terminates when
-    // the entries of A_ are within the range [0.5,8).
+    // the entries of AI_ are within the range [0.5,8). Preserves the rightmost
+    // identity matrix in AI_.
     // [1] P. A. Knight, D. Ruiz, B. Ucar, "A symmetry preserving algorithm for
     //     matrix scaling", SIAM J. Matrix Anal., 35(3), 2014.
     void EquilibrateMatrix();
@@ -270,94 +264,88 @@ private:
     // more than 1000 dense columns, then no columns are classified as dense.
     void FindDenseColumns();
 
-    // Prints the coefficient ranges of input data to control.Log(). Must be
-    // called after CopyInput() and before ScaleModel().
+    // Prints the coefficient ranges of input data to control.Log().
     void PrintCoefficientRange(const Control& control) const;
 
     // Prints preprocessing operations to control.Log().
     void PrintPreprocessingLog(const Control& control) const;
 
-    // Applies the operations from ScaleModel() to a primal-dual point.
-    void ScalePoint(Vector& x, Vector& slack, Vector& y, Vector& z) const;
-    void ScalePoint(Vector& x, Vector& xl, Vector& xu, Vector& slack,
-                    Vector& y, Vector& zl, Vector& zu) const;
-
-    // ScaleBack*() do the reverse operation of ScaleModel().
-    void ScaleBackInteriorSolution(Vector& x, Vector& xl, Vector& xu,
-                                   Vector& slack, Vector& y, Vector& zl,
-                                   Vector& zu) const;
-    void ScaleBackResiduals(Vector& rb, Vector& rc, Vector& rl,
-                            Vector& ru) const;
-    void ScaleBackBasicSolution(Vector& x, Vector& slack, Vector& y,
-                                Vector& z) const;
-    void ScaleBackBasis(std::vector<Int>& cbasis,
-                        std::vector<Int>& vbasis) const;
-
-    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
-    // point.
-    void DualizeBasicSolution(const Vector& x_user, const Vector& slack_user,
-                              const Vector& y_user, const Vector& z_user,
-                              Vector& x_solver, Vector& y_solver,
+    // Translates arbitrary primal-dual point from user model to computational
+    // form. No sign conditions are assumed for the user point.
+    void PresolveGeneralPoint(const Vector& x_user,
+                              const Vector& slack_user,
+                              const Vector& y_user,
+                              const Vector& z_user,
+                              Vector& x_solver,
+                              Vector& y_solver,
                               Vector& z_solver) const;
 
-    // Applies the operations of LoadPrimal() or LoadDual() to a primal-dual
-    // point. Currently only implemented for dualized_ == false. Otherwise an
-    // assertion will fail.
-    void DualizeIPMStartingPoint(const Vector& x_user,
-                                 const Vector& xl_user,
-                                 const Vector& xu_user,
-                                 const Vector& slack_user,
-                                 const Vector& y_user,
-                                 const Vector& zl_user,
-                                 const Vector& zu_user,
-                                 Vector& x_solver,
-                                 Vector& xl_solver,
-                                 Vector& xu_solver,
-                                 Vector& y_solver,
-                                 Vector& zl_solver,
-                                 Vector& zu_solver) const;
+    // Translates interior point from user model to computational form. The user
+    // point must satisfy the sign conditions imposed by the user model.
+    // Currently only implemented for dualized_ == false.
+    void PresolveInteriorPoint(const Vector& x_user,
+                               const Vector& xl_user,
+                               const Vector& xu_user,
+                               const Vector& slack_user,
+                               const Vector& y_user,
+                               const Vector& zl_user,
+                               const Vector& zu_user,
+                               Vector& x_solver,
+                               Vector& xl_solver,
+                               Vector& xu_solver,
+                               Vector& y_solver,
+                               Vector& zl_solver,
+                               Vector& zu_solver) const;
 
-    // DualizeBack*() do the reverse operations of LoadPrimal() or LoadDual().
-    // Given the solution from the solver, they recover the solution to the
-    // scaled user model.
-    void DualizeBackInteriorSolution(const Vector& x_solver,
-                                     const Vector& xl_solver,
-                                     const Vector& xu_solver,
-                                     const Vector& y_solver,
-                                     const Vector& zl_solver,
-                                     const Vector& zu_solver,
-                                     Vector& x_user,
-                                     Vector& xl_user,
-                                     Vector& xu_user,
-                                     Vector& slack_user,
-                                     Vector& y_user,
-                                     Vector& zl_user,
-                                     Vector& zu_user) const;
-    void DualizeBackBasicSolution(const Vector& x_solver,
-                                  const Vector& y_solver,
-                                  const Vector& z_solver,
-                                  Vector& x_user,
-                                  Vector& slack_user,
-                                  Vector& y_user,
-                                  Vector& z_user) const;
-    void DualizeBackBasis(const std::vector<Int>& basic_status_solver,
-                          std::vector<Int>& cbasis_user,
-                          std::vector<Int>& vbasis_user) const;
+    // Translates interior point from computational form to user model. The
+    // solver point must satisfy the sign conditions imposed by the
+    // computational form model.
+    void PostsolveInteriorPoint(const Vector& x_solver,
+                                const Vector& xl_solver,
+                                const Vector& xu_solver,
+                                const Vector& y_solver,
+                                const Vector& zl_solver,
+                                const Vector& zu_solver,
+                                Vector& x_user,
+                                Vector& xl_user,
+                                Vector& xu_user,
+                                Vector& slack_user,
+                                Vector& y_user,
+                                Vector& zl_user,
+                                Vector& zu_user) const;
 
-    void CorrectScaledBasicSolution(Vector& x, Vector& slack, Vector& y,
-                                    Vector& z,
-                                    const std::vector<Int> cbasis,
-                                    const std::vector<Int> vbasis) const;
+    // Translates arbitrary primal-dual point from computational form to user
+    // model. No sign conditions are assumed.
+    void PostsolveGeneralPoint(const Vector& x_solver,
+                               const Vector& y_solver,
+                               const Vector& z_solver,
+                               Vector& x_user,
+                               Vector& slack_user,
+                               Vector& y_user,
+                               Vector& z_user) const;
 
-    // Performs lhs += alpha*A*rhs or lhs += alpha*A'rhs, where A is the user
-    // matrix after scaling. This matrix is not stored explicitly, but is used
-    // implicitly through AI.
-    // @trans: 't' or 'T' for multiplication with A'.
-    void MultiplyWithScaledMatrix(const Vector& rhs, double alpha, Vector& lhs,
-                                  char trans) const;
+    // Translates basic statuses from computational form to user model.
+    void PostsolveBasis(const std::vector<Int>& basic_status_solver,
+                        std::vector<Int>& cbasis_user,
+                        std::vector<Int>& vbasis_user) const;
+
+    // Adjusts primal-dual point to be consistent with basis:
+    // - For nonbasic variables sets the primal variable to its bound.
+    // - For basic variables sets the dual variable to zero.
+    void CorrectBasicSolution(Vector& x, Vector& slack, Vector& y, Vector& z,
+                              const std::vector<Int> cbasis,
+                              const std::vector<Int> vbasis) const;
+
+    double colscale(Int j) const {
+        return colscale_.size() > 0 ? colscale_[j] : 1.0;
+    }
+    double rowscale(Int i) const {
+        return rowscale_.size() > 0 ? rowscale_[i] : 1.0;
+    }
 
     // Computational form model.
     bool dualized_{false};        // model was dualized in preprocessing?
+    std::vector<Int> negated_vars_; // user variables negated for dualization
     Int num_rows_{0};             // # rows of AI
     Int num_cols_{0};             // # structural columns of AI
     Int num_dense_cols_{0};       // # columns classified as dense
@@ -371,8 +359,7 @@ private:
     double norm_bounds_{0.0};     // infinity norm of [b;lb;ub]
     double norm_c_{0.0};          // infinity norm of c
 
-    // User model after scaling. The data members are first initialized by
-    // CopyInput() and the vectors and matrix are then modified by ScaleModel().
+    // User model.
     Int num_constr_{0};           // # constraints
     Int num_eqconstr_{0};         // # equality constraints
     Int num_var_{0};              // # variables
@@ -382,14 +369,13 @@ private:
     std::vector<char> constr_type_;
     double norm_obj_{0.0};        // Infnorm(obj) as given by user
     double norm_rhs_{0.0};        // Infnorm(rhs,lb,ub) as given by user
-    Vector scaled_obj_;
-    Vector scaled_rhs_;
-    Vector scaled_lbuser_;
-    Vector scaled_ubuser_;
-    SparseMatrix A_;              // is cleared after preprocessing
+    Vector obj_;
+    Vector rhs_;
+    Vector lbuser_;
+    Vector ubuser_;
+    SparseMatrix A_;
 
-    // Data from ScaleModel() that is required by ScaleBack*().
-    std::vector<Int> flipped_vars_;
+    // Data from ScaleModel(). Empty when no scaling was applied.
     Vector colscale_;
     Vector rowscale_;
 };
