@@ -527,14 +527,7 @@ Int Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
     scaled_lbuser_ = Vector(lbuser, num_var);
     scaled_ubuser_ = Vector(ubuser, num_var);
     A_.LoadFromArrays(num_constr, num_var, Ap, Ap+1, Ai, Ax);
-    norm_obj_ = Infnorm(scaled_obj_);
-    norm_rhs_ = Infnorm(scaled_rhs_);
-    for (double x : scaled_lbuser_)
-        if (std::isfinite(x))
-            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
-    for (double x : scaled_ubuser_)
-        if (std::isfinite(x))
-            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
+    ComputeInputNorms();
     return 0;
 }
 
@@ -571,6 +564,17 @@ void Model::Presolve(const Control& control) {
         if (std::isfinite(x))
             norm_bounds_ = std::max(norm_bounds_, std::abs(x));
     PrintPreprocessingLog(control);
+}
+
+void Model::ComputeInputNorms() {
+    norm_obj_ = Infnorm(scaled_obj_);
+    norm_rhs_ = Infnorm(scaled_rhs_);
+    for (double x : scaled_lbuser_)
+        if (std::isfinite(x))
+            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
+    for (double x : scaled_ubuser_)
+        if (std::isfinite(x))
+            norm_rhs_ = std::max(norm_rhs_, std::abs(x));
 }
 
 void Model::ScaleModel(const Control& control) {
