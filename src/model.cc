@@ -17,38 +17,7 @@ Int Model::Load(const Control& control, Int num_constr, Int num_var,
                             obj, lbuser, ubuser);
     if (errflag)
         return errflag;
-    control.Log()
-        << "Input\n"
-        << Textline("Number of variables:") << num_var_ << '\n'
-        << Textline("Number of free variables:") << num_free_var_ << '\n'
-        << Textline("Number of constraints:") << num_constr_ << '\n'
-        << Textline("Number of equality constraints:") << num_eqconstr_ << '\n'
-        << Textline("Number of matrix entries:") << num_entries_ << '\n';
-    PrintCoefficientRange(control);
-    ScaleModel(control);
-
-    // Make an automatic decision for dualization if not specified by user.
-    Int dualize = control.dualize();
-    if (dualize < 0)
-        dualize = num_constr > 2*num_var;
-    if (dualize)
-        LoadDual();
-    else
-        LoadPrimal();
-
-    A_.clear();
-    AIt_ = Transpose(AI_);
-    assert(AI_.begin(num_cols_ + num_rows_) == AIt_.begin(num_rows_));
-    FindDenseColumns();
-    norm_c_ = Infnorm(c_);
-    norm_bounds_ = Infnorm(b_);
-    for (double x : lb_)
-        if (std::isfinite(x))
-            norm_bounds_ = std::max(norm_bounds_, std::abs(x));
-    for (double x : ub_)
-        if (std::isfinite(x))
-            norm_bounds_ = std::max(norm_bounds_, std::abs(x));
-    PrintPreprocessingLog(control);
+    Presolve(control);
     return 0;
 }
 
@@ -567,6 +536,41 @@ Int Model::CopyInput(Int num_constr, Int num_var, const Int* Ap, const Int* Ai,
         if (std::isfinite(x))
             norm_rhs_ = std::max(norm_rhs_, std::abs(x));
     return 0;
+}
+
+void Model::Presolve(const Control& control) {
+    control.Log()
+        << "Input\n"
+        << Textline("Number of variables:") << num_var_ << '\n'
+        << Textline("Number of free variables:") << num_free_var_ << '\n'
+        << Textline("Number of constraints:") << num_constr_ << '\n'
+        << Textline("Number of equality constraints:") << num_eqconstr_ << '\n'
+        << Textline("Number of matrix entries:") << num_entries_ << '\n';
+    PrintCoefficientRange(control);
+    ScaleModel(control);
+
+    // Make an automatic decision for dualization if not specified by user.
+    Int dualize = control.dualize();
+    if (dualize < 0)
+        dualize = num_constr_ > 2*num_var_;
+    if (dualize)
+        LoadDual();
+    else
+        LoadPrimal();
+
+    A_.clear();
+    AIt_ = Transpose(AI_);
+    assert(AI_.begin(num_cols_ + num_rows_) == AIt_.begin(num_rows_));
+    FindDenseColumns();
+    norm_c_ = Infnorm(c_);
+    norm_bounds_ = Infnorm(b_);
+    for (double x : lb_)
+        if (std::isfinite(x))
+            norm_bounds_ = std::max(norm_bounds_, std::abs(x));
+    for (double x : ub_)
+        if (std::isfinite(x))
+            norm_bounds_ = std::max(norm_bounds_, std::abs(x));
+    PrintPreprocessingLog(control);
 }
 
 void Model::ScaleModel(const Control& control) {

@@ -211,6 +211,9 @@ private:
                   const double* obj, const double* lbuser,
                   const double* ubuser);
 
+    // Builds computational form model from user input.
+    void Presolve(const Control& control);
+
     // Scales A_, scaled_obj_, scaled_rhs_, scaled_lbuser_ and scaled_ubuser_
     // according to parameter control.scale(). The scaling factors are stored in
     // colscale_ and rowscale_. If all factors are 1.0 (either because scaling
