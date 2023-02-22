@@ -12,13 +12,16 @@ namespace ipx {
 
 Crossover::Crossover(const Control& control) : control_(control) {}
 
-void Crossover::PushAll(Basis* basis, Vector& x, Vector& y, Vector& z,
+void Crossover::PushAll(Basis* basis, SimplexIterate& iterate,
                         const double* weights, Info* info) {
     const Model& model = basis->model();
     const Int m = model.rows();
     const Int n = model.cols();
     const Vector& lb = model.lb();
     const Vector& ub = model.ub();
+    Vector& x = iterate.x;
+    Vector& y = iterate.y;
+    Vector& z = iterate.z;
     std::vector<Int> perm = Sortperm(n+m, weights, false);
 
     control_.Log()

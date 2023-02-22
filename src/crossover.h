@@ -37,6 +37,7 @@
 #include "basis.h"
 #include "control.h"
 #include "indexed_vector.h"
+#include "simplex_iterate.h"
 
 namespace ipx {
 
@@ -58,8 +59,8 @@ public:
     // On return info->status_crossover and info->errflag have been set by
     // PushPrimal() or PushDual().
     //
-    void PushAll(Basis* basis, Vector& x, Vector& y, Vector& z,
-                 const double* weights, Info* info);
+    void PushAll(Basis* basis, SimplexIterate& iterate, const double* weights,
+                 Info* info);
 
     // Pushes a set of primal variables to one of their bounds.
     //

@@ -321,12 +321,15 @@ Int Basis::ExchangeIfStable(Int jb, Int jn, double tableau_entry, int sys,
     return 0;
 }
 
-void Basis::ComputeBasicSolution(Vector& x, Vector& y, Vector& z) const {
+void Basis::ComputeBasicSolution(SimplexIterate& iterate) const {
     const Int m = model_.rows();
     const Int n = model_.cols();
     const Vector& b = model_.b();
     const Vector& c = model_.c();
     const SparseMatrix& AI = model_.AI();
+    Vector& x = iterate.x;
+    Vector& y = iterate.y;
+    Vector& z = iterate.z;
 
     // Compute x[basic] so that Ax=b. Use y as workspace.
     y = b;

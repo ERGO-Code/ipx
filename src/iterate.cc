@@ -312,13 +312,16 @@ void Iterate::Postprocess() {
     evaluated_ = false;
 }
 
-void Iterate::DropToComplementarity(Vector& x, Vector& y, Vector& z) const {
+void Iterate::DropToComplementarity(SimplexIterate& simplex_iterate) const {
     const Int m = model_.rows();
     const Int n = model_.cols();
     const Vector& lb = model_.lb();
     const Vector& ub = model_.ub();
     assert(postprocessed_);
 
+    Vector& x = simplex_iterate.x;
+    Vector& y = simplex_iterate.y;
+    Vector& z = simplex_iterate.z;
     assert(x.size() == n+m);
     assert(y.size() == m);
     assert(z.size() == n+m);

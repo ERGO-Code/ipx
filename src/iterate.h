@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "model.h"
+#include "simplex_iterate.h"
 
 namespace ipx {
 
@@ -195,7 +196,7 @@ public:
     // Copies y and constructs x and z from the iterate such that
     // x[j]==lb[j] || x[j]==ub[j] || z[j]==0.0 is true for each j.
     // The method can only be called after Postprocess().
-    void DropToComplementarity(Vector& x, Vector& y, Vector& z) const;
+    void DropToComplementarity(SimplexIterate& simplex_iterate) const;
 
 private:
     // A (primal or dual) variable that is required to be positive in the IPM is

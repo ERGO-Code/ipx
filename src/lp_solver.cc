@@ -495,8 +495,7 @@ void LpSolver::RunCrossover() {
     // Construct a complementary primal-dual point from the final IPM iterate.
     // This usually increases the residuals to Ax=b and A'y+z=c.
     simplex_iterate_.reset(new SimplexIterate(model_));
-    iterate_->DropToComplementarity(simplex_iterate_->x, simplex_iterate_->y,
-                                    simplex_iterate_->z);
+    iterate_->DropToComplementarity(*simplex_iterate_);
 
     // Run crossover. Perform dual pushes in increasing order and primal pushes
     // in decreasing order of the scaling factors from the final IPM iterate.
@@ -505,9 +504,7 @@ void LpSolver::RunCrossover() {
         for (Int j = 0; j < n+m; j++)
             weights[j] = iterate_->ScalingFactor(j);
         Crossover crossover(control_);
-        crossover.PushAll(basis_.get(), simplex_iterate_->x,
-                          simplex_iterate_->y, simplex_iterate_->z, &weights[0],
-                          &info_);
+        crossover.PushAll(basis_.get(), *simplex_iterate_, &weights[0], &info_);
         info_.time_crossover =
             crossover.time_primal() + crossover.time_dual();
         info_.updates_crossover =
@@ -520,8 +517,7 @@ void LpSolver::RunCrossover() {
     }
 
     // Recompute vertex solution and set basic statuses.
-    basis_->ComputeBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
-                                 simplex_iterate_->z);
+    basis_->ComputeBasicSolution(*simplex_iterate_);
     basic_statuses_.resize(n+m);
     for (Int j = 0; j < basic_statuses_.size(); j++) {
         if (basis_->IsBasic(j)) {
