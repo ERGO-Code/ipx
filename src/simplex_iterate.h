@@ -3,7 +3,7 @@
 #ifndef IPX_SIMPLEX_ITERATE_H_
 #define IPX_SIMPLEX_ITERATE_H_
 
-#include <vector>
+#include "ipx_internal.h"
 #include "model.h"
 
 namespace ipx {
