@@ -135,8 +135,9 @@ Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
     if (basic_statuses_.empty())
         return -1;
-    presolver_.PostsolveBasicSolution(x_crossover_, y_crossover_, z_crossover_,
-                                      basic_statuses_, x, slack, y, z);
+    presolver_.PostsolveBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
+                                      simplex_iterate_->z, basic_statuses_, x,
+                                      slack, y, z);
     presolver_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
     return 0;
 }
@@ -272,9 +273,7 @@ Int LpSolver::SymbolicInvert(Int* rowcounts, Int* colcounts) {
 void LpSolver::ClearSolution() {
     iterate_.reset(nullptr);
     basis_.reset(nullptr);
-    x_crossover_.resize(0);
-    y_crossover_.resize(0);
-    z_crossover_.resize(0);
+    simplex_iterate_.reset(nullptr);
     basic_statuses_.clear();
     basic_statuses_.shrink_to_fit();
     info_ = Info();
@@ -495,10 +494,9 @@ void LpSolver::RunCrossover() {
 
     // Construct a complementary primal-dual point from the final IPM iterate.
     // This usually increases the residuals to Ax=b and A'y+z=c.
-    x_crossover_.resize(n+m);
-    y_crossover_.resize(m);
-    z_crossover_.resize(n+m);
-    iterate_->DropToComplementarity(x_crossover_, y_crossover_, z_crossover_);
+    simplex_iterate_.reset(new SimplexIterate(model_));
+    iterate_->DropToComplementarity(simplex_iterate_->x, simplex_iterate_->y,
+                                    simplex_iterate_->z);
 
     // Run crossover. Perform dual pushes in increasing order and primal pushes
     // in decreasing order of the scaling factors from the final IPM iterate.
@@ -507,34 +505,34 @@ void LpSolver::RunCrossover() {
         for (Int j = 0; j < n+m; j++)
             weights[j] = iterate_->ScalingFactor(j);
         Crossover crossover(control_);
-        crossover.PushAll(basis_.get(), x_crossover_, y_crossover_,
-                          z_crossover_, &weights[0], &info_);
+        crossover.PushAll(basis_.get(), simplex_iterate_->x,
+                          simplex_iterate_->y, simplex_iterate_->z, &weights[0],
+                          &info_);
         info_.time_crossover =
             crossover.time_primal() + crossover.time_dual();
         info_.updates_crossover =
             crossover.primal_pivots() + crossover.dual_pivots();
         if (info_.status_crossover != IPX_STATUS_optimal) {
             // Crossover failed. Discard solution.
-            x_crossover_.resize(0);
-            y_crossover_.resize(0);
-            z_crossover_.resize(0);
+            simplex_iterate_.reset(nullptr);
             return;
         }
     }
 
     // Recompute vertex solution and set basic statuses.
-    basis_->ComputeBasicSolution(x_crossover_, y_crossover_, z_crossover_);
+    basis_->ComputeBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
+                                 simplex_iterate_->z);
     basic_statuses_.resize(n+m);
     for (Int j = 0; j < basic_statuses_.size(); j++) {
         if (basis_->IsBasic(j)) {
             basic_statuses_[j] = IPX_basic;
         } else {
             if (lb[j] == ub[j])
-                basic_statuses_[j] = z_crossover_[j] >= 0.0 ?
+                basic_statuses_[j] = simplex_iterate_->z[j] >= 0.0 ?
                     IPX_nonbasic_lb : IPX_nonbasic_ub;
-            else if (x_crossover_[j] == lb[j])
+            else if (simplex_iterate_->x[j] == lb[j])
                 basic_statuses_[j] = IPX_nonbasic_lb;
-            else if (x_crossover_[j] == ub[j])
+            else if (simplex_iterate_->x[j] == ub[j])
                 basic_statuses_[j] = IPX_nonbasic_ub;
             else
                 basic_statuses_[j] = IPX_superbasic;
@@ -542,17 +540,19 @@ void LpSolver::RunCrossover() {
     }
     control_.Debug()
         << Textline("Bound violation of basic solution:")
-        << sci2(PrimalInfeasibility(model_, x_crossover_)) << '\n'
+        << sci2(PrimalInfeasibility(model_, simplex_iterate_->x)) << '\n'
         << Textline("Dual sign violation of basic solution:")
-        << sci2(DualInfeasibility(model_, x_crossover_, z_crossover_)) << '\n';
+        << sci2(DualInfeasibility(
+                    model_, simplex_iterate_->x, simplex_iterate_->z)) << '\n';
     control_.Debug()
         << Textline("Minimum singular value of basis matrix:")
         << sci2(basis_->MinSingularValue()) << '\n';
 
     // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
-    presolver_.EvaluateBasicSolution(x_crossover_, y_crossover_, z_crossover_,
-                                     basic_statuses_, &info_);
+    presolver_.EvaluateBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
+                                     simplex_iterate_->z, basic_statuses_,
+                                     &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;
