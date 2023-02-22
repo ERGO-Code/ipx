@@ -11,6 +11,7 @@
 #include "model.h"
 #include "presolver.h"
 #include "simplex_iterate.h"
+#include "solution.h"
 #include "user_model.h"
 
 namespace ipx {
@@ -175,12 +176,11 @@ private:
     Presolver presolver_;
     std::unique_ptr<Iterate> iterate_;
     std::unique_ptr<Basis> basis_;
-
-    // Basic solution computed by crossover and basic status of each variable
-    // (one of IPX_nonbasic_lb, IPX_nonbasic_ub, IPX_basic, IPX_superbasic).
-    // If crossover was not run or failed, then basic_statuses_ is empty.
     std::unique_ptr<SimplexIterate> simplex_iterate_;
-    std::vector<Int> basic_statuses_;
+
+    // Postsolved IPM solution and crossover solution (if available).
+    std::unique_ptr<InteriorSolution> interior_solution_;
+    std::unique_ptr<BasicSolution> basic_solution_;
 
     // IPM starting point provided by user (presolved).
     Vector x_start_, xl_start_, xu_start_, y_start_, zl_start_, zu_start_;

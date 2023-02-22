@@ -122,23 +122,54 @@ Info LpSolver::GetInfo() const {
 Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* slack, double* y, double* zl,
                                   double* zu) const {
-    if (!iterate_)
+    if (!interior_solution_)
         return -1;
-    presolver_.PostsolveInteriorSolution(
-        iterate_->x(), iterate_->xl(), iterate_->xu(),
-        iterate_->y(), iterate_->zl(), iterate_->zu(),
-        x, xl, xu, slack, y, zl, zu);
+    if (x)
+        std::copy(std::begin(interior_solution_->x),
+                  std::end(interior_solution_->x), x);
+    if (xl)
+        std::copy(std::begin(interior_solution_->xl),
+                  std::end(interior_solution_->xl), xl);
+    if (xu)
+        std::copy(std::begin(interior_solution_->xu),
+                  std::end(interior_solution_->xu), xu);
+    if (slack)
+        std::copy(std::begin(interior_solution_->slack),
+                  std::end(interior_solution_->slack), slack);
+    if (y)
+        std::copy(std::begin(interior_solution_->y),
+                  std::end(interior_solution_->y), y);
+    if (zl)
+        std::copy(std::begin(interior_solution_->zl),
+                  std::end(interior_solution_->zl), zl);
+    if (zu)
+        std::copy(std::begin(interior_solution_->zu),
+                  std::end(interior_solution_->zu), zu);
     return 0;
 }
 
 Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
-    if (basic_statuses_.empty())
+    if (!basic_solution_)
         return -1;
-    presolver_.PostsolveBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
-                                      simplex_iterate_->z, basic_statuses_, x,
-                                      slack, y, z);
-    presolver_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
+    if (x)
+        std::copy(std::begin(basic_solution_->x), std::end(basic_solution_->x),
+                  x);
+    if (slack)
+        std::copy(std::begin(basic_solution_->slack),
+                  std::end(basic_solution_->slack), slack);
+    if (y)
+        std::copy(std::begin(basic_solution_->y), std::end(basic_solution_->y),
+                  y);
+    if (z)
+        std::copy(std::begin(basic_solution_->z), std::end(basic_solution_->z),
+                  z);
+    if (cbasis)
+        std::copy(std::begin(basic_solution_->cbasis),
+                  std::end(basic_solution_->cbasis), cbasis);
+    if (vbasis)
+        std::copy(std::begin(basic_solution_->vbasis),
+                  std::end(basic_solution_->vbasis), vbasis);
     return 0;
 }
 
@@ -220,9 +251,14 @@ static std::vector<Int> BuildBasicStatuses(const Basis& basis) {
 Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
     if (!basis_)
         return -1;
-    if (!basic_statuses_.empty()) {
+    if (basic_solution_) {
         // crossover provides basic statuses
-        presolver_.PostsolveBasis(basic_statuses_, cbasis, vbasis);
+        if (cbasis)
+            std::copy(std::begin(basic_solution_->cbasis),
+                      std::end(basic_solution_->cbasis), cbasis);
+        if (vbasis)
+            std::copy(std::begin(basic_solution_->vbasis),
+                      std::end(basic_solution_->vbasis), vbasis);
     } else {
         presolver_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
@@ -274,8 +310,8 @@ void LpSolver::ClearSolution() {
     iterate_.reset(nullptr);
     basis_.reset(nullptr);
     simplex_iterate_.reset(nullptr);
-    basic_statuses_.clear();
-    basic_statuses_.shrink_to_fit();
+    interior_solution_.reset(nullptr);
+    basic_solution_.reset(nullptr);
     info_ = Info();
     // Restore info entries that belong to model.
     user_model_.GetInfo(&info_);
@@ -296,6 +332,7 @@ void LpSolver::InteriorPointSolve() {
     RunIPM();
 
     iterate_->Postprocess();
+
     presolver_.EvaluateInteriorSolution(iterate_->x(),
                                         iterate_->xl(),
                                         iterate_->xu(),
@@ -312,6 +349,19 @@ void LpSolver::InteriorPointSolve() {
             info_.rel_dresidual > control_.ipm_feasibility_tol())
             info_.status_ipm = IPX_STATUS_imprecise;
     }
+
+    interior_solution_.reset(
+        new InteriorSolution(user_model_.num_var(), user_model_.num_constr()));
+    presolver_.PostsolveInteriorSolution(
+        iterate_->x(), iterate_->xl(), iterate_->xu(),
+        iterate_->y(), iterate_->zl(), iterate_->zu(),
+        &interior_solution_->x[0],
+        &interior_solution_->xl[0],
+        &interior_solution_->xu[0],
+        &interior_solution_->slack[0],
+        &interior_solution_->y[0],
+        &interior_solution_->zl[0],
+        &interior_solution_->zu[0]);
 }
 
 void LpSolver::RunIPM() {
@@ -490,7 +540,6 @@ void LpSolver::RunCrossover() {
     const Int n = model_.cols();
     const Vector& lb = model_.lb();
     const Vector& ub = model_.ub();
-    basic_statuses_.clear();
 
     // Construct a complementary primal-dual point from the final IPM iterate.
     // This usually increases the residuals to Ax=b and A'y+z=c.
@@ -518,20 +567,20 @@ void LpSolver::RunCrossover() {
 
     // Recompute vertex solution and set basic statuses.
     basis_->ComputeBasicSolution(*simplex_iterate_);
-    basic_statuses_.resize(n+m);
-    for (Int j = 0; j < basic_statuses_.size(); j++) {
+    std::vector<Int> basic_statuses(n+m);
+    for (Int j = 0; j < basic_statuses.size(); j++) {
         if (basis_->IsBasic(j)) {
-            basic_statuses_[j] = IPX_basic;
+            basic_statuses[j] = IPX_basic;
         } else {
             if (lb[j] == ub[j])
-                basic_statuses_[j] = simplex_iterate_->z[j] >= 0.0 ?
+                basic_statuses[j] = simplex_iterate_->z[j] >= 0.0 ?
                     IPX_nonbasic_lb : IPX_nonbasic_ub;
             else if (simplex_iterate_->x[j] == lb[j])
-                basic_statuses_[j] = IPX_nonbasic_lb;
+                basic_statuses[j] = IPX_nonbasic_lb;
             else if (simplex_iterate_->x[j] == ub[j])
-                basic_statuses_[j] = IPX_nonbasic_ub;
+                basic_statuses[j] = IPX_nonbasic_ub;
             else
-                basic_statuses_[j] = IPX_superbasic;
+                basic_statuses[j] = IPX_superbasic;
         }
     }
     control_.Debug()
@@ -547,11 +596,22 @@ void LpSolver::RunCrossover() {
     // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
     presolver_.EvaluateBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
-                                     simplex_iterate_->z, basic_statuses_,
+                                     simplex_iterate_->z, basic_statuses,
                                      &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;
+
+    basic_solution_.reset(
+        new BasicSolution(user_model_.num_var(), user_model_.num_constr()));
+    presolver_.PostsolveBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
+                                      simplex_iterate_->z, basic_statuses,
+                                      &basic_solution_->x[0],
+                                      &basic_solution_->slack[0],
+                                      &basic_solution_->y[0],
+                                      &basic_solution_->z[0]);
+    presolver_.PostsolveBasis(basic_statuses, &basic_solution_->cbasis[0],
+                              &basic_solution_->vbasis[0]);
 }
 
 void LpSolver::PrintSummary() {
