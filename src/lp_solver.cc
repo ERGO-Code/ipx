@@ -40,23 +40,21 @@ Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
                                    const double* xu, const double* slack,
                                    const double* y, const double* zl,
                                    const double* zu) {
-    const Int m = model_.rows();
-    const Int n = model_.cols();
-    x_start_.resize(n+m);
-    xl_start_.resize(n+m);
-    xu_start_.resize(n+m);
-    y_start_.resize(m);
-    zl_start_.resize(n+m);
-    zu_start_.resize(n+m);
-    Int errflag = presolver_.PresolveIPMStartingPoint(x, xl, xu, slack, y, zl,
-                                                      zu, x_start_, xl_start_,
-                                                      xu_start_, y_start_,
-                                                      zl_start_, zu_start_);
-    if (errflag) {
-        ClearIPMStartingPoint();
+    ClearIPMStartingPoint();
+    Int errflag = user_model_.CheckInteriorPoint(x, xl, xu, slack, y, zl, zu);
+    if (errflag)
         return errflag;
-    }
-    MakeIPMStartingPointValid();
+
+    const Int num_var = user_model_.num_var();
+    const Int num_constr = user_model_.num_constr();
+    ipm_start_.reset(new InteriorSolution(num_var, num_constr));
+    std::copy_n(x, num_var, std::begin(ipm_start_->x));
+    std::copy_n(xl, num_var, std::begin(ipm_start_->xl));
+    std::copy_n(xu, num_var, std::begin(ipm_start_->xu));
+    std::copy_n(slack, num_constr, std::begin(ipm_start_->slack));
+    std::copy_n(y, num_constr, std::begin(ipm_start_->y));
+    std::copy_n(zl, num_var, std::begin(ipm_start_->zl));
+    std::copy_n(zu, num_var, std::begin(ipm_start_->zu));
     return 0;
 }
 
@@ -183,12 +181,7 @@ void LpSolver::ClearModel() {
 }
 
 void LpSolver::ClearIPMStartingPoint() {
-    x_start_.resize(0);
-    xl_start_.resize(0);
-    xu_start_.resize(0);
-    y_start_.resize(0);
-    zl_start_.resize(0);
-    zu_start_.resize(0);
+    ipm_start_.reset(nullptr);
 }
 
 Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
@@ -342,13 +335,17 @@ void LpSolver::InteriorPointSolve() {
 void LpSolver::RunIPM() {
     IPM ipm(control_);
 
-    if (x_start_.size() != 0) {
+    if (ipm_start_ && !model_.dualized()) {
         control_.Log() << " Using starting point provided by user."
             " Skipping initial iterations.\n";
-        iterate_->Initialize(x_start_, xl_start_, xu_start_,
-                             y_start_, zl_start_, zu_start_);
+        LoadStartingPoint();
+        if (info_.status_ipm != IPX_STATUS_not_run)
+            return;
     }
     else {
+        if (ipm_start_)
+            control_.Log() << " Ignoring starting point provided by user"
+                " because presolver dualized model.\n";
         ComputeStartingPoint(ipm);
         if (info_.status_ipm != IPX_STATUS_not_run)
             return;
@@ -362,16 +359,20 @@ void LpSolver::RunIPM() {
     RunMainIPM(ipm);
 }
 
-void LpSolver::MakeIPMStartingPointValid() {
+void LpSolver::LoadStartingPoint() {
     const Int m = model_.rows();
     const Int n = model_.cols();
     const Vector& lb = model_.lb();
     const Vector& ub = model_.ub();
-    Vector& xl = xl_start_;
-    Vector& xu = xu_start_;
-    Vector& zl = zl_start_;
-    Vector& zu = zu_start_;
+    Vector x(n+m), xl(n+m), xu(n+m), y(m), zl(n+m), zu(n+m);
 
+    Int errflag = presolver_.PresolveIPMStartingPoint(
+        &ipm_start_->x[0], &ipm_start_->xl[0], &ipm_start_->xu[0],
+        &ipm_start_->slack[0], &ipm_start_->y[0], &ipm_start_->zl[0],
+        &ipm_start_->zu[0], x, xl, xu, y, zl, zu);
+    assert(errflag == 0);
+
+    // Make starting point valid.
     Int numComplementarityProducts = 0;
     double sumComplementarityProducts = 0.0;
     for (Int j = 0; j < n+m; ++j) {
@@ -415,6 +416,8 @@ void LpSolver::MakeIPMStartingPointValid() {
             assert(zu[j] == 0.0);
         }
     }
+
+    iterate_->Initialize(x, xl, xu, y, zl, zu);
 }
 
 void LpSolver::ComputeStartingPoint(IPM& ipm) {

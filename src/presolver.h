@@ -41,13 +41,10 @@ public:
 
     // Transforms interior point from user model to solver model. The user
     // vectors must all be given and must satisfy the sign conditions from the
-    // reference documentation. Otherwise an error code will be returned.
-    // Currently PresolveIPMStartingPoint() is not implemented for the case that
-    // the model was dualized in presolve.
+    // reference documentation (not checked). Currently only implemented for the
+    // case that the model was not dualized in presolve.
     // Returns:
     //  0
-    //  IPX_ERROR_argument_null
-    //  IPX_ERROR_invalid_vector if a sign condition is violated
     //  IPX_ERROR_not_implemented if the model was dualized in presolve
     Int PresolveIPMStartingPoint(const double* x_user,
                                  const double* xl_user,

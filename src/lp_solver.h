@@ -62,13 +62,12 @@ public:
     // primal and dual slacks with value 0 are made positive if necessary. The
     // IPM will skip the initial iterations and start directly with basis
     // preconditioning.
-    // At the moment loading a starting point is not possible when the model was
+    // At the moment using a starting point is not possible when the model is
     // dualized during preprocessing. See parameters to turn dualization off.
     // Returns:
     // 0                            success
     // IPX_ERROR_argument_null      an argument was NULL
     // IPX_ERROR_invalid_vector     a sign condition was violated
-    // IPX_ERROR_not_implemented    the model was dualized during preprocessing
     Int LoadIPMStartingPoint(const double* x, const double* xl,
                              const double* xu, const double* slack,
                              const double* y, const double* zl,
@@ -161,7 +160,7 @@ private:
     void ClearSolution();
     void InteriorPointSolve();
     void RunIPM();
-    void MakeIPMStartingPointValid();
+    void LoadStartingPoint();
     void ComputeStartingPoint(IPM& ipm);
     void RunInitialIPM(IPM& ipm);
     void BuildStartingBasis();
@@ -182,8 +181,8 @@ private:
     std::unique_ptr<InteriorSolution> interior_solution_;
     std::unique_ptr<BasicSolution> basic_solution_;
 
-    // IPM starting point provided by user (presolved).
-    Vector x_start_, xl_start_, xu_start_, y_start_, zl_start_, zu_start_;
+    // IPM starting point provided by user.
+    std::unique_ptr<InteriorSolution> ipm_start_;
 };
 
 }  // namespace ipx

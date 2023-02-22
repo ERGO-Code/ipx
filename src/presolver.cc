@@ -94,11 +94,6 @@ Int Presolver::PresolveIPMStartingPoint(const double* x_user,
                                         Vector& y_solver,
                                         Vector& zl_solver,
                                         Vector& zu_solver) const {
-    Int errflag =
-        user_model_.CheckInteriorPoint(x_user, xl_user, xu_user, slack_user,
-                                       y_user, zl_user, zu_user);
-    if (errflag)
-        return errflag;
     if (dualized_)
         return IPX_ERROR_not_implemented;
 
