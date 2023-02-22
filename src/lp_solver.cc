@@ -119,32 +119,29 @@ Info LpSolver::GetInfo() const {
     return info_;
 }
 
+namespace {
+    void copy_if_not_null(const Vector& src, double* dest) {
+        if (dest)
+            std::copy(std::begin(src), std::end(src), dest);
+    }
+    void copy_if_not_null(const std::vector<Int>& src, Int* dest) {
+        if (dest)
+            std::copy(std::begin(src), std::end(src), dest);
+    }
+} // namespace
+
 Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* slack, double* y, double* zl,
                                   double* zu) const {
     if (!interior_solution_)
         return -1;
-    if (x)
-        std::copy(std::begin(interior_solution_->x),
-                  std::end(interior_solution_->x), x);
-    if (xl)
-        std::copy(std::begin(interior_solution_->xl),
-                  std::end(interior_solution_->xl), xl);
-    if (xu)
-        std::copy(std::begin(interior_solution_->xu),
-                  std::end(interior_solution_->xu), xu);
-    if (slack)
-        std::copy(std::begin(interior_solution_->slack),
-                  std::end(interior_solution_->slack), slack);
-    if (y)
-        std::copy(std::begin(interior_solution_->y),
-                  std::end(interior_solution_->y), y);
-    if (zl)
-        std::copy(std::begin(interior_solution_->zl),
-                  std::end(interior_solution_->zl), zl);
-    if (zu)
-        std::copy(std::begin(interior_solution_->zu),
-                  std::end(interior_solution_->zu), zu);
+    copy_if_not_null(interior_solution_->x, x);
+    copy_if_not_null(interior_solution_->xl, xl);
+    copy_if_not_null(interior_solution_->xu, xu);
+    copy_if_not_null(interior_solution_->slack, slack);
+    copy_if_not_null(interior_solution_->y, y);
+    copy_if_not_null(interior_solution_->zl, zl);
+    copy_if_not_null(interior_solution_->zu, zu);
     return 0;
 }
 
@@ -152,24 +149,12 @@ Int LpSolver::GetBasicSolution(double* x, double* slack, double* y, double* z,
                                Int* cbasis, Int* vbasis) const {
     if (!basic_solution_)
         return -1;
-    if (x)
-        std::copy(std::begin(basic_solution_->x), std::end(basic_solution_->x),
-                  x);
-    if (slack)
-        std::copy(std::begin(basic_solution_->slack),
-                  std::end(basic_solution_->slack), slack);
-    if (y)
-        std::copy(std::begin(basic_solution_->y), std::end(basic_solution_->y),
-                  y);
-    if (z)
-        std::copy(std::begin(basic_solution_->z), std::end(basic_solution_->z),
-                  z);
-    if (cbasis)
-        std::copy(std::begin(basic_solution_->cbasis),
-                  std::end(basic_solution_->cbasis), cbasis);
-    if (vbasis)
-        std::copy(std::begin(basic_solution_->vbasis),
-                  std::end(basic_solution_->vbasis), vbasis);
+    copy_if_not_null(basic_solution_->x, x);
+    copy_if_not_null(basic_solution_->slack, slack);
+    copy_if_not_null(basic_solution_->y, y);
+    copy_if_not_null(basic_solution_->z, z);
+    copy_if_not_null(basic_solution_->cbasis, cbasis);
+    copy_if_not_null(basic_solution_->vbasis, vbasis);
     return 0;
 }
 
@@ -210,18 +195,12 @@ Int LpSolver::GetIterate(double* x, double* y, double* zl, double* zu,
                          double* xl, double* xu) {
     if (!iterate_)
         return -1;
-    if (x)
-        std::copy(std::begin(iterate_->x()), std::end(iterate_->x()), x);
-    if (y)
-        std::copy(std::begin(iterate_->y()), std::end(iterate_->y()), y);
-    if (zl)
-        std::copy(std::begin(iterate_->zl()), std::end(iterate_->zl()), zl);
-    if (zu)
-        std::copy(std::begin(iterate_->zu()), std::end(iterate_->zu()), zu);
-    if (xl)
-        std::copy(std::begin(iterate_->xl()), std::end(iterate_->xl()), xl);
-    if (xu)
-        std::copy(std::begin(iterate_->xu()), std::end(iterate_->xu()), xu);
+    copy_if_not_null(iterate_->x(), x);
+    copy_if_not_null(iterate_->y(), y);
+    copy_if_not_null(iterate_->zl(), zl);
+    copy_if_not_null(iterate_->zu(), zu);
+    copy_if_not_null(iterate_->xl(), xl);
+    copy_if_not_null(iterate_->xu(), xu);
     return 0;
 }
 
@@ -253,12 +232,8 @@ Int LpSolver::GetBasis(Int* cbasis, Int* vbasis) {
         return -1;
     if (basic_solution_) {
         // crossover provides basic statuses
-        if (cbasis)
-            std::copy(std::begin(basic_solution_->cbasis),
-                      std::end(basic_solution_->cbasis), cbasis);
-        if (vbasis)
-            std::copy(std::begin(basic_solution_->vbasis),
-                      std::end(basic_solution_->vbasis), vbasis);
+        copy_if_not_null(basic_solution_->cbasis, cbasis);
+        copy_if_not_null(basic_solution_->vbasis, vbasis);
     } else {
         presolver_.PostsolveBasis(BuildBasicStatuses(*basis_), cbasis, vbasis);
     }
