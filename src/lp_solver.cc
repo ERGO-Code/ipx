@@ -19,20 +19,11 @@ Int LpSolver::LoadModel(Int num_var, const double* obj, const double* lb,
                         const Int* Ai, const double* Ax, const double* rhs,
                         const char* constr_type) {
     ClearModel();
-    Int errflag = 0;
-
-    errflag = user_model_.Load(control_, num_constr, num_var, Ap, Ai, Ax, rhs,
-                               constr_type, obj, lb, ub);
+    Int errflag = user_model_.Load(control_, num_constr, num_var, Ap, Ai, Ax,
+                                   rhs, constr_type, obj, lb, ub);
     if (errflag)
         return errflag;
     user_model_.GetInfo(&info_);
-
-    errflag = presolver_.PresolveModel(control_);
-    if (errflag)
-        return errflag;
-    model_.GetInfo(&info_);
-    presolver_.GetInfo(&info_);
-
     return 0;
 }
 
@@ -59,17 +50,21 @@ Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
 }
 
 Int LpSolver::Solve() {
-    if (model_.empty())
+    if (user_model_.empty())
         return info_.status = IPX_STATUS_no_model;
     ClearSolution();
     control_.ResetTimer();
     control_.OpenLogfile();
     control_.Log() << "IPX version 1.0\n";
     try {
-        InteriorPointSolve();
-        if ((info_.status_ipm == IPX_STATUS_optimal ||
-             info_.status_ipm == IPX_STATUS_imprecise) && control_.crossover())
-            RunCrossover();
+        Presolve();
+        if (info_.status == IPX_STATUS_not_run) {
+            InteriorPointSolve();
+            if ((info_.status_ipm == IPX_STATUS_optimal ||
+                 info_.status_ipm == IPX_STATUS_imprecise) &&
+                control_.crossover())
+                RunCrossover();
+        }
         if (basis_) {
             info_.ftran_sparse = basis_->frac_ftran_sparse();
             info_.btran_sparse = basis_->frac_btran_sparse();
@@ -283,6 +278,11 @@ void LpSolver::ClearSolution() {
     info_ = Info();
     // Restore info entries that belong to model.
     user_model_.GetInfo(&info_);
+}
+
+void LpSolver::Presolve() {
+    Int errflag = presolver_.PresolveModel(control_);
+    assert(errflag == 0);
     model_.GetInfo(&info_);
     presolver_.GetInfo(&info_);
 }

@@ -158,6 +158,7 @@ public:
 
 private:
     void ClearSolution();
+    void Presolve();
     void InteriorPointSolve();
     void RunIPM();
     void LoadStartingPoint(IPM& ipm);
