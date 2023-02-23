@@ -58,24 +58,11 @@ public:
     void PostsolveInteriorSolution(const Iterate& iterate,
                                    InteriorSolution& user_point) const;
 
-    // Evaluates the solution to the user model obtained from postsolving the
-    // IPM iterate. The following info members are set: abs_presidual,
-    // abs_dresidual, rel_presidual, rel_dresidual, pobjval, dobjval,
-    // rel_objgap, complementarity, normx, normy, normz.
-    void EvaluateInteriorSolution(const Iterate& iterate, Info* info) const;
-
     // Given a basic solution to the solver model, recovers the basic solution
     // to the user model.
     void PostsolveBasicSolution(const SimplexIterate& iterate,
                                 const std::vector<Int>& basic_status_solver,
                                 BasicSolution& user_point) const;
-
-    // Evaluates the solution to the user model obtained from postsolving the
-    // basic solution from the solver. The following info members are set:
-    // primal_infeas, dual_infeas, objval
-    void EvaluateBasicSolution(const SimplexIterate& iterate,
-                               const std::vector<Int>& basic_status_solver,
-                               Info* info) const;
 
     // Given a basic status for each variable in the solver model, recovers the
     // basic statuses for constraints and variables in the user model. Each

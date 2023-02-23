@@ -96,10 +96,16 @@ Int UserModel::CheckInteriorPoint(const double* x, const double* xl,
     return 0;
 }
 
-void UserModel::EvaluateInteriorPoint(const Vector& x, const Vector& xl,
-                                      const Vector& xu, const Vector& slack,
-                                      const Vector& y, const Vector& zl,
-                                      const Vector& zu, Info* info) const {
+void UserModel::EvaluateInteriorPoint(const InteriorSolution& point,
+                                      Info* info) const {
+    const Vector& x = point.x;
+    const Vector& xl = point.xl;
+    const Vector& xu = point.xu;
+    const Vector& slack = point.slack;
+    const Vector& y = point.y;
+    const Vector& zl = point.zl;
+    const Vector& zu = point.zu;
+
     // rb = rhs-slack-A*x
     // Add rhs at the end to avoid loosing digits when x is huge.
     Vector rb(num_constr_);
@@ -164,12 +170,13 @@ void UserModel::EvaluateInteriorPoint(const Vector& x, const Vector& xl,
     info->normz = std::max(Infnorm(zl), Infnorm(zu));
 }
 
-void UserModel::EvaluateBasicPoint(const Vector& x, const Vector& slack,
-                                   const Vector& y, const Vector& z,
-                                   const std::vector<Int>& vbasis,
-                                   const std::vector<Int>& cbasis,
+void UserModel::EvaluateBasicPoint(const BasicSolution& point,
                                    Info* info) const {
-    (void)cbasis;
+    const Vector& x = point.x;
+    const Vector& slack = point.slack;
+    const Vector& y = point.y;
+    const Vector& z = point.z;
+    const std::vector<Int>& vbasis = point.vbasis;
     double primal_infeas = 0.0;
     double dual_infeas = 0.0;
 

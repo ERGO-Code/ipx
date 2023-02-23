@@ -301,7 +301,10 @@ void LpSolver::InteriorPointSolve() {
 
     iterate_->Postprocess();
 
-    presolver_.EvaluateInteriorSolution(*iterate_, &info_);
+    interior_solution_.reset(
+        new InteriorSolution(user_model_.num_var(), user_model_.num_constr()));
+    presolver_.PostsolveInteriorSolution(*iterate_, *interior_solution_);
+    user_model_.EvaluateInteriorPoint(*interior_solution_, &info_);
 
     // Declare status_ipm "imprecise" if the IPM terminated optimal but the
     // solution after postprocessing/postsolve does not satisfy tolerances.
@@ -311,10 +314,6 @@ void LpSolver::InteriorPointSolve() {
             info_.rel_dresidual > control_.ipm_feasibility_tol())
             info_.status_ipm = IPX_STATUS_imprecise;
     }
-
-    interior_solution_.reset(
-        new InteriorSolution(user_model_.num_var(), user_model_.num_constr()));
-    presolver_.PostsolveInteriorSolution(*iterate_, *interior_solution_);
 }
 
 void LpSolver::RunIPM() {
@@ -507,19 +506,19 @@ void LpSolver::RunCrossover() {
         << Textline("Minimum singular value of basis matrix:")
         << sci2(basis_->MinSingularValue()) << '\n';
 
-    // Declare crossover status "imprecise" if the vertex solution defined by
-    // the final basis does not satisfy tolerances.
-    presolver_.EvaluateBasicSolution(*simplex_iterate_, basic_statuses, &info_);
-    if (info_.primal_infeas > control_.pfeasibility_tol() ||
-        info_.dual_infeas > control_.dfeasibility_tol())
-        info_.status_crossover = IPX_STATUS_imprecise;
-
     basic_solution_.reset(
         new BasicSolution(user_model_.num_var(), user_model_.num_constr()));
     presolver_.PostsolveBasicSolution(*simplex_iterate_, basic_statuses,
                                       *basic_solution_);
     presolver_.PostsolveBasis(basic_statuses, &basic_solution_->cbasis[0],
                               &basic_solution_->vbasis[0]);
+    user_model_.EvaluateBasicPoint(*basic_solution_, &info_);
+
+    // Declare crossover status "imprecise" if the vertex solution defined by
+    // the final basis does not satisfy tolerances.
+    if (info_.primal_infeas > control_.pfeasibility_tol() ||
+        info_.dual_infeas > control_.dfeasibility_tol())
+        info_.status_crossover = IPX_STATUS_imprecise;
 }
 
 void LpSolver::PrintSummary() {

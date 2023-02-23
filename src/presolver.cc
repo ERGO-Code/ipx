@@ -89,24 +89,6 @@ void Presolver::PostsolveInteriorSolution(const Iterate& iterate,
                            user_point.y, user_point.zl, user_point.zu);
 }
 
-void Presolver::EvaluateInteriorSolution(const Iterate& iterate,
-                                         Info* info) const {
-    // Build solution to user model.
-    Vector x(num_var_);
-    Vector xl(num_var_);
-    Vector xu(num_var_);
-    Vector slack(num_constr_);
-    Vector y(num_constr_);
-    Vector zl(num_var_);
-    Vector zu(num_var_);
-    PostsolveInteriorPoint(iterate.x(), iterate.xl(), iterate.xu(), iterate.y(),
-                           iterate.zl(), iterate.zu(), x, xl, xu, slack, y, zl,
-                           zu);
-
-    // Evaluate solution to user model.
-    user_model_.EvaluateInteriorPoint(x, xl, xu, slack, y, zl, zu, info);
-}
-
 void Presolver::PostsolveBasicSolution(
     const SimplexIterate& iterate,
     const std::vector<Int>& basic_status_solver,
@@ -116,25 +98,6 @@ void Presolver::PostsolveBasicSolution(
     PostsolveBasis(basic_status_solver, user_point.cbasis, user_point.vbasis);
     CorrectBasicSolution(user_point.x, user_point.slack, user_point.y,
                          user_point.z, user_point.cbasis, user_point.vbasis);
-}
-
-void Presolver::EvaluateBasicSolution(
-    const SimplexIterate& iterate,
-    const std::vector<Int>& basic_status_solver,
-    Info* info) const {
-    // Build basic solution to user model.
-    Vector x(num_var_);
-    Vector slack(num_constr_);
-    Vector y(num_constr_);
-    Vector z(num_var_);
-    std::vector<Int> cbasis(num_constr_);
-    std::vector<Int> vbasis(num_var_);
-    PostsolveGeneralPoint(iterate.x, iterate.y, iterate.z, x, slack, y, z);
-    PostsolveBasis(basic_status_solver, cbasis, vbasis);
-    CorrectBasicSolution(x, slack, y, z, cbasis, vbasis);
-
-    // Evaluate basic solution to user model.
-    user_model_.EvaluateBasicPoint(x, slack, y, z, vbasis, cbasis, info);
 }
 
 void Presolver::PostsolveBasis(const std::vector<Int>& basic_status_solver,

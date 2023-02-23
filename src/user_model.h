@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "control.h"
+#include "solution.h"
 #include "sparse_matrix.h"
 
 namespace ipx {
@@ -86,18 +87,12 @@ public:
     // following info members are set: abs_presidual, abs_dresidual,
     // rel_presidual, rel_dresidual, pobjval, dobjval, rel_objgap,
     // complementarity, normx, normy, normz.
-    void EvaluateInteriorPoint(const Vector& x, const Vector& xl,
-                               const Vector& xu, const Vector& slack,
-                               const Vector& y, const Vector& zl,
-                               const Vector& zu, Info* info) const;
+    void EvaluateInteriorPoint(const InteriorSolution& point,
+                               Info* info) const;
 
     // Evaluates the infeasibilities, objective, etc. of a basic point. The
     // following info members are set: primal_infeas, dual_infeas, objval
-    void EvaluateBasicPoint(const Vector& x, const Vector& slack,
-                            const Vector& y, const Vector& z,
-                            const std::vector<Int>& vbasis,
-                            const std::vector<Int>& cbasis,
-                            Info* info) const;
+    void EvaluateBasicPoint(const BasicSolution& point, Info* info) const;
 
 private:
     // Checks that input is valid and copies into the member variables. If the
