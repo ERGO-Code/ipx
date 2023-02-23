@@ -52,10 +52,7 @@ void Presolver::GetInfo(Info *info) const {
     info->dualized = dualized_;
 }
 
-void Presolver::PresolveStartingPoint(const double* x_user,
-                                      const double* slack_user,
-                                      const double* y_user,
-                                      const double* z_user,
+void Presolver::PresolveStartingPoint(const BasicSolution& user_point,
                                       Vector& x_solver,
                                       Vector& y_solver,
                                       Vector& z_solver) const {
@@ -64,30 +61,11 @@ void Presolver::PresolveStartingPoint(const double* x_user,
     assert(x_solver.size() == n+m);
     assert(y_solver.size() == m);
     assert(z_solver.size() == n+m);
-
-    Vector x_temp(num_var_);
-    Vector slack_temp(num_constr_);
-    Vector y_temp(num_constr_);
-    Vector z_temp(num_var_);
-    if (x_user)
-        std::copy_n(x_user, num_var_, std::begin(x_temp));
-    if (slack_user)
-        std::copy_n(slack_user, num_constr_, std::begin(slack_temp));
-    if (y_user)
-        std::copy_n(y_user, num_constr_, std::begin(y_temp));
-    if (z_user)
-        std::copy_n(z_user, num_var_, std::begin(z_temp));
-    PresolveGeneralPoint(x_temp, slack_temp, y_temp, z_temp, x_solver, y_solver,
-                         z_solver);
+    PresolveGeneralPoint(user_point.x, user_point.slack, user_point.y,
+                         user_point.z, x_solver, y_solver, z_solver);
 }
 
-Int Presolver::PresolveIPMStartingPoint(const double* x_user,
-                                        const double* xl_user,
-                                        const double* xu_user,
-                                        const double* slack_user,
-                                        const double* y_user,
-                                        const double* zl_user,
-                                        const double* zu_user,
+Int Presolver::PresolveIPMStartingPoint(const InteriorSolution& user_point,
                                         Vector& x_solver,
                                         Vector& xl_solver,
                                         Vector& xu_solver,
@@ -96,84 +74,23 @@ Int Presolver::PresolveIPMStartingPoint(const double* x_user,
                                         Vector& zu_solver) const {
     if (dualized_)
         return IPX_ERROR_not_implemented;
-
-    Vector x_temp(x_user, num_var_);
-    Vector xl_temp(xl_user, num_var_);
-    Vector xu_temp(xu_user, num_var_);
-    Vector slack_temp(slack_user, num_constr_);
-    Vector y_temp(y_user, num_constr_);
-    Vector zl_temp(zl_user, num_var_);
-    Vector zu_temp(zu_user, num_var_);
-    PresolveInteriorPoint(x_temp, xl_temp, xu_temp, slack_temp, y_temp, zl_temp,
-                          zu_temp, x_solver, xl_solver, xu_solver, y_solver,
-                          zl_solver, zu_solver);
+    PresolveInteriorPoint(user_point.x, user_point.xl, user_point.xu,
+                          user_point.slack, user_point.y, user_point.zl,
+                          user_point.zu, x_solver, xl_solver, xu_solver,
+                          y_solver, zl_solver, zu_solver);
     return 0;
 }
 
-void Presolver::PostsolveInteriorSolution(const Vector& x_solver,
-                                          const Vector& xl_solver,
-                                          const Vector& xu_solver,
-                                          const Vector& y_solver,
-                                          const Vector& zl_solver,
-                                          const Vector& zu_solver,
-                                          double* x_user,
-                                          double* xl_user,
-                                          double* xu_user,
-                                          double* slack_user,
-                                          double* y_user,
-                                          double* zl_user,
-                                          double* zu_user) const {
-    const Int m = model_.rows();
-    const Int n = model_.cols();
-    assert(x_solver.size() == n+m);
-    assert(xl_solver.size() == n+m);
-    assert(xu_solver.size() == n+m);
-    assert(y_solver.size() == m);
-    assert(zl_solver.size() == n+m);
-    assert(zu_solver.size() == n+m);
-
-    Vector x_temp(num_var_);
-    Vector xl_temp(num_var_);
-    Vector xu_temp(num_var_);
-    Vector slack_temp(num_constr_);
-    Vector y_temp(num_constr_);
-    Vector zl_temp(num_var_);
-    Vector zu_temp(num_var_);
-    PostsolveInteriorPoint(x_solver, xl_solver, xu_solver, y_solver, zl_solver,
-                           zu_solver, x_temp, xl_temp, xu_temp, slack_temp,
-                           y_temp, zl_temp, zu_temp);
-    if (x_user)
-        std::copy(std::begin(x_temp), std::end(x_temp), x_user);
-    if (xl_user)
-        std::copy(std::begin(xl_temp), std::end(xl_temp), xl_user);
-    if (xu_user)
-        std::copy(std::begin(xu_temp), std::end(xu_temp), xu_user);
-    if (slack_user)
-        std::copy(std::begin(slack_temp), std::end(slack_temp), slack_user);
-    if (y_user)
-        std::copy(std::begin(y_temp), std::end(y_temp), y_user);
-    if (zl_user)
-        std::copy(std::begin(zl_temp), std::end(zl_temp), zl_user);
-    if (zu_user)
-        std::copy(std::begin(zu_temp), std::end(zu_temp), zu_user);
+void Presolver::PostsolveInteriorSolution(const Iterate& iterate,
+                                          InteriorSolution& user_point) const {
+    PostsolveInteriorPoint(iterate.x(), iterate.xl(), iterate.xu(), iterate.y(),
+                           iterate.zl(), iterate.zu(), user_point.x,
+                           user_point.xl, user_point.xu, user_point.slack,
+                           user_point.y, user_point.zl, user_point.zu);
 }
 
-void Presolver::EvaluateInteriorSolution(const Vector& x_solver,
-                                         const Vector& xl_solver,
-                                         const Vector& xu_solver,
-                                         const Vector& y_solver,
-                                         const Vector& zl_solver,
-                                         const Vector& zu_solver,
+void Presolver::EvaluateInteriorSolution(const Iterate& iterate,
                                          Info* info) const {
-    const Int m = model_.rows();
-    const Int n = model_.cols();
-    assert(x_solver.size() == n+m);
-    assert(xl_solver.size() == n+m);
-    assert(xu_solver.size() == n+m);
-    assert(y_solver.size() == m);
-    assert(zl_solver.size() == n+m);
-    assert(zu_solver.size() == n+m);
-
     // Build solution to user model.
     Vector x(num_var_);
     Vector xl(num_var_);
@@ -182,65 +99,29 @@ void Presolver::EvaluateInteriorSolution(const Vector& x_solver,
     Vector y(num_constr_);
     Vector zl(num_var_);
     Vector zu(num_var_);
-    PostsolveInteriorPoint(x_solver, xl_solver, xu_solver, y_solver, zl_solver,
-                           zu_solver, x, xl, xu, slack, y, zl, zu);
+    PostsolveInteriorPoint(iterate.x(), iterate.xl(), iterate.xu(), iterate.y(),
+                           iterate.zl(), iterate.zu(), x, xl, xu, slack, y, zl,
+                           zu);
 
     // Evaluate solution to user model.
     user_model_.EvaluateInteriorPoint(x, xl, xu, slack, y, zl, zu, info);
 }
 
 void Presolver::PostsolveBasicSolution(
-    const Vector& x_solver,
-    const Vector& y_solver,
-    const Vector& z_solver,
+    const SimplexIterate& iterate,
     const std::vector<Int>& basic_status_solver,
-    double* x_user,
-    double* slack_user,
-    double* y_user,
-    double* z_user) const {
-
-    const Int m = model_.rows();
-    const Int n = model_.cols();
-    assert(x_solver.size() == n+m);
-    assert(y_solver.size() == m);
-    assert(z_solver.size() == n+m);
-    assert(basic_status_solver.size() == n+m);
-
-    Vector x_temp(num_var_);
-    Vector slack_temp(num_constr_);
-    Vector y_temp(num_constr_);
-    Vector z_temp(num_var_);
-    std::vector<Int> cbasis_temp(num_constr_);
-    std::vector<Int> vbasis_temp(num_var_);
-    PostsolveGeneralPoint(x_solver, y_solver, z_solver, x_temp, slack_temp,
-                          y_temp, z_temp);
-    PostsolveBasis(basic_status_solver, cbasis_temp, vbasis_temp);
-    CorrectBasicSolution(x_temp, slack_temp, y_temp, z_temp, cbasis_temp,
-                         vbasis_temp);
-    if (x_user)
-        std::copy(std::begin(x_temp), std::end(x_temp), x_user);
-    if (slack_user)
-        std::copy(std::begin(slack_temp), std::end(slack_temp), slack_user);
-    if (y_user)
-        std::copy(std::begin(y_temp), std::end(y_temp), y_user);
-    if (z_user)
-        std::copy(std::begin(z_temp), std::end(z_temp), z_user);
+    BasicSolution& user_point) const {
+    PostsolveGeneralPoint(iterate.x, iterate.y, iterate.z, user_point.x,
+                          user_point.slack, user_point.y, user_point.z);
+    PostsolveBasis(basic_status_solver, user_point.cbasis, user_point.vbasis);
+    CorrectBasicSolution(user_point.x, user_point.slack, user_point.y,
+                         user_point.z, user_point.cbasis, user_point.vbasis);
 }
 
 void Presolver::EvaluateBasicSolution(
-    const Vector& x_solver,
-    const Vector& y_solver,
-    const Vector& z_solver,
+    const SimplexIterate& iterate,
     const std::vector<Int>& basic_status_solver,
     Info* info) const {
-
-    const Int m = model_.rows();
-    const Int n = model_.cols();
-    assert(x_solver.size() == n+m);
-    assert(y_solver.size() == m);
-    assert(z_solver.size() == n+m);
-    assert(basic_status_solver.size() == n+m);
-
     // Build basic solution to user model.
     Vector x(num_var_);
     Vector slack(num_constr_);
@@ -248,7 +129,7 @@ void Presolver::EvaluateBasicSolution(
     Vector z(num_var_);
     std::vector<Int> cbasis(num_constr_);
     std::vector<Int> vbasis(num_var_);
-    PostsolveGeneralPoint(x_solver, y_solver, z_solver, x, slack, y, z);
+    PostsolveGeneralPoint(iterate.x, iterate.y, iterate.z, x, slack, y, z);
     PostsolveBasis(basic_status_solver, cbasis, vbasis);
     CorrectBasicSolution(x, slack, y, z, cbasis, vbasis);
 

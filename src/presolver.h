@@ -5,7 +5,10 @@
 
 #include <vector>
 #include "control.h"
+#include "iterate.h"
 #include "model.h"
+#include "simplex_iterate.h"
+#include "solution.h"
 #include "sparse_matrix.h"
 #include "user_model.h"
 
@@ -32,27 +35,17 @@ public:
     // Writes statistics of presolve to @info.
     void GetInfo(Info* info) const;
 
-    // Transforms point from user model to solver model. Each of the pointer
-    // arguments can be NULL, in which case its components are assumed 0.0.
-    void PresolveStartingPoint(const double* x_user, const double* slack_user,
-                               const double* y_user, const double* z_user,
+    // Transforms point from user model to solver model.
+    void PresolveStartingPoint(const BasicSolution& user_point,
                                Vector& x_solver, Vector& y_solver,
                                Vector& z_solver) const;
 
-    // Transforms interior point from user model to solver model. The user
-    // vectors must all be given and must satisfy the sign conditions from the
-    // reference documentation (not checked). Currently only implemented for the
-    // case that the model was not dualized in presolve.
+    // Transforms interior point from user model to solver model. Currently only
+    // implemented for the case that the model was not dualized in presolve.
     // Returns:
     //  0
     //  IPX_ERROR_not_implemented if the model was dualized in presolve
-    Int PresolveIPMStartingPoint(const double* x_user,
-                                 const double* xl_user,
-                                 const double* xu_user,
-                                 const double* slack_user,
-                                 const double* y_user,
-                                 const double* zl_user,
-                                 const double* zu_user,
+    Int PresolveIPMStartingPoint(const InteriorSolution& user_point,
                                  Vector& x_solver,
                                  Vector& xl_solver,
                                  Vector& xu_solver,
@@ -61,49 +54,26 @@ public:
                                  Vector& zu_solver) const;
 
     // Given an IPM iterate, recovers the solution to the user model (see the
-    // reference documentation). Each of the pointer arguments can be NULL, in
-    // which case the quantity is not returned. The sign conditions on the dual
-    // variables and those on the primal slack variables are satisfied if
-    // xl_solver, xu_solver, zl_solver and zu_solver are nonnegative.
-    void PostsolveInteriorSolution(const Vector& x_solver,
-                                   const Vector& xl_solver,
-                                   const Vector& xu_solver,
-                                   const Vector& y_solver,
-                                   const Vector& zl_solver,
-                                   const Vector& zu_solver,
-                                   double* x_user,
-                                   double* xl_user, double* xu_user,
-                                   double* slack_user,
-                                   double* y_user,
-                                   double* zl_user, double* zu_user) const;
+    // reference documentation).
+    void PostsolveInteriorSolution(const Iterate& iterate,
+                                   InteriorSolution& user_point) const;
 
     // Evaluates the solution to the user model obtained from postsolving the
     // IPM iterate. The following info members are set: abs_presidual,
     // abs_dresidual, rel_presidual, rel_dresidual, pobjval, dobjval,
     // rel_objgap, complementarity, normx, normy, normz.
-    void EvaluateInteriorSolution(const Vector& x_solver,
-                                  const Vector& xl_solver,
-                                  const Vector& xu_solver,
-                                  const Vector& y_solver,
-                                  const Vector& zl_solver,
-                                  const Vector& zu_solver,
-                                  Info* info) const;
+    void EvaluateInteriorSolution(const Iterate& iterate, Info* info) const;
 
     // Given a basic solution to the solver model, recovers the basic solution
-    // to the user model. Each of the pointer arguments can be NULL.
-    void PostsolveBasicSolution(const Vector& x_solver,
-                                const Vector& y_solver,
-                                const Vector& z_solver,
+    // to the user model.
+    void PostsolveBasicSolution(const SimplexIterate& iterate,
                                 const std::vector<Int>& basic_status_solver,
-                                double* x_user, double* slack_user,
-                                double* y_user, double* z_user) const;
+                                BasicSolution& user_point) const;
 
     // Evaluates the solution to the user model obtained from postsolving the
     // basic solution from the solver. The following info members are set:
     // primal_infeas, dual_infeas, objval
-    void EvaluateBasicSolution(const Vector& x_solver,
-                               const Vector& y_solver,
-                               const Vector& z_solver,
+    void EvaluateBasicSolution(const SimplexIterate& iterate,
                                const std::vector<Int>& basic_status_solver,
                                Info* info) const;
 

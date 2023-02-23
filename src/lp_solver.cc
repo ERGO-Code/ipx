@@ -301,13 +301,7 @@ void LpSolver::InteriorPointSolve() {
 
     iterate_->Postprocess();
 
-    presolver_.EvaluateInteriorSolution(iterate_->x(),
-                                        iterate_->xl(),
-                                        iterate_->xu(),
-                                        iterate_->y(),
-                                        iterate_->zl(),
-                                        iterate_->zu(),
-                                        &info_);
+    presolver_.EvaluateInteriorSolution(*iterate_, &info_);
 
     // Declare status_ipm "imprecise" if the IPM terminated optimal but the
     // solution after postprocessing/postsolve does not satisfy tolerances.
@@ -320,16 +314,7 @@ void LpSolver::InteriorPointSolve() {
 
     interior_solution_.reset(
         new InteriorSolution(user_model_.num_var(), user_model_.num_constr()));
-    presolver_.PostsolveInteriorSolution(
-        iterate_->x(), iterate_->xl(), iterate_->xu(),
-        iterate_->y(), iterate_->zl(), iterate_->zu(),
-        &interior_solution_->x[0],
-        &interior_solution_->xl[0],
-        &interior_solution_->xu[0],
-        &interior_solution_->slack[0],
-        &interior_solution_->y[0],
-        &interior_solution_->zl[0],
-        &interior_solution_->zu[0]);
+    presolver_.PostsolveInteriorSolution(*iterate_, *interior_solution_);
 }
 
 void LpSolver::RunIPM() {
@@ -364,10 +349,8 @@ void LpSolver::LoadStartingPoint(IPM& ipm) {
     const Int n = model_.cols();
     Vector x(n+m), xl(n+m), xu(n+m), y(m), zl(n+m), zu(n+m);
 
-    Int errflag = presolver_.PresolveIPMStartingPoint(
-        &ipm_start_->x[0], &ipm_start_->xl[0], &ipm_start_->xu[0],
-        &ipm_start_->slack[0], &ipm_start_->y[0], &ipm_start_->zl[0],
-        &ipm_start_->zu[0], x, xl, xu, y, zl, zu);
+    Int errflag = presolver_.PresolveIPMStartingPoint(*ipm_start_,
+                                                      x, xl, xu, y, zl, zu);
     assert(errflag == 0);
 
     ipm.LoadStartingPoint(x, xl, xu, y, zl, zu, iterate_.get(), &info_);
@@ -526,21 +509,15 @@ void LpSolver::RunCrossover() {
 
     // Declare crossover status "imprecise" if the vertex solution defined by
     // the final basis does not satisfy tolerances.
-    presolver_.EvaluateBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
-                                     simplex_iterate_->z, basic_statuses,
-                                     &info_);
+    presolver_.EvaluateBasicSolution(*simplex_iterate_, basic_statuses, &info_);
     if (info_.primal_infeas > control_.pfeasibility_tol() ||
         info_.dual_infeas > control_.dfeasibility_tol())
         info_.status_crossover = IPX_STATUS_imprecise;
 
     basic_solution_.reset(
         new BasicSolution(user_model_.num_var(), user_model_.num_constr()));
-    presolver_.PostsolveBasicSolution(simplex_iterate_->x, simplex_iterate_->y,
-                                      simplex_iterate_->z, basic_statuses,
-                                      &basic_solution_->x[0],
-                                      &basic_solution_->slack[0],
-                                      &basic_solution_->y[0],
-                                      &basic_solution_->z[0]);
+    presolver_.PostsolveBasicSolution(*simplex_iterate_, basic_statuses,
+                                      *basic_solution_);
     presolver_.PostsolveBasis(basic_statuses, &basic_solution_->cbasis[0],
                               &basic_solution_->vbasis[0]);
 }
