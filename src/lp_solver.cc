@@ -50,9 +50,9 @@ Int LpSolver::LoadIPMStartingPoint(const double* x, const double* xl,
 }
 
 Int LpSolver::Solve() {
+    ClearSolution();
     if (user_model_.empty())
         return info_.status = IPX_STATUS_no_model;
-    ClearSolution();
     control_.ResetTimer();
     control_.OpenLogfile();
     control_.Log() << "IPX version 1.0\n";
