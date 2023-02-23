@@ -22,7 +22,7 @@ struct IPM::Step {
 
 IPM::IPM(const Control& control) : control_(control) {}
 
-void IPM::StartingPoint(KKTSolver* kkt, Iterate* iterate, Info* info) {
+void IPM::ComputeStartingPoint(KKTSolver* kkt, Iterate* iterate, Info* info) {
     kkt_ = kkt;
     iterate_ = iterate;
     info_ = info;
@@ -39,6 +39,18 @@ void IPM::StartingPoint(KKTSolver* kkt, Iterate* iterate, Info* info) {
     } else {
         info->status_ipm = IPX_STATUS_not_run;
     }
+}
+
+void IPM::LoadStartingPoint(const Vector& x, const Vector& xl, const Vector& xu,
+                            const Vector& y, const Vector& zl, const Vector& zu,
+                            Iterate* iterate, Info* info) {
+    kkt_ = nullptr;
+    iterate_ = iterate;
+    info_ = info;
+    PrintHeader();
+    LoadStartingPoint(x, xl, xu, y, zl, zu);
+    PrintOutput();
+    info->status_ipm = IPX_STATUS_not_run;
 }
 
 void IPM::Driver(KKTSolver* kkt, Iterate* iterate, Info* info) {
@@ -242,6 +254,63 @@ void IPM::ComputeStartingPoint() {
         if (std::isfinite(ub[j]))
             zu[j] += zshift2;
     }
+    iterate_->Initialize(x, xl, xu, y, zl, zu);
+    best_complementarity_ = iterate_->complementarity();
+}
+
+void IPM::LoadStartingPoint(Vector x, Vector xl, Vector xu, Vector y, Vector zl,
+                            Vector zu) {
+    const Model& model = iterate_->model();
+    const Int m = model.rows();
+    const Int n = model.cols();
+    const Vector& lb = model.lb();
+    const Vector& ub = model.ub();
+
+    // Make starting point valid.
+    Int numComplementarityProducts = 0;
+    double sumComplementarityProducts = 0.0;
+    for (Int j = 0; j < n+m; ++j) {
+        if (xl[j] > 0.0 && zl[j] > 0.0) {
+            sumComplementarityProducts += xl[j] * zl[j];
+            numComplementarityProducts++;
+        }
+        if (xu[j] > 0.0 && zu[j] > 0.0) {
+            sumComplementarityProducts += xu[j] * zu[j];
+            numComplementarityProducts++;
+        }
+    }
+    const double mu = numComplementarityProducts ?
+        sumComplementarityProducts / numComplementarityProducts : 1.0;
+
+    for (Int j = 0; j < n+m; ++j) {
+        if (std::isfinite(lb[j])) {
+            assert(std::isfinite(xl[j]) && xl[j] >= 0.0);
+            assert(std::isfinite(zl[j]) && zl[j] >= 0.0);
+            if (xl[j] == 0.0 && zl[j] == 0.0)
+                xl[j] = zl[j] = std::sqrt(mu);
+            else if (xl[j] == 0.0)
+                xl[j] = mu / zl[j];
+            else if (zl[j] == 0.0)
+                zl[j] = mu / xl[j];
+        } else {
+            assert(xl[j] == INFINITY);
+            assert(zl[j] == 0.0);
+        }
+        if (std::isfinite(ub[j])) {
+            assert(std::isfinite(xu[j]) && xu[j] >= 0.0);
+            assert(std::isfinite(zu[j]) && zu[j] >= 0.0);
+            if (xu[j] == 0.0 && zu[j] == 0.0)
+                xu[j] = zu[j] = std::sqrt(mu);
+            else if (xu[j] == 0.0)
+                xu[j] = mu / zu[j];
+            else if (zu[j] == 0.0)
+                zu[j] = mu / xu[j];
+        } else {
+            assert(xu[j] == INFINITY);
+            assert(zu[j] == 0.0);
+        }
+    }
+
     iterate_->Initialize(x, xl, xu, y, zl, zu);
     best_complementarity_ = iterate_->complementarity();
 }
@@ -593,6 +662,8 @@ void IPM::PrintHeader() {
 
 void IPM::PrintOutput() {
     const bool ipm_optimal = iterate_->feasible() && iterate_->optimal();
+    const Int num_pivots = kkt_ ? kkt_->basis_changes() : Int(0);
+    const Int num_kktiter = kkt_ ? kkt_->iter() : Int(0);
 
     control_.Log()
         << " "  << Format(info_->iter, 3)
@@ -605,14 +676,14 @@ void IPM::PrintOutput() {
         << "  " << Fixed(control_.Elapsed(), 6, 0) << "s";
     control_.Debug()
         << "  " << Fixed(step_primal_, 4, 2) << " " << Fixed(step_dual_, 4, 2)
-        << "  " << Format(kkt_->basis_changes(), 7)
-        << " "  << Format(kkt_->iter(), 7);
+        << "  " << Format(num_pivots, 7)
+        << " "  << Format(num_kktiter, 7);
     control_.Debug()
         << "  " << Format(info_->dual_dropped, 7)
         << " "  << Format(info_->primal_dropped, 7);
 
-    const Basis* basis = kkt_->basis();
-    if (basis) {
+    if (kkt_ && kkt_->basis()) {
+        const Basis* basis = kkt_->basis();
         if (control_.Debug(4)) {
             control_.Debug(4) << "  "
                               << Scientific(basis->MinSingularValue(), 9, 2);

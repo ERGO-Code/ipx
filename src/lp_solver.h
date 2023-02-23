@@ -160,7 +160,7 @@ private:
     void ClearSolution();
     void InteriorPointSolve();
     void RunIPM();
-    void LoadStartingPoint();
+    void LoadStartingPoint(IPM& ipm);
     void ComputeStartingPoint(IPM& ipm);
     void RunInitialIPM(IPM& ipm);
     void BuildStartingBasis();

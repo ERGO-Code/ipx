@@ -27,7 +27,14 @@ public:
     // IPX_STATUS_time_limit if the KKT solver was interrupted by time limit,
     // IPX_STATUS_failed     if the KKT solver failed with info->errflag.
     // If the method did not terminate successfully, @iterate is unchanged.
-    void StartingPoint(KKTSolver* kkt, Iterate* iterate, Info* info);
+    void ComputeStartingPoint(KKTSolver* kkt, Iterate* iterate, Info* info);
+
+    // Copies the given vectors into @iterate and modifies them if necessary to
+    // obtain a valid starting point for Driver(). On return info->status_ipm is
+    // IPX_STATUS_not_run.
+    void LoadStartingPoint(const Vector& x, const Vector& xl, const Vector& xu,
+                           const Vector& y, const Vector& zl, const Vector& zu,
+                           Iterate* iterate, Info* info);
 
     // Updates @iterate by interior point iterations. On return ipm_status is
     // IPX_STATUS_optimal       if iterate->term_crit_reached() is true,
@@ -48,6 +55,8 @@ private:
     static constexpr double kDivergeTol = 1e6;
 
     void ComputeStartingPoint();
+    void LoadStartingPoint(Vector x, Vector xl, Vector xu, Vector y, Vector zl,
+                           Vector zu);
     void Predictor(Step& step);
     void AddCorrector(Step& step);
     void StepSizes(const Step& step);
