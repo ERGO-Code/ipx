@@ -17,6 +17,11 @@ DEP_FILES = $(wildcard src/*.h) $(wildcard include/*.h) Makefile config.mk
 SRC_FILES = $(wildcard src/*.cc)
 OBJ_FILES = $(patsubst src/%.cc, build/%.o, $(SRC_FILES))
 
+EXAMPLE_SRC_FILES = $(wildcard example/*.cc) $(wildcard example/*.c)
+EXAMPLE_BIN_FILES = $(EXAMPLE_SRC_FILES)
+EXAMPLE_BIN_FILES := $(patsubst %.cc, %, $(EXAMPLE_BIN_FILES))
+EXAMPLE_BIN_FILES := $(patsubst %.c, %, $(EXAMPLE_BIN_FILES))
+
 #-------------------------------------------------------------------------------
 # create the static library
 #-------------------------------------------------------------------------------
@@ -49,8 +54,19 @@ build/%.o: src/%.cc $(DEP_FILES)
 # compile examples
 #-------------------------------------------------------------------------------
 
-examples:
-	@( cd example; $(MAKE); )
+examples: $(EXAMPLE_BIN_FILES)
+
+# We bake rpath into the executables so that they will run regardless of whether
+# libipx.so is in the runtime search path. The disadvantage is that the
+# executables cannot be moved to another directory and can only be called from
+# the examples/ or the top-level directory, but for example programs that should
+# be OK.
+
+example/%: example/%.cc shared
+	$(CXX) $(CF) -Iinclude -Isrc $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+
+example/%: example/%.c shared
+	$(CC) $(CF) -Iinclude $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
 
 #-------------------------------------------------------------------------------
 # clean and purge
@@ -58,8 +74,7 @@ examples:
 
 clean:
 	$(RM) $(OBJ_FILES)
-	@( cd example; $(MAKE) clean; )
 
 purge: clean
 	$(RM) lib/$(AR_TARGET) lib/$(SO_TARGET) lib/$(SO_PLAIN) lib/$(SO_MAIN)
-	@( cd example; $(MAKE) purge; )
+	$(RM) $(EXAMPLE_BIN_FILES)
