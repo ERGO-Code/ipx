@@ -66,15 +66,20 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     COMPILEFLAGS += -Iinclude -Isrc
-    LINKFLAGS = -Llib -lipx
+    LINKFLAGS = -Wl,-Bstatic -lipx -lbasiclu -Llib
     SO_OPTS =
 
     ifdef BASICLUROOT
         COMPILEFLAGS += -I$(BASICLUROOT)/include
+        LINKFLAGS += -L$(BASICLUROOT)/lib
         SO_OPTS += -L$(BASICLUROOT)/lib -Wl,-rpath,$(BASICLUROOT)/lib
     endif
     # If BASICLUROOT is not defined, assume that it is in the default search
     # paths.
+
+    LINKFLAGS += -Wl,-Bdynamic
+    LINKFLAGS += $(LAPACK) $(BLAS)
+    LINKFLAGS += -lstdc++ -lm
 
     #---------------------------------------------------------------------------
     # shell commands

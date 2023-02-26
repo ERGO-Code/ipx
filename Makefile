@@ -56,17 +56,11 @@ build/%.o: src/%.cc $(DEP_FILES)
 
 examples: $(EXAMPLE_BIN_FILES)
 
-# We bake rpath into the executables so that they will run regardless of whether
-# libipx.so is in the runtime search path. The disadvantage is that the
-# executables cannot be moved to another directory and can only be called from
-# the examples/ or the top-level directory, but for example programs that should
-# be OK.
+example/%: example/%.cc static
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS)
 
-example/%: example/%.cc shared
-	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS) -Wl,-rpath,lib -Wl,-rpath,../lib
-
-example/%: example/%.c shared
-	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS) -Wl,-rpath,lib -Wl,-rpath,../lib
+example/%: example/%.c static
+	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS)
 
 #-------------------------------------------------------------------------------
 # clean and purge
