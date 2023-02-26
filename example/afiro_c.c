@@ -81,6 +81,9 @@ int main() {
 
     // Get solver and solution information.
     struct ipx_info info = ipx_get_info(lps);
+    printf("Solver performed %ld IPM iterations and %ld crossover pivots"
+           " in %.3f seconds.\n", info.iter, info.updates_crossover,
+           info.time_total);
 
     // Get the interior solution (available if IPM was started).
     double x[NUM_VAR], xl[NUM_VAR], xu[NUM_VAR], slack[NUM_CONSTR];

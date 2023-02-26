@@ -77,6 +77,9 @@ int main() {
 
     // Get solver and solution information.
     ipx::Info info = lps.GetInfo();
+    std::cout << "Solver performed " << info.iter << " IPM iterations and "
+              << info.updates_crossover << " crossover pivots in "
+              << info.time_total << " seconds.\n";
 
     // Get the interior solution (available if IPM was started).
     double x[num_var], xl[num_var], xu[num_var], slack[num_constr];
