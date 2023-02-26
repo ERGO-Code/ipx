@@ -66,6 +66,7 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     COMPILEFLAGS += -Iinclude -Isrc
+    LINKFLAGS = -Llib -lipx
     SO_OPTS =
 
     ifdef BASICLUROOT

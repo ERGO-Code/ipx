@@ -63,10 +63,10 @@ examples: $(EXAMPLE_BIN_FILES)
 # be OK.
 
 example/%: example/%.cc shared
-	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS) -Wl,-rpath,lib -Wl,-rpath,../lib
 
 example/%: example/%.c shared
-	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS) -Wl,-rpath,lib -Wl,-rpath,../lib
 
 #-------------------------------------------------------------------------------
 # clean and purge
