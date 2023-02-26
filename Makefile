@@ -48,7 +48,7 @@ lib/$(SO_TARGET): $(OBJ_FILES)
 #-------------------------------------------------------------------------------
 
 build/%.o: src/%.cc $(DEP_FILES)
-	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $(IFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) -c $< -o $@
 
 #-------------------------------------------------------------------------------
 # compile examples
@@ -63,10 +63,10 @@ examples: $(EXAMPLE_BIN_FILES)
 # be OK.
 
 example/%: example/%.cc shared
-	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) -Iinclude -Isrc $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
 
 example/%: example/%.c shared
-	$(CC) $(CCFLAGS) $(COMPILEFLAGS) -Iinclude $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
 
 #-------------------------------------------------------------------------------
 # clean and purge

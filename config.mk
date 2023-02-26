@@ -65,12 +65,12 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     # include flags and linker options
     #---------------------------------------------------------------------------
 
-    IFLAGS = -I./include
+    COMPILEFLAGS += -Iinclude -Isrc
     LFLAGS =
     PFLAGS =
 
     ifdef BASICLUROOT
-        IFLAGS += -I$(BASICLUROOT)/include
+        COMPILEFLAGS += -I$(BASICLUROOT)/include
         LFLAGS += -L$(BASICLUROOT)/lib
         PFLAGS += -Wl,-rpath,$(BASICLUROOT)/lib
     endif
