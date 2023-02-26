@@ -39,7 +39,7 @@ lib/$(AR_TARGET): $(OBJ_FILES)
 shared: lib/$(SO_TARGET)
 
 lib/$(SO_TARGET): $(OBJ_FILES)
-	$(CXX) $(CF) $(SO_OPTS) $^ -o $@ $(LDLIBS)
+	$(CXX) $(CXXFLAGS) $(SO_OPTS) $^ -o $@ $(LDLIBS)
 	( cd lib; ln -sf $(SO_TARGET) $(SO_PLAIN) )
 	( cd lib; ln -sf $(SO_TARGET) $(SO_MAIN) )
 
@@ -48,7 +48,7 @@ lib/$(SO_TARGET): $(OBJ_FILES)
 #-------------------------------------------------------------------------------
 
 build/%.o: src/%.cc $(DEP_FILES)
-	$(CXX) $(CF) $(IFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $(IFLAGS) -c $< -o $@
 
 #-------------------------------------------------------------------------------
 # compile examples
@@ -63,10 +63,10 @@ examples: $(EXAMPLE_BIN_FILES)
 # be OK.
 
 example/%: example/%.cc shared
-	$(CXX) $(CF) -Iinclude -Isrc $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) -Iinclude -Isrc $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
 
 example/%: example/%.c shared
-	$(CC) $(CF) -Iinclude $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
+	$(CC) $(CCFLAGS) $(COMPILEFLAGS) -Iinclude $< -o $@ -lipx -Llib -Wl,-rpath,lib -Wl,-rpath,../lib
 
 #-------------------------------------------------------------------------------
 # clean and purge

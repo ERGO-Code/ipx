@@ -28,15 +28,20 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     OPTIMIZATION ?= -O2
 
     #---------------------------------------------------------------------------
-    # compiler flags for the C compiler
+    # compiler flags for both C and C++ compiler
     #---------------------------------------------------------------------------
 
-    # The CF macro is used as a combination of
-    # CXXFLAGS, CPPFLAGS, TARGET_ARCH, and system-dependent settings.
-    CF = $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fPIC
+    COMPILEFLAGS = $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fPIC
 
     #---------------------------------------------------------------------------
-    # compiler, must support C++11
+    # C compiler, must support C99
+    #---------------------------------------------------------------------------
+
+    CC = gcc
+    CCFLAGS = -std=c99
+
+    #---------------------------------------------------------------------------
+    # C++ compiler, must support C++11
     #---------------------------------------------------------------------------
 
     CXX = g++
@@ -50,7 +55,7 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     BLAS ?= -lopenblas
 
     # uncomment if your BLAS library uses 64 bit integers rather than 'int'
-    # CF += -DBLAS64
+    # COMPILEFLAGS += -DBLAS64
 
     LDLIBS =
     LDLIBS += -lbasiclu
