@@ -66,13 +66,11 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
     #---------------------------------------------------------------------------
 
     COMPILEFLAGS += -Iinclude -Isrc
-    LFLAGS =
-    PFLAGS =
+    SO_OPTS =
 
     ifdef BASICLUROOT
         COMPILEFLAGS += -I$(BASICLUROOT)/include
-        LFLAGS += -L$(BASICLUROOT)/lib
-        PFLAGS += -Wl,-rpath,$(BASICLUROOT)/lib
+        SO_OPTS += -L$(BASICLUROOT)/lib -Wl,-rpath,$(BASICLUROOT)/lib
     endif
     # If BASICLUROOT is not defined, assume that it is in the default search
     # paths.
@@ -114,8 +112,6 @@ BASICLUROOT = $(HOME)/ERGO-Code/basiclu
 LIBRARY = libipx
 VERSION = 1.0.0
 SO_VERSION = 1
-
-SO_OPTS = $(LFLAGS) $(PFLAGS)
 
 ifeq ($(UNAME),Windows)
     # Cygwin / Mingw Make on Windows
