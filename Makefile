@@ -4,8 +4,8 @@ include config.mk
 # compile the package
 #-------------------------------------------------------------------------------
 
-# The default creates the static and shared library in the lib/ subdirectory and
-# compiles the examples in the example/ subdirectory.
+# The default creates the static and shared library in lib/ and compiles the
+# *.c and *.cc files from example/ into executables stored in bin/example/.
 
 default: static shared examples
 
@@ -21,6 +21,7 @@ EXAMPLE_SRC_FILES = $(wildcard example/*.cc) $(wildcard example/*.c)
 EXAMPLE_BIN_FILES = $(EXAMPLE_SRC_FILES)
 EXAMPLE_BIN_FILES := $(patsubst %.cc, %, $(EXAMPLE_BIN_FILES))
 EXAMPLE_BIN_FILES := $(patsubst %.c, %, $(EXAMPLE_BIN_FILES))
+EXAMPLE_BIN_FILES := $(patsubst %, bin/%, $(EXAMPLE_BIN_FILES))
 
 #-------------------------------------------------------------------------------
 # create the static library
@@ -56,10 +57,10 @@ build/%.o: src/%.cc $(DEP_FILES)
 
 examples: $(EXAMPLE_BIN_FILES)
 
-example/%: example/%.cc static
+bin/example/%: example/%.cc static
 	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS)
 
-example/%: example/%.c static
+bin/example/%: example/%.c static
 	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS)
 
 #-------------------------------------------------------------------------------

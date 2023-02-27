@@ -7,4 +7,4 @@
     - change LAPACK and BLAS as necessary for linking with these libraries
     Then call 'make' in the top level directory.
 
-(3) Change into the example/ subdirectory and run the afiro program.
+(3) Run the example programs from bin/example/.
