@@ -671,7 +671,7 @@ void Presolver::PostsolveInteriorPoint(const Vector& x_solver,
         else
             zl_user = xl_solver[std::slice(n, num_var_, 1)];
         for (Int j = 0; j < num_var_; j++)
-            if (!std::isfinite(user_model_.lb(j)))
+            if (model_.lb(n+j) == model_.ub(n+j))
                 zl_user[j] = 0.0;
 
         // Dual variables associated with x <= ubuser in the scaled user model
@@ -688,7 +688,7 @@ void Presolver::PostsolveInteriorPoint(const Vector& x_solver,
         // xl in the scaled user model is zl[n+1:n+m] in the solver model or
         // infinity.
         for (Int i = 0; i < m; i++) {
-            if (std::isfinite(user_model_.lb(i)))
+            if (model_.lb(n+i) != model_.ub(n+i))
                 xl_user[i] = zl_solver[n+i] * rowscale(i);
             else
                 xl_user[i] = INFINITY;
@@ -811,7 +811,7 @@ void Presolver::PostsolveBasis(const std::vector<Int>& basic_status_solver,
             // slack cannot be superbasic
             assert(basic_status_solver[n+j] != IPX_superbasic);
             if (basic_status_solver[n+j] == 0)
-                vbasis_user[j] = std::isfinite(user_model_.lb(j)) ?
+                vbasis_user[j] = model_.lb(n+j) != model_.ub(n+j) ?
                     IPX_nonbasic_lb : IPX_superbasic;
             else
                 vbasis_user[j] = IPX_basic;
