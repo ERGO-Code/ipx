@@ -8,8 +8,11 @@
 
 IPX_VERSION = 1.0.0
 
-# path to basiclu
-BASICLUROOT = $(HOME)/ERGO-Code/basiclu
+# Path to the top-level directory of the basiclu package, which can be obtained
+# from https://github.com/ERGO-Code/basiclu. By default assume that ipx/ and
+# basiclu/ reside side-by-side. If basiclu/include and basiclu/lib are in the
+# compiler's default search path, then the line can be commented out.
+BASICLUROOT = $(realpath ../basiclu)
 
 #===============================================================================
 # Defaults for any system
