@@ -68,7 +68,7 @@ BASICLUROOT = $(realpath ../basiclu)
     # include flags and linker options
     #---------------------------------------------------------------------------
 
-    COMPILEFLAGS += -Iinclude -Isrc
+    COMPILEFLAGS += -Iinclude -Isrc -Ithird_party
     LINKFLAGS = -Wl,-Bstatic -lipx -lbasiclu -Llib
     SO_OPTS =
 
@@ -121,6 +121,7 @@ BASICLUROOT = $(realpath ../basiclu)
 LIBRARY = libipx
 VERSION = 1.0.0
 SO_VERSION = 1
+TEST_EXECUTABLE = ipx_test
 
 ifeq ($(UNAME),Windows)
     # Cygwin / Mingw Make on Windows
@@ -130,6 +131,7 @@ ifeq ($(UNAME),Windows)
     SO_TARGET = $(LIBRARY).$(VERSION).dll
     SO_OPTS   += -shared
     SO_INSTALL_NAME = echo
+    TEST_TARGET = $(TEST_EXECUTABLE).exe
 else
     # Mac or Linux/Unix
     AR_TARGET = $(LIBRARY).a
@@ -153,4 +155,5 @@ else
         # Linux/Unix *.so files can be moved without modification:
         SO_INSTALL_NAME = echo
     endif
+    TEST_TARGET = $(TEST_EXECUTABLE)
 endif

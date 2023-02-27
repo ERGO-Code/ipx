@@ -23,6 +23,10 @@ EXAMPLE_BIN_FILES := $(patsubst %.cc, %, $(EXAMPLE_BIN_FILES))
 EXAMPLE_BIN_FILES := $(patsubst %.c, %, $(EXAMPLE_BIN_FILES))
 EXAMPLE_BIN_FILES := $(patsubst %, bin/%, $(EXAMPLE_BIN_FILES))
 
+TEST_SRC_FILES = $(wildcard check/*.cc)
+TEST_DEP_FILES = $(wildcard check/*.h)
+TEST_BIN_FILE = bin/$(TEST_TARGET)
+
 #-------------------------------------------------------------------------------
 # create the static library
 #-------------------------------------------------------------------------------
@@ -64,6 +68,16 @@ bin/example/%: example/%.c static
 	$(CC) $(CCFLAGS) $(COMPILEFLAGS) $< -o $@ $(LINKFLAGS)
 
 #-------------------------------------------------------------------------------
+# compile and run tests
+#-------------------------------------------------------------------------------
+
+test: $(TEST_BIN_FILE)
+
+$(TEST_BIN_FILE): $(TEST_SRC_FILES) $(TEST_DEP_FILES) static
+	$(CXX) $(CXXFLAGS) $(COMPILEFLAGS) $(TEST_SRC_FILES) -o $@ $(LINKFLAGS)
+	./$@
+
+#-------------------------------------------------------------------------------
 # clean and purge
 #-------------------------------------------------------------------------------
 
@@ -73,3 +87,4 @@ clean:
 purge: clean
 	$(RM) lib/$(AR_TARGET) lib/$(SO_TARGET) lib/$(SO_PLAIN) lib/$(SO_MAIN)
 	$(RM) $(EXAMPLE_BIN_FILES)
+	$(RM) $(TEST_BIN_FILE)
