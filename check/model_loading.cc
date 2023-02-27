@@ -10,15 +10,15 @@ TEST_CASE("argument null", "[model_loading]") {
     ipx::LpSolver lps;
 
     const Int num_var = 1;
-    const Int num_constr = 0;
+    const Int num_constr = 1;
     const double obj[] = {0};
     const double lb[] = {0};
     const double ub[] = {1};
-    const Int Ap[] = {0, 0};
-    const Int Ai[] = {};
-    const double Ax[] = {};
-    const double rhs[] = {};
-    const char constr_type[] = {};
+    const Int Ap[] = {0, 1};
+    const Int Ai[] = {0};
+    const double Ax[] = {1};
+    const double rhs[] = {0};
+    const char constr_type[] = {'='};
 
     SECTION("model ok") {
         Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap, Ai,
@@ -64,6 +64,21 @@ TEST_CASE("argument null", "[model_loading]") {
         Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap, Ai,
                                     Ax, rhs, nullptr);
         REQUIRE(errflag == IPX_ERROR_argument_null);
+    }
+    SECTION("rhs and constr_type can be null when no constraints") {
+        const Int num_constr = 0;
+        const Int Ap[] = {0, 0};
+        const Int Ai[] = {};
+        const double Ax[] = {};
+        Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap, Ai,
+                                    Ax, nullptr, nullptr);
+        REQUIRE(errflag == 0);
+    }
+    SECTION("Ai and Ax can be null when no matrix entries") {
+        const Int Ap[] = {0, 0};
+        Int errflag = lps.LoadModel(num_var, obj, lb, ub, num_constr, Ap,
+                                    nullptr, nullptr, rhs, constr_type);
+        REQUIRE(errflag == 0);
     }
 }
 

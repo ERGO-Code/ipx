@@ -269,11 +269,21 @@ Int UserModel::CopyInput(Int num_constr, Int num_var, const Int* Ap,
                          const Int* Ai, const double* Ax, const double* rhs,
                          const char* constr_type, const double* obj,
                          const double* lbuser, const double* ubuser) {
-    if (!(Ap && Ai && Ax && rhs && constr_type && obj && lbuser && ubuser)) {
-        return IPX_ERROR_argument_null;
-    }
     if (num_constr < 0 || num_var <= 0) {
         return IPX_ERROR_invalid_dimension;
+    }
+    if (!Ap) {
+        return IPX_ERROR_argument_null;
+    }
+    if (num_var > 0 && !(obj && lbuser && ubuser)) {
+        return IPX_ERROR_argument_null;
+    }
+    if (num_constr > 0 && !(rhs && constr_type)) {
+        return IPX_ERROR_argument_null;
+    }
+    Int num_entries = Ap[num_var];
+    if (num_entries > 0 && !(Ai && Ax)) {
+        return IPX_ERROR_argument_null;
     }
     if (CheckVectors(num_constr, num_var, rhs, constr_type, obj, lbuser, ubuser)
         != 0) {
