@@ -11,6 +11,12 @@ namespace ipx {
 BasicLu::BasicLu(const Control& control, Int dim) : control_(control) {
     static_assert(sizeof(Int) == sizeof(lu_int),
                   "IPX integer type does not match BASICLU integer type");
+
+    // BASICLU returns an error when initialized for matrices of dimension zero.
+    if (dim == 0)
+        return;
+
+    dim_ = dim;
     istore_.resize(BASICLU_SIZE_ISTORE_1 + BASICLU_SIZE_ISTORE_M * dim);
     xstore_.resize(BASICLU_SIZE_ISTORE_1 + BASICLU_SIZE_ISTORE_M * dim);
 
@@ -29,10 +35,15 @@ BasicLu::BasicLu(const Control& control, Int dim) : control_(control) {
     xstore_[BASICLU_MEMORYL] = 1;
     xstore_[BASICLU_MEMORYU] = 1;
     xstore_[BASICLU_MEMORYW] = 1;
+
+    pivottol_ = xstore_[BASICLU_REL_PIVOT_TOLERANCE];
 }
 
 Int BasicLu::_Factorize(const Int* Bbegin, const Int* Bend, const Int* Bi,
                         const double* Bx, bool strict_abs_pivottol) {
+    if (dim_ == 0)
+        return 0;
+
     Int status;
     if (strict_abs_pivottol) {
         xstore_[BASICLU_REMOVE_COLUMNS] = 1;
@@ -78,6 +89,13 @@ Int BasicLu::_Factorize(const Int* Bbegin, const Int* Bend, const Int* Bi,
 
 void BasicLu::_GetFactors(SparseMatrix* L, SparseMatrix* U, Int* rowperm,
                           Int* colperm, std::vector<Int>* dependent_cols) {
+    if (dim_ == 0) {
+        L->clear();
+        U->clear();
+        dependent_cols->clear();
+        return;
+    }
+
     Int *Lbegin = nullptr, *Ubegin = nullptr;
     Int *Lindex = nullptr, *Uindex = nullptr;
     double *Lvalue = nullptr, *Uvalue = nullptr;
@@ -122,6 +140,8 @@ void BasicLu::_GetFactors(SparseMatrix* L, SparseMatrix* U, Int* rowperm,
 }
 
 void BasicLu::_SolveDense(const Vector& rhs, Vector& lhs, char trans) {
+    if (dim_ == 0)
+        return;
     Int status = basiclu_solve_dense(istore_.data(), xstore_.data(),
                                      Li_.data(), Lx_.data(),
                                      Ui_.data(), Ux_.data(),
@@ -132,6 +152,8 @@ void BasicLu::_SolveDense(const Vector& rhs, Vector& lhs, char trans) {
 }
 
 void BasicLu::_FtranForUpdate(Int nzrhs, const Int* bi, const double* bx) {
+    if (dim_ == 0)
+        return;
     Int status;
     for (Int ncall = 0; ; ncall++) {
         status = basiclu_solve_for_update(istore_.data(), xstore_.data(),
@@ -151,6 +173,8 @@ void BasicLu::_FtranForUpdate(Int nzrhs, const Int* bi, const double* bx) {
 
 void BasicLu::_FtranForUpdate(Int nzrhs, const Int* bi, const double* bx,
                               IndexedVector& lhs) {
+    if (dim_ == 0)
+        return;
     Int status;
     Int nzlhs = 0;
     lhs.set_to_zero();
@@ -173,6 +197,8 @@ void BasicLu::_FtranForUpdate(Int nzrhs, const Int* bi, const double* bx,
 }
 
 void BasicLu::_BtranForUpdate(Int j) {
+    if (dim_ == 0)
+        return;
     Int status;
     for (Int ncall = 0; ; ncall++) {
         status = basiclu_solve_for_update(istore_.data(), xstore_.data(),
@@ -191,6 +217,8 @@ void BasicLu::_BtranForUpdate(Int j) {
 }
 
 void BasicLu::_BtranForUpdate(Int j, IndexedVector& lhs) {
+    if (dim_ == 0)
+        return;
     Int status;
     Int nzlhs = 0;
     lhs.set_to_zero();
@@ -213,6 +241,8 @@ void BasicLu::_BtranForUpdate(Int j, IndexedVector& lhs) {
 }
 
 Int BasicLu::_Update(double pivot) {
+    if (dim_ == 0)
+        return 0;
     double max_eta_old = xstore_[BASICLU_MAX_ETA];
     Int status;
     for (Int ncall = 0; ; ncall++) {
@@ -246,6 +276,9 @@ Int BasicLu::_Update(double pivot) {
 }
 
 bool BasicLu::_NeedFreshFactorization() {
+    if (dim_ == 0)
+        return false;
+
     Int dim = xstore_[BASICLU_DIM];
     Int nforrest = xstore_[BASICLU_NFORREST];
     double update_cost = xstore_[BASICLU_UPDATE_COST];
@@ -258,14 +291,17 @@ double BasicLu::_fill_factor() const {
 }
 
 double BasicLu::_pivottol() const {
-    return xstore_[BASICLU_REL_PIVOT_TOLERANCE];
+    return pivottol_;
 }
 
 void BasicLu::_pivottol(double new_pivottol) {
-    xstore_[BASICLU_REL_PIVOT_TOLERANCE] = new_pivottol;
+    pivottol_ = new_pivottol;
+    if (dim_ != 0)
+        xstore_[BASICLU_REL_PIVOT_TOLERANCE] = pivottol_;
 }
 
 void BasicLu::Reallocate() {
+    assert(dim_ != 0);
     assert(Li_.size() == xstore_[BASICLU_MEMORYL]);
     assert(Lx_.size() == xstore_[BASICLU_MEMORYL]);
     assert(Ui_.size() == xstore_[BASICLU_MEMORYU]);

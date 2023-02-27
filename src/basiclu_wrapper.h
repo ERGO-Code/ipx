@@ -37,11 +37,13 @@ private:
     static constexpr double kReallocFactor = 1.5;
 
     const Control& control_;
+    Int dim_{0};
     std::vector<Int> istore_;
     std::vector<double> xstore_;
     std::vector<Int> Li_, Ui_, Wi_;
     std::vector<double> Lx_, Ux_, Wx_;
-    double fill_factor_;
+    double fill_factor_{1.0};
+    double pivottol_{0.1};
 };
 
 }  // namespace ipx

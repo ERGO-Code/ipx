@@ -35,6 +35,16 @@ void BasicLuKernel::_Factorize(Int dim, const Int* Bbegin, const Int* Bend,
                                std::vector<Int>* rowperm,
                                std::vector<Int>* colperm,
                                std::vector<Int>* dependent_cols) {
+    // BASICLU returns an error when initialized for matrices of dimension zero.
+    if (dim == 0) {
+        L->clear();
+        U->clear();
+        rowperm->clear();
+        colperm->clear();
+        dependent_cols->clear();
+        return;
+    }
+
     BasicLuHelper lu(dim);
     lu.obj.xstore[BASICLU_REL_PIVOT_TOLERANCE] = pivottol;
     if (strict_abs_pivottol) {
