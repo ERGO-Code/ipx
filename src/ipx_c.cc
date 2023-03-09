@@ -1,8 +1,21 @@
 #include "ipx_c.h"
 #include "ipx_internal.h"
 #include "lp_solver.h"
+#include "version.h"
 
 using namespace ipx;
+
+ipxint ipx_version_major() {
+    return Version{}.major();
+}
+
+ipxint ipx_version_minor() {
+    return Version{}.minor();
+}
+
+ipxint ipx_version_patch() {
+    return Version{}.patch();
+}
 
 struct ipx_parameters ipx_default_parameters() {
     return ipx_parameters{};

@@ -5,10 +5,15 @@
 #include "ipx_info.h"
 #include "ipx_parameters.h"
 #include "ipx_status.h"
+#include "ipx_version.h"
 
 #ifdef __cplusplus
 extern "C"{
 #endif
+    ipxint ipx_version_major();
+    ipxint ipx_version_minor();
+    ipxint ipx_version_patch();
+
     /* Returns an ipx_parameters struct with default values. */
     struct ipx_parameters ipx_default_parameters();
 

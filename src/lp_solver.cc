@@ -11,6 +11,7 @@
 #include "kkt_solver_diag.h"
 #include "starting_basis.h"
 #include "utils.h"
+#include "version.h"
 
 namespace ipx {
 
@@ -55,7 +56,7 @@ Int LpSolver::Solve() {
         return info_.status = IPX_STATUS_no_model;
     control_.ResetTimer();
     control_.OpenLogfile();
-    control_.Log() << "IPX version 1.0\n";
+    control_.Log() << "IPX version " << Version{} << '\n';
     try {
         Presolve();
         if (info_.status == IPX_STATUS_not_run) {

@@ -6,8 +6,6 @@
 # in SuiteSparse version 4.5.3 and available from http://www.suitesparse.com.
 # As with the original file, no licensing restrictions apply to this file.
 
-IPX_VERSION = 1.0.0
-
 # Path to the top-level directory of the basiclu package, which can be obtained
 # from https://github.com/ERGO-Code/basiclu. By default assume that ipx/ and
 # basiclu/ reside side-by-side. If basiclu/include and basiclu/lib are in the
