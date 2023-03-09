@@ -117,7 +117,7 @@ BASICLUROOT = $(realpath ../basiclu)
 #===============================================================================
 
 LIBRARY = libipx
-VERSION = 1.0.0
+VERSION = 1.1.0
 SO_VERSION = 1
 TEST_EXECUTABLE = ipx_test
 
