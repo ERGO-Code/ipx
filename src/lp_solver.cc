@@ -123,6 +123,13 @@ namespace {
     }
 } // namespace
 
+Int LpSolver::GetInteriorSolution(InteriorSolution& solution) const {
+    if (!interior_solution_)
+        return -1;
+    solution = *interior_solution_;
+    return 0;
+}
+
 Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
                                   double* slack, double* y, double* zl,
                                   double* zu) const {
@@ -135,6 +142,13 @@ Int LpSolver::GetInteriorSolution(double* x, double* xl, double* xu,
     copy_if_not_null(interior_solution_->y, y);
     copy_if_not_null(interior_solution_->zl, zl);
     copy_if_not_null(interior_solution_->zu, zu);
+    return 0;
+}
+
+Int LpSolver::GetBasicSolution(BasicSolution& solution) const {
+    if (!basic_solution_)
+        return -1;
+    solution = *basic_solution_;
     return 0;
 }
 

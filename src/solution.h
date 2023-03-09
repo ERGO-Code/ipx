@@ -18,6 +18,7 @@ struct InteriorSolution {
     Vector zl;                  // size num_var lower bound dual
     Vector zu;                  // size num_var upper bound dual
 
+    InteriorSolution() : InteriorSolution(0, 0) {};
     explicit InteriorSolution(Int num_var, int num_constr)
         : x(num_var), xl(num_var), xu(num_var), slack(num_constr),
         y(num_constr), zl(num_var), zu(num_var)
@@ -33,6 +34,7 @@ struct BasicSolution {
     std::vector<Int> vbasis;    // size num_var basic statuses of columns
     std::vector<Int> cbasis;    // size num_constr basic statuses of rows
 
+    BasicSolution() : BasicSolution(0, 0) {};
     explicit BasicSolution(Int num_var, int num_constr)
         : x(num_var), slack(num_constr), y(num_constr), z(num_var),
         vbasis(num_var), cbasis(num_constr)

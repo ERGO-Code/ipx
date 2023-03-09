@@ -81,22 +81,26 @@ public:
     // documentation for the meaning of Info values.
     Info GetInfo() const;
 
-    // Returns the final IPM iterate from the last call to Solve() into user
-    // arrays. An iterate is available if GetInfo().status_ipm !=
-    // IPX_STATUS_not_run. If no iterate is available, the method does nothing.
-    // Each of the pointer arguments must either be NULL or an array of
-    // appropriate dimension. If NULL, the quantity is not returned.
-    // Returns -1 if no IPM iterate was available and 0 otherwise.
+    // Returns the final IPM iterate from the last call to Solve(). An iterate
+    // is available if GetInfo().status_ipm != IPX_STATUS_not_run. If no iterate
+    // is available, the method does nothing. In the first version an
+    // InteriorSolution object is returned in @solution. In the second version
+    // each of the pointer arguments must either be NULL or an array of
+    // appropriate dimension. If NULL, the quantity is not returned. Returns -1
+    // if no IPM iterate was available and 0 otherwise.
+    Int GetInteriorSolution(InteriorSolution& solution) const;
     Int GetInteriorSolution(double* x, double* xl, double* xu, double* slack,
                             double* y, double* zl, double* zu) const;
 
-    // Returns the basic solution and basis from the last call to Solve() into
-    // user arrays. A basic solution and basis are available if
-    // GetInfo().status_crossover == IPX_STATUS_optimal ||
-    // GetInfo().status_crossover == IPX_STATUS_imprecise. Otherwise the method
-    // does nothing. Each of the pointer arguments must either be NULL or an
-    // array of appropriate dimension. If NULL, the quantity is not returned.
-    // Returns -1 if no basic solution was available and 0 otherwise.
+    // Returns the basic solution and basis from the last call to Solve(). A
+    // basic solution and basis are available if GetInfo().status_crossover ==
+    // IPX_STATUS_optimal || GetInfo().status_crossover == IPX_STATUS_imprecise.
+    // Otherwise the method does nothing. In the first version a BasicSolution
+    // object is returned in @solution. In the second version each of the
+    // pointer arguments must either be NULL or an array of appropriate
+    // dimension. If NULL, the quantity is not returned. Returns -1 if no basic
+    // solution was available and 0 otherwise.
+    Int GetBasicSolution(BasicSolution& solution) const;
     Int GetBasicSolution(double* x, double* slack, double* y, double* z,
                          Int* cbasis, Int* vbasis) const;
 
